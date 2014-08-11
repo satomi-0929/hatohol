@@ -843,8 +843,8 @@ static const int columnIndexesEventsUniqId[] = {
 };
 
 static const DBAgent::IndexDef indexDefsEvents[] = {
-  {"EventsUniqId", &tableProfileEvents,
-   (const int *)columnIndexesEventsUniqId, true},
+  {"EventsId", &tableProfileEvents,
+   (const int *)columnIndexesEventsUniqId, false},
   {NULL}
 };
 
@@ -2250,7 +2250,8 @@ void DBClientHatohol::addEventInfoWithoutTransaction(const EventInfo &eventInfo)
 	  "server_id=%s AND id=%s",
 	  dbTermCodec->enc(eventInfo.serverId).c_str(),
 	  dbTermCodec->enc(eventInfo.id).c_str());
-	if (!isRecordExisting(TABLE_NAME_EVENTS, condition)) {
+	if (!isRecordExisting(TABLE_NAME_EVENTS, condition) ||
+	    eventInfo.id == DISCONNECT_SERVER_EVENTID_TYPE) {
 		DBAgent::InsertArg arg(tableProfileEvents);
 		arg.add(AUTO_INCREMENT_VALUE_U64);
 		arg.add(eventInfo.serverId);
