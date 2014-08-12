@@ -87,10 +87,10 @@ do { \
 	} \
 } while (0)
 
-#define THROW_HATOHOL_EXCEPTION_WITHERR(ERR_CODE, FMT, ...) \
+#define THROW_HATOHOL_EXCEPTION_WITH_ERRORCODE(ERROR_CODE, FMT, ...) \
 do { \
         throw HatoholException( \
-	  ERR_CODE, \
+	  ERROR_CODE, \
           mlpl::StringUtils::sprintf(FMT, ##__VA_ARGS__), \
 	  __FILE__, __LINE__); \
  } while (0)
