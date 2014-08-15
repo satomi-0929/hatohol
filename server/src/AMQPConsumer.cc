@@ -51,10 +51,15 @@ public:
 			} else {
 				scheme = "amqp";
 			}
-			MLPL_INFO("Broker URL: <%s://%s:%d>\n",
+			const char *vhost = m_connectionInfo.vhost;
+			if (string(vhost) == "/") {
+				vhost = "";
+			}
+			MLPL_INFO("Broker URL: <%s://%s:%d/%s>\n",
 				  scheme,
 				  m_connectionInfo.host,
-				  m_connectionInfo.port);
+				  m_connectionInfo.port,
+				  vhost);
 		} else {
 			MLPL_ERR("Bad broker URL: %s: <%s>\n",
 				 amqp_error_string2(status),
@@ -161,6 +166,11 @@ private:
 		return m_connectionInfo.password;
 	}
 
+	const char *getVirtualHost()
+	{
+		return m_connectionInfo.vhost;
+	}
+
 	void logErrorResponse(const char *context, int status)
 	{
 		logErrorResponse(context, static_cast<amqp_status_enum>(status));
@@ -236,11 +246,10 @@ private:
 
 	bool login()
 	{
-		const char *vhost = "/";
 		const int heartbeat = 1;
 		const amqp_rpc_reply_t reply =
 			amqp_login(m_connection,
-				   vhost,
+				   getVirtualHost(),
 				   AMQP_DEFAULT_MAX_CHANNELS,
 				   AMQP_DEFAULT_FRAME_SIZE,
 				   heartbeat,
