@@ -635,6 +635,18 @@ namespace testTableProfile
 		cppcut_assert_equal(sprintf("%s.%s", tableName, columnName),
 				    profile.getFullColumnName(index));
 	}
+
+	void test_getColumnName(void)
+	{
+		size_t index = 1;
+		const char *tableName = TABLE_NAME_TEST;
+		const std::string columnName = COLUMN_DEF_TEST[index].columnName;
+		DBAgent::TableProfile profile(tableName,
+					      COLUMN_DEF_TEST,
+					      tableProfileTest.numColumns);
+		cppcut_assert_equal(columnName,
+				    profile.getColumnName(index));
+	}
 }
 
 } // namespace testDBAgent

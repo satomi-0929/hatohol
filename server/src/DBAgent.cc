@@ -122,6 +122,12 @@ std::string DBAgent::TableProfile::getFullColumnName(const size_t &index) const
 	return fullName;
 }
 
+std::string DBAgent::TableProfile::getColumnName(const size_t &index) const
+{
+	const ColumnDef &def = columnDefs[index];
+	return def.columnName;
+}
+
 // ---------------------------------------------------------------------------
 // DBAgent::RowElement
 // ---------------------------------------------------------------------------

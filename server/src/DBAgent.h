@@ -79,6 +79,17 @@ public:
 		 * @return A full name of the specified column.
 		 */
 		std::string getFullColumnName(const size_t &index) const;
+
+		/**
+		 * Get a name of a column.
+		 *
+		 * E.g. If a column name is 'name', 'name' is returned.
+		 *
+		 * @param index      An index of the target column.
+		 *
+		 * @return A name of the specified column.
+		 */
+		std::string getColumnName(const size_t &index) const;
 	};
 
 	struct IndexDef {
