@@ -337,6 +337,11 @@ DBAgent::AddColumnsArg::AddColumnsArg(const TableProfile &profile)
 {
 }
 
+void DBAgent::AddColumnsArg::add(const size_t &index)
+{
+	columnIndexes.push_back(index);
+}
+
 // ---------------------------------------------------------------------------
 // TransactionProc
 // ---------------------------------------------------------------------------

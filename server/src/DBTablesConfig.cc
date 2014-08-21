@@ -442,8 +442,7 @@ static bool updateDB(DBAgent *dbAgent, int oldVer, void *data)
 {
 	if (oldVer <= 5) {
 		DBAgent::AddColumnsArg addColumnsArg(tableProfileSystem);
-		addColumnsArg.columnIndexes.push_back(
-		  IDX_SYSTEM_ENABLE_COPY_ON_DEMAND);
+		addColumnsArg.add(IDX_SYSTEM_ENABLE_COPY_ON_DEMAND);
 		dbAgent->addColumns(addColumnsArg);
 	}
 	if (oldVer <= 7) {

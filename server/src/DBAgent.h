@@ -209,6 +209,8 @@ public:
 		std::vector<size_t> columnIndexes;
 
 		AddColumnsArg(const TableProfile &tableProfile);
+
+		void add(const size_t &index);
 	};
 
 	static void addSetupFunction(DBDomainId domainId,

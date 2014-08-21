@@ -785,7 +785,7 @@ void dbAgentTestAddColumns(DBAgent &dbAgent, DBAgentChecker &checker)
 	// Add remaining columns
 	DBAgent::AddColumnsArg arg(tableProfile1);
 	for (size_t idx = 0; idx < numColumnsOfTable1; idx++)
-		arg.columnIndexes.push_back(idx);
+		arg.add(idx);
 	dbAgent.addColumns(arg);
 
 	checker.assertTable(tableProfileTest);
