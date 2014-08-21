@@ -515,17 +515,15 @@ void DBAgentMySQL::addColumns(const AddColumnsArg &addColumnsArg)
 	string query = "ALTER TABLE ";
 	query += addColumnsArg.tableProfile.name;
 	vector<size_t>::const_iterator it = addColumnsArg.columnIndexes.begin();
-	vector<size_t>::const_iterator lastElemIt =
-	  --addColumnsArg.columnIndexes.end();
 
+	SeparatorInjector commaInjector(",");
 	for (; it != addColumnsArg.columnIndexes.end(); ++it) {
 		const size_t index = *it;
 		const ColumnDef &columnDef =
 		  addColumnsArg.tableProfile.columnDefs[index];
+		commaInjector(query);
 		query += " ADD COLUMN ";
 		query += getColumnDefinitionQuery(columnDef);
-		if (it != lastElemIt)
-			query += ",";
 	}
 	execSql(query);
 }
