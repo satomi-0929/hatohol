@@ -173,7 +173,7 @@ void ArmZabbixAPI::makeHatoholTriggers(ItemTablePtr triggers)
 	cache.getMonitoring().addTriggerInfoList(triggerInfoList);
 }
 
-void ArmZabbixAPI::makeTriggerInfoInHatoholEvents(EventInfo &eventInfo)
+void ArmZabbixAPI::fillTriggerInfo(EventInfo &eventInfo)
 {
 	ThreadLocalDBCache cache;
 	DBTablesMonitoring &dbMonitoring = cache.getMonitoring();
@@ -185,6 +185,8 @@ void ArmZabbixAPI::makeTriggerInfoInHatoholEvents(EventInfo &eventInfo)
 	if (succedded) {
 		eventInfo.severity = triggerInfo.severity;
 	} else {
+		MLPL_WARN("Not found: svID: %d, trigID: %d",
+			  eventInfo.serverId, eventInfo.triggerId);
 		eventInfo.severity = TRIGGER_SEVERITY_UNKNOWN;
 	}
 }	
@@ -198,7 +200,7 @@ void ArmZabbixAPI::makeHatoholEvents(ItemTablePtr events)
 	EventInfoListIterator it = eventInfoList.begin();
 	for (; it != eventInfoList.end(); ++it) {
 		EventInfo &eventInfo = *it;
-		makeTriggerInfoInHatoholEvents(eventInfo);
+		fillTriggerInfo(eventInfo);
 	}
 
 	UnifiedDataStore *dataStore = UnifiedDataStore::getInstance();
