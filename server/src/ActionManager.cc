@@ -525,7 +525,10 @@ void ActionManager::checkEvents(const EventInfoList &eventList)
 	EventInfoListConstIterator it = eventList.begin();
 	for (; it != eventList.end(); ++it) {
 		ActionDefList actionDefList;
-		const EventInfo &eventInfo = *it;
+		const EventInfo &_eventInfo = *it;
+		EventInfo eventInfo(_eventInfo);
+		fillTriggerInfoInEventInfo(eventInfo);
+
 		if (eventInfo.id != DISCONNECT_SERVER_EVENT_ID) {
 			if (shouldSkipByTime(eventInfo))
 				continue;
@@ -603,12 +606,9 @@ static bool checkActionOwner(const ActionDef &actionDef)
 }
 
 HatoholError ActionManager::runAction(const ActionDef &actionDef,
-                                      const EventInfo &_eventInfo,
+                                      const EventInfo &eventInfo,
                                       DBTablesAction &dbAction)
 {
-	EventInfo eventInfo(_eventInfo);
-	fillTriggerInfoInEventInfo(eventInfo);
-
 	if (!checkActionOwner(actionDef))
 		return HTERR_INVALID_USER;
 
