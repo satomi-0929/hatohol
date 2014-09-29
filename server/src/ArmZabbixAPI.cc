@@ -173,11 +173,33 @@ void ArmZabbixAPI::makeHatoholTriggers(ItemTablePtr triggers)
 	cache.getMonitoring().addTriggerInfoList(triggerInfoList);
 }
 
+void ArmZabbixAPI::makeTriggerInfoInHatoholEvents(EventInfo &eventInfo)
+{
+	ThreadLocalDBCache cache;
+	DBTablesMonitoring &dbMonitoring = cache.getMonitoring();
+	TriggerInfo triggerInfo;
+	TriggersQueryOption option(USER_ID_SYSTEM);
+	option.setTargetServerId(eventInfo.serverId);
+	option.setTargetId(eventInfo.triggerId);
+	bool succedded = dbMonitoring.getTriggerInfo(triggerInfo, option);
+	if (succedded) {
+		eventInfo.severity = triggerInfo.severity;
+	} else {
+		eventInfo.severity = TRIGGER_SEVERITY_UNKNOWN;
+	}
+}	
+
 void ArmZabbixAPI::makeHatoholEvents(ItemTablePtr events)
 {
 	EventInfoList eventInfoList;
 	HatoholDBUtils::transformEventsToHatoholFormat(
 	  eventInfoList, events, m_impl->zabbixServerId);
+
+	EventInfoListIterator it = eventInfoList.begin();
+	for (; it != eventInfoList.end(); ++it) {
+		EventInfo &eventInfo = *it;
+		makeTriggerInfoInHatoholEvents(eventInfo);
+	}
 
 	UnifiedDataStore *dataStore = UnifiedDataStore::getInstance();
 	dataStore->addEventList(eventInfoList);
