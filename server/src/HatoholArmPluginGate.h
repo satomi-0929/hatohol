@@ -126,6 +126,8 @@ protected:
 	void cmdHandlerSendArmInfo(const HapiCommandHeader *header);
 	void cmdHandlerAvailableTrigger(const HapiCommandHeader *header);
 
+	void fillUpdateTriggerInfo(EventInfo &eventInfo);
+
 	void addInitialTrigger(HatoholArmPluginWatchType addtrigger);
 
 	void createPluginTriggerInfo(const HAPIWtchPointInfo &resTrigger,

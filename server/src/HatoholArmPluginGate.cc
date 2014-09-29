@@ -820,6 +820,24 @@ void HatoholArmPluginGate::cmdHandlerSendHostgroups(
 	replyOk();
 }
 
+void HatoholArmPluginGate::fillUpdateTriggerInfo(EventInfo &eventInfo)
+{
+	ThreadLocalDBCache cache;
+	DBTablesMonitoring &dbMonitoring = cache.getMonitoring();
+	TriggerInfo triggerInfo;
+	TriggersQueryOption option(USER_ID_SYSTEM);
+	option.setTargetServerId(eventInfo.serverId);
+	option.setTargetId(eventInfo.triggerId);
+	bool succedded = dbMonitoring.getTriggerInfo(triggerInfo, option);
+	if (succedded) {
+		eventInfo.severity = triggerInfo.severity;
+	} else {
+		MLPL_WARN("Not found: svID: %d, trigID: %d",
+			  eventInfo.serverId, eventInfo.triggerId);
+		eventInfo.severity = TRIGGER_SEVERITY_UNKNOWN;
+	}
+}	
+
 void HatoholArmPluginGate::cmdHandlerSendUpdatedEvents(
   const HapiCommandHeader *header)
 {
@@ -832,6 +850,15 @@ void HatoholArmPluginGate::cmdHandlerSendUpdatedEvents(
 	EventInfoList eventInfoList;
 	HatoholDBUtils::transformEventsToHatoholFormat(
 	  eventInfoList, eventTablePtr, m_impl->serverInfo.id);
+
+	const MonitoringServerInfo &svInfo = m_impl->serverInfo;
+	if (svInfo.type == MONITORING_SYSTEM_HAPI_ZABBIX) {
+		EventInfoListIterator it = eventInfoList.begin();
+		for (; it != eventInfoList.end(); ++it) {
+			EventInfo &eventInfo = *it;
+			fillUpdateTriggerInfo(eventInfo);
+		}
+	}
 	UnifiedDataStore::getInstance()->addEventList(eventInfoList);
 
 	replyOk();
