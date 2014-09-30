@@ -86,6 +86,16 @@ protected:
 	static bool transformItemItemGroupToItemInfo(
 	  ItemInfo &itemInfo, const ItemGroup *item,
 	  const AppliationIdNameMap &appIdNameMap);
+
+	typedef std::map<TriggerIdType, TriggerInfo> TriggerIDInfoMap;
+	typedef TriggerIDInfoMap::iterator           TriggerIDInfoMapIterator;
+	typedef TriggerIDInfoMap::const_iterator
+	  TriggerIDInfoMapConstIterator;
+
+	static const TriggerInfo *findTriggerInfo(TriggerIDInfoMap &triggers,
+						  const TriggerIdType &id);
+	static void fillTriggerInfoInEventInfoList(
+	  EventInfoList &eventInfoList);
 };
 
 #endif // HatoholDBUtils_h

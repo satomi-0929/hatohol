@@ -19,6 +19,7 @@
 
 #include "HatoholDBUtils.h"
 #include "DBTablesMonitoring.h"
+#include "ThreadLocalDBCache.h"
 
 using namespace std;
 using namespace mlpl;
@@ -98,6 +99,8 @@ void HatoholDBUtils::transformEventsToHatoholFormat(
 			continue;
 		eventInfoList.push_back(eventInfo);
 	}
+
+	fillTriggerInfoInEventInfoList(eventInfoList);
 }
 
 void HatoholDBUtils::transformGroupsToHatoholFormat(
@@ -414,4 +417,41 @@ bool HatoholDBUtils::transformItemItemGroupToItemInfo(
 	itemInfo.itemGroupName = it->second;
 
 	return true;
+}
+
+const TriggerInfo *HatoholDBUtils::findTriggerInfo(TriggerIDInfoMap &triggers,
+						   const TriggerIdType &id)
+{
+	TriggerIDInfoMapConstIterator it;
+	it = triggers.find(id);
+	if (it != triggers.end())
+		return &(it->second);
+
+	TriggersQueryOption option(USER_ID_SYSTEM);
+	option.setMaximumNumber(1);
+	option.setTargetId(id);
+	TriggerInfo triggerInfo;
+	ThreadLocalDBCache cache;
+	if (!cache.getMonitoring().getTriggerInfo(triggerInfo, option))
+		return NULL;
+
+	triggers[triggerInfo.id] = triggerInfo;
+	return &triggers[triggerInfo.id];
+}
+
+void HatoholDBUtils::fillTriggerInfoInEventInfoList(EventInfoList &eventInfoList)
+{
+	TriggerIDInfoMap triggers;
+	EventInfoListIterator it;
+	for (it = eventInfoList.begin(); it != eventInfoList.end(); ++it) {
+		EventInfo eventInfo = *it;
+		const TriggerInfo *triggerInfo =
+			findTriggerInfo(triggers, eventInfo.triggerId);
+		if (!triggerInfo)
+			continue;
+		eventInfo.severity = triggerInfo->severity;
+		eventInfo.hostId   = triggerInfo->hostId;
+		eventInfo.hostName = triggerInfo->hostName;
+		eventInfo.brief    = triggerInfo->brief;
+	}
 }
