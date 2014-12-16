@@ -5,7 +5,7 @@ Summary: Hatohol
 Name: hatohol
 Group: Applications/System
 Version: @VERSION@
-License: GPLv2+
+License: GPLv3 with exception/LGPLv3
 URL: https://github.com/project-hatohol/hatohol
 Release: 1%{?dist}
 Source0: %{name}-%{version}.tar.bz2
@@ -51,6 +51,7 @@ software.
 %package arm-plugin-zabbix
 Summary: Arm plguin for Zabbix server.
 Group: Applications/System
+License: GPLv3 with exception
 Requires: %{name} = %{version}-%{release}
 Requires: hatohol-lib-arm-plugin >= %{version}
 
@@ -61,6 +62,7 @@ it to hatohol via HAPI.
 %package lib-common
 Summary: Library files for Hatohol
 Group: Applications/System
+License: LGPLv3
 Requires: %{name} = %{version}-%{release}
 
 %description lib-common
@@ -69,6 +71,7 @@ Common libraries for hatohol and arm plugins.
 %package lib-arm-plugin
 Summary: Library files for Hatohol Arm Plugin
 Group: Applications/System
+License: LGPLv3
 Requires: %{name} = %{version}-%{release}
 Requires: hatohol-lib-common >= %{version}
 
@@ -78,6 +81,7 @@ Libraries for arm plugins.
 %package client
 Summary: A web UI client of Hatohol.
 Group: Applications/System
+License: GPLv3 with exception
 Requires: %{name} = %{version}-%{release}
 Requires: MySQL-python >= 1.2.3
 %if %is_el6
@@ -97,6 +101,7 @@ creates a response page when a user accesses.
 %package devel
 Summary: Header files for Hatohol library.
 Group: Development/Libraries
+License: GPLv3 with exception
 Requires: %{name} = %{version}-%{release}
 Requires: glib2 >= 2.22
 
