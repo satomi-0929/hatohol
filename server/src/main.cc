@@ -189,10 +189,11 @@ static bool changeUser(const string &user)
 			 user.c_str(), strerror(errno));
 		return false;
 	}
-	if (setuid(pwd->pw_uid)) {
-		MLPL_ERR("Failed to switch user to %s (uid=%" PRIuMAX "); %s\n",
+	if (setuid(pwd->pw_gid) || setuid(pwd->pw_uid)) {
+		MLPL_ERR("Failed to switch user to %s ("
+			 "uid=%" PRIuMAX ", gid=%" PRIuMAX "); %s\n",
 			 user.c_str(), (uintmax_t)pwd->pw_uid,
-			 strerror(errno));
+			 (uintmax_t)pwd->pw_gid, strerror(errno));
 		return false;
 	}
 	return true;
