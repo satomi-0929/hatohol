@@ -270,7 +270,11 @@ void HatoholArmPluginInterface::send(const string &message)
 	Message request;
 	request.setReplyTo(m_impl->receiverAddr);
 	request.setContent(message);
-	m_impl->sender.send(request);
+	try{
+		m_impl->sender.send(request);
+	} catch (const exception &e) {
+		MLPL_ERR("Send Error: %s\n", e.what()); 
+	}
 }
 
 void HatoholArmPluginInterface::send(
@@ -289,7 +293,11 @@ void HatoholArmPluginInterface::send(
 	Message request;
 	request.setReplyTo(m_impl->receiverAddr);
 	request.setContent(smbuf.getPointer<char>(0), smbuf.size());
-	m_impl->sender.send(request);
+	try{
+		m_impl->sender.send(request);
+	} catch (const exception &e) {
+		MLPL_ERR("Send Error: %s\n", e.what()); 
+	}
 }
 
 bool HatoholArmPluginInterface::getMessagingContext(MessagingContext &msgCtx)
