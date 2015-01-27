@@ -143,6 +143,11 @@ struct HatoholArmPluginInterface::Impl {
 		hapi->onSessionChanged(&session);
 	}
 
+	bool getConnectStat(void)
+	{
+		return connected;
+	}
+
 	void disconnect(void)
 	{
 		AutoMutex autoMutex(&connectionLock);
@@ -267,6 +272,10 @@ HatoholArmPluginInterface::~HatoholArmPluginInterface()
 
 void HatoholArmPluginInterface::send(const string &message)
 {
+	if(!m_impl->getConnectStat()) {
+		MLPL_ERR("Not Connect to Broker");
+		return;
+	}
 	Message request;
 	request.setReplyTo(m_impl->receiverAddr);
 	request.setContent(message);
@@ -280,6 +289,10 @@ void HatoholArmPluginInterface::send(const string &message)
 void HatoholArmPluginInterface::send(
   const SmartBuffer &smbuf, CommandCallbacks *callbacks)
 {
+	if(!m_impl->getConnectStat()) {
+		MLPL_ERR("Not Connect to Broker");
+		return;
+	}
 	CommandCallbacksPtr callbacksPtr(callbacks);
 	if (!callbacks && (getMessageType(smbuf) == HAPI_MSG_COMMAND)) {
 		CommandCallbacks *cb = new CommandCallbacks();
