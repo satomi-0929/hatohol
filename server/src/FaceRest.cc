@@ -939,10 +939,23 @@ static void addHostsMap(
 	agent.endObject();
 }
 
-static string getTriggerBrief(
+static bool parseExtendedInfo(const std::string &extendedInfo,
+                         std::string &extendedInfoValue)
+{
+	if (extendedInfo.empty())
+		return false;
+
+	JSONParser parser(extendedInfo);
+	if (parser.hasError())
+		return false;
+
+	return parser.read("expandedDescription", extendedInfoValue);
+}
+
+static std::pair<string, string> getTriggerBriefAndExpandedDescPair(
   FaceRest::ResourceHandler *job, const ServerIdType serverId, const TriggerIdType triggerId)
 {
-	string triggerBrief;
+	std::pair<string,string> triggerInfoBriefExtendInfoPair;
 	UnifiedDataStore *dataStore = UnifiedDataStore::getInstance();
 	TriggerInfoList triggerInfoList;
 	TriggersQueryOption triggersQueryOption(job->m_dataQueryContextPtr);
@@ -956,7 +969,11 @@ static string getTriggerBrief(
 	for (; it != triggerInfoList.end(); ++it) {
 		TriggerInfo &triggerInfo = *it;
 		if (firstId == triggerInfo.id) {
-			triggerBrief = triggerInfo.brief;
+			string parsedExtendedInfo;
+			parseExtendedInfo(triggerInfo.extendedInfo, parsedExtendedInfo);
+			triggerInfoBriefExtendInfoPair
+			  = make_pair<string, string>(triggerInfo.brief,
+			                             parsedExtendedInfo);
 		} else {
 			MLPL_WARN("Failed to getTriggerInfo: "
 			          "%" FMT_SERVER_ID ", %" FMT_TRIGGER_ID "\n",
@@ -964,7 +981,7 @@ static string getTriggerBrief(
 		}
 	}
 
-	return triggerBrief;
+	return triggerInfoBriefExtendInfoPair;
 }
 
 static void addTriggersIdBriefHash(
@@ -980,12 +997,16 @@ static void addTriggersIdBriefHash(
 	for (; server_it != triggerMaps.end() && it != triggers.end(); ++it) {
 		TriggerIdType triggerId = it->first;
 		string &triggerBrief = it->second;
+		std::pair<string, string> triggerInfoPair;
 		if (lookupTriggerBrief)
-			triggerBrief = getTriggerBrief(job,
-						       serverId,
-						       triggerId);
+			triggerInfoPair = getTriggerBriefAndExpandedDescPair(job,
+			                                                     serverId,
+			                                                     triggerId);
 		agent.startObject(StringUtils::toString(triggerId));
-		agent.add("brief", triggerBrief);
+		agent.add("brief", triggerInfoPair.first);
+		if (!triggerInfoPair.second.empty()) {
+			agent.add("expandedDescription", triggerInfoPair.second);
+		}
 		agent.endObject();
 	}
 	agent.endObject();
