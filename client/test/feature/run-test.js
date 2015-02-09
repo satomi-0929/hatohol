@@ -14,11 +14,17 @@ casper.test.begin('Login tests', function suite(test) {
   casper.then(function() {
     this.click('input#loginFormSubmit');
     test.assertHttpStatus(200);
-    test.assertExists('form#loginForm', 'Login form is found');
   });
 
   casper.then(function() {
     test.assertExists('#update-time');
+  });
+
+  casper.then(function() {
+    casper.wait(3000, function() {
+      casper.log('should appear after 3s', 'info');
+      test.assertTextDoesntExist('None', 'None does not exist within the body');
+    });
   });
 
   casper.run(function() {
