@@ -13,7 +13,7 @@ casper.test.begin('Login tests', function suite(test) {
 
   casper.then(function() {
     this.click('input#loginFormSubmit');
-    test.assertHttpStatus(200);
+    test.assertHttpStatus(200, 'It can logged in.');
   });
 
   casper.then(function() {
@@ -23,7 +23,7 @@ casper.test.begin('Login tests', function suite(test) {
   casper.then(function() {
     casper.wait(3000, function() {
       casper.log('should appear after 3s', 'info');
-      test.assertTextDoesntExist('None', 'None does not exist within the body');
+      test.assertTextDoesntExist('None', 'None does not exist within the body when logged in.');
     });
   });
 
