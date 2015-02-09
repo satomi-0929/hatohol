@@ -39,6 +39,16 @@ casper.test.begin('Login tests', function suite(test) {
     });
   });
 
+  casper.then(function() {
+    this.click('#userProfileButton');
+    this.waitForSelector('#logoutMenuItem', function() {
+      this.click('#logoutMenuItem');
+    });
+    casper.wait(1000, function() {
+      test.assertTextExists('None', 'None exists within the body when logged out.');
+    });
+  });
+
   casper.run(function() {
     test.done();
   });
