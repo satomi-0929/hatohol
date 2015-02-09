@@ -46,9 +46,9 @@ HatoholLoginDialog.prototype.createMainElement = function() {
     var s = '';
     s += '<form method="POST" id="loginForm">';
     s += '<label for="inputUserName">' + gettext("User name") + '</label><br>';
-    s += '<input id="inputUserName" type="text" value="" class="input-xlarge"><br>';
+    s += '<input id="inputUserName" type="text" name="inputUserName" value="" class="input-xlarge"><br>';
     s += '<label for="inputPassword">' + gettext("Password") + '</label><br>';
-    s += '<input id="inputPassword" type="password" value="" class="input-xlarge"><br>';
+    s += '<input id="inputPassword" type="password" name="inputPassword" value="" class="input-xlarge"><br>';
     s += '<div align="center">';
     s += '  <br>';
     s += '  <input type="submit" id="loginFormSubmit" value="' + gettext("Login") + '"/>';
