@@ -2,7 +2,7 @@
 'use strict';
 var x = require('casper').selectXPath;
 
-casper.test.begin('Login tests', function suite(test) {
+casper.test.begin('Feature tests', function suite(test) {
   casper.start('http://0.0.0.0:8000/ajax_dashboard', function() {
     test.assertTitle('ダッシュボード - Hatohol', 'Expected top page title');
     test.assertExists('form#loginForm', 'Login form is found');
