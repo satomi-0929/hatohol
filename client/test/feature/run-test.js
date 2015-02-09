@@ -23,7 +23,7 @@ casper.test.begin('Feature tests', function suite(test) {
 
   casper.then(function() {
     casper.wait(200, function() {
-      casper.log('should appear after 1s', 'info');
+      casper.log('should appear after 200ms', 'info');
       test.assertTextDoesntExist('None', 'None does not exist within the body when logged in.');
     });
   });
