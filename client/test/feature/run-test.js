@@ -22,7 +22,7 @@ casper.test.begin('Login tests', function suite(test) {
   });
 
   casper.then(function() {
-    casper.wait(1000, function() {
+    casper.wait(200, function() {
       casper.log('should appear after 1s', 'info');
       test.assertTextDoesntExist('None', 'None does not exist within the body when logged in.');
     });
@@ -33,7 +33,7 @@ casper.test.begin('Login tests', function suite(test) {
     this.waitUntilVisible(x('//*[text()="アクション"]'), function() {
       this.test.pass('Settings dropdown is opened');
       this.click(x('//*[text()="アクション"]'));
-      casper.wait(1000, function() {
+      casper.wait(200, function() {
         test.assertUrlMatch(/ajax_actions/, 'Moved into "actions page"');
       });
     });
@@ -44,7 +44,7 @@ casper.test.begin('Login tests', function suite(test) {
     this.waitForSelector('#logoutMenuItem', function() {
       this.click('#logoutMenuItem');
     });
-    casper.wait(1000, function() {
+    casper.wait(200, function() {
       test.assertTextExists('None', 'None exists within the body when logged out.');
     });
   });
