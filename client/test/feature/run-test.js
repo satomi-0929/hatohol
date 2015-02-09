@@ -21,8 +21,8 @@ casper.test.begin('Login tests', function suite(test) {
   });
 
   casper.then(function() {
-    casper.wait(3000, function() {
-      casper.log('should appear after 3s', 'info');
+    casper.wait(1000, function() {
+      casper.log('should appear after 1s', 'info');
       test.assertTextDoesntExist('None', 'None does not exist within the body when logged in.');
     });
   });
