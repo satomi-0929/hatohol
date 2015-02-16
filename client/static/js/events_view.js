@@ -89,6 +89,7 @@ var EventsView = function(userProfile, baseElem) {
   }
 
   function updatePager() {
+    self.disableAutoRefresh();
     self.pager.update({
       currentPage: self.currentPage,
       numRecords: self.rawData ? self.rawData["numberOfEvents"] : -1,
@@ -152,7 +153,6 @@ var EventsView = function(userProfile, baseElem) {
     setLoading(true);
     if (!isNaN(page)) {
       self.currentPage = page;
-      self.disableAutoRefresh();
     } else {
       self.currentPage = 0;
     }
@@ -386,7 +386,8 @@ var EventsView = function(userProfile, baseElem) {
     drawTableContents();
     updatePager();
     setLoading(false);
-    self.setAutoReload(load, self.reloadIntervalSeconds);
+    if (self.currentPage == 0)
+      self.enableAutoRefresh(load, self.intervalSeconds);
   }
 };
 
