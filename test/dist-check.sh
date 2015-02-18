@@ -15,4 +15,5 @@ case `uname` in
         :
         ;;
 esac
+sudo echo 3 > /proc/sys/vm/drop_caches
 $MAKE $MAKE_ARGS -C $top_dir/ hatoholdistcheck || exit 1
