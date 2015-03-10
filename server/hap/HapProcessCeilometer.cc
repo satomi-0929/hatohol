@@ -1121,10 +1121,9 @@ ItemTablePtr HapProcessCeilometer::getHistory(
       const ItemIdType &itemId, const time_t &beginTime, const time_t &endTime)
 {
 	VariableItemTablePtr tablePtr;
-	timespec beginTimeSpec = {beginTime, 0};
-	timespec endTimeSpec   = {endTime, 0};
+	const timespec beginTimeSpec = {beginTime, 0};
+	const timespec endTimeSpec   = {endTime, 0};
 	string targetItem,instanceId;
-
 	if (!m_impl->getItemInfoVectl(itemId, targetItem, instanceId))
 		return ItemTablePtr(tablePtr);
 		
