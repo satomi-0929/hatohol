@@ -480,7 +480,7 @@ ItemInfo testItemInfo[] = {
 {
 	1,                        // serverId
 	2,                        // id
-	1129,                     // hostId
+	"1129",                     // hostId
 	"Rome wasn't built in a day",// brief
 	{1362951129,0},           // lastValueTime
 	"Fukuoka",                // lastValue
@@ -492,7 +492,7 @@ ItemInfo testItemInfo[] = {
 }, {
 	3,                        // serverId
 	1,                        // id
-	5,                        // hostId
+	"5",                        // hostId
 	"The age of the cat.",    // brief
 	{1362957200,0},           // lastValueTime
 	"1",                      // lastValue
@@ -504,7 +504,7 @@ ItemInfo testItemInfo[] = {
 }, {
 	3,                        // serverId
 	2,                        // id
-	100,                      // hostId
+	"100",                      // hostId
 	"All roads lead to Rome.",// brief
 	{1362951000,0},           // lastValueTime
 	"Osaka",                  // lastValue
@@ -516,7 +516,7 @@ ItemInfo testItemInfo[] = {
 }, {
 	4,                        // serverId
 	1,                        // id
-	100,                      // hostId
+	"100",                      // hostId
 	"All roads lead to Rome.",// brief
 	{1362951000,0},           // lastValueTime
 	"Osaka",                  // lastValue

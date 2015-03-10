@@ -417,8 +417,8 @@ static const ColumnDef COLUMN_DEF_ITEMS[] = {
 	NULL,                              // defaultValue
 }, {
 	"host_id",                         // columnName
-	SQL_COLUMN_TYPE_BIGUINT,           // type
-	20,                                // columnLength
+	SQL_COLUMN_TYPE_VARCHAR,           // type
+	255,                                // columnLength
 	0,                                 // decFracLength
 	false,                             // canBeNull
 	SQL_KEY_IDX,                       // keyType

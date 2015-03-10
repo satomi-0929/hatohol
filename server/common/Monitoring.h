@@ -147,7 +147,7 @@ enum ItemInfoValueType {
 struct ItemInfo {
 	ServerIdType        serverId;
 	ItemIdType          id;
-	HostIdType          hostId;
+	LocalHostIdType     hostId;
 	std::string         brief;
 	timespec            lastValueTime;
 	std::string         lastValue;
