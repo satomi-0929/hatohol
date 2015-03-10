@@ -606,7 +606,6 @@ string HapProcessCeilometer::getHistoryTimeString(const timespec &ts)
 	  "%04d-%02d-%02dT%02d%%3A%02d%%3A%02d.%06ld",
 	  1900+tm.tm_year, tm.tm_mon + 1, tm.tm_mday, 
 	  tm.tm_hour, tm.tm_min, tm.tm_sec, ts.tv_nsec);
-	MLPL_ERR("%s\n",timeStr.c_str());
 	return timeStr;
 }
 
