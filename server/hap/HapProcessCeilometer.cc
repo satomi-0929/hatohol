@@ -1149,8 +1149,8 @@ ItemTablePtr HapProcessCeilometer::getHistory(
 			(int)parseStateTimestamp(timestamp).getAsTimespec().tv_sec;
 		
 		VariableItemGroupPtr grp;
-		grp->addNewItem(ITEM_ID_ZBX_HISTORY_ITEMID, m_impl->itemInfoVectl[count].id);
-			grp->addNewItem(ITEM_ID_ZBX_HISTORY_CLOCK,  timestampSec);
+		grp->addNewItem(ITEM_ID_ZBX_HISTORY_ITEMID, itemId);
+		grp->addNewItem(ITEM_ID_ZBX_HISTORY_CLOCK,  timestampSec);
 		grp->addNewItem(ITEM_ID_ZBX_HISTORY_NS,     0);
 		grp->addNewItem(ITEM_ID_ZBX_HISTORY_VALUE, 
 				StringUtils::sprintf("%lf", counter_volume));
