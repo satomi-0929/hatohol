@@ -83,6 +83,7 @@ struct HapProcessCeilometer::Impl {
 	vector<string>    instanceIds;
 	set<string>       targetItemNames;
 	vector<HistoryItemInfo> itemInfoVectl;
+	Mutex             infoVrctllock;
 
 	Impl(void)
 	{
@@ -108,6 +109,36 @@ struct HapProcessCeilometer::Impl {
 		ceilometerEP.clear();
 		novaEP.clear();
 		tokenExpires = SmartTime();
+	}
+
+	void clearItemInfoVectl()
+	{
+		infoVrctllock.lock();
+		itemInfoVectl.clear();
+		infoVrctllock.unlock();
+	}
+
+	void setItemInfoVectl(const HistoryItemInfo &iteminfo)
+	{
+		infoVrctllock.lock();
+		itemInfoVectl.push_back(iteminfo);
+		infoVrctllock.unlock();
+	}
+	
+	bool getItemInfoVectl(const ItemIdType &itemId, 
+			      std::string &targetItem, std::string &instanceId)
+	{
+		infoVrctllock.lock();
+		for (size_t count=0; count < itemInfoVectl.size(); count++) {
+			if (itemInfoVectl[count].id == itemId) {
+				targetItem = itemInfoVectl[count].targetItem;
+				instanceId = itemInfoVectl[count].instanceId;
+				infoVrctllock.unlock();
+				return true;
+			}
+		}
+		infoVrctllock.unlock();
+		return false;
 	}
 };
 
@@ -890,7 +921,7 @@ HatoholError HapProcessCeilometer::fetchItem(const MessagingContext &msgCtx,
 					     const SmartBuffer &cmdBuf)
 {
 	MLPL_DBG("fetchItem\n");
-	m_impl->itemInfoVectl.clear();
+	m_impl->clearItemInfoVectl();
 	VariableItemTablePtr tablePtr;
 	HatoholError err(HTERR_OK);
 	for (size_t i = 0; i < m_impl->instanceIds.size(); i++) {
@@ -1002,7 +1033,7 @@ HatoholError HapProcessCeilometer::parserResourceLink(
 	if (err == HTERR_OK) {
 		iteminfo.instanceId = instanceId;
 		iteminfo.targetItem = rel;
-		m_impl->itemInfoVectl.push_back(iteminfo);
+		m_impl->setItemInfoVectl(iteminfo);
 	}
 
 	return err;
@@ -1092,12 +1123,9 @@ ItemTablePtr HapProcessCeilometer::getHistory(
 	VariableItemTablePtr tablePtr;
 	timespec beginTimeSpec = {beginTime, 0};
 	timespec endTimeSpec   = {endTime, 0};
-	size_t count;
-	for (count=0; count < m_impl->itemInfoVectl.size();count++){
-		if (m_impl->itemInfoVectl[count].id == itemId)
-			break;
-	}
-	if (count >= m_impl->itemInfoVectl.size())
+	string targetItem,instanceId;
+
+	if (!m_impl->getItemInfoVectl(itemId, targetItem, instanceId))
 		return ItemTablePtr(tablePtr);
 		
 	string url = StringUtils::sprintf(
@@ -1106,11 +1134,10 @@ ItemTablePtr HapProcessCeilometer::getHistory(
 			"&q.op=eq&q.op=gt&q.op=lt"
 			"&q.value=%s&q.value=%s&q.value=%s",
 			m_impl->ceilometerEP.publicURL.c_str(),
-			m_impl->itemInfoVectl[count].targetItem.c_str(),
-			m_impl->itemInfoVectl[count].instanceId.c_str(),
+			targetItem.c_str(), 
+			instanceId.c_str(),
 			getHistoryTimeString(beginTimeSpec).c_str(), 
 			getHistoryTimeString(endTimeSpec).c_str());
-			
 	HttpRequestArg arg(SOUP_METHOD_GET, url);
 	HatoholError err = sendHttpRequest(arg);
 	if (err != HTERR_OK)
