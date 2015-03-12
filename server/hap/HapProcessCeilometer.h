@@ -37,6 +37,12 @@ protected:
 	typedef std::map<const mlpl::SmartTime, const ItemGroupPtr> AlarmTimeMap;
 	typedef AlarmTimeMap::const_iterator AlarmTimeMapConstIterator;
 
+	struct HistoryItemInfo {
+		ItemIdType  id;
+		std::string instanceId;
+		std::string targetItem;
+	};
+
 	bool canSkipAuthentification(void);
 	HatoholError updateAuthTokenIfNeeded(void);
 	bool parseReplyToknes(SoupMessage *msg);
@@ -104,7 +110,9 @@ protected:
 	  const unsigned int &index, const std::string &instanceId);
 	HatoholError getResource(
 	  VariableItemTablePtr &tablePtr, const std::string &url,
-	  const std::string &instanceId);
+	  const std::string &instanceId, ItemIdType &iteminfo);
+	std::string getHistoryTimeString(const timespec &timeSpec);
+	ItemTablePtr getHistory(const ItemIdType &itemId, const time_t &beginTime, const time_t &endTime);
 
 private:
 	struct Impl;

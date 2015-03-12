@@ -725,7 +725,7 @@ void RestResourceHost::replyGetItem(void)
 	for (; it != itemList.end(); ++it) {
 		ItemInfo &itemInfo = *it;
 		agent.startObject();
-		agent.add("id",        itemInfo.id);
+		agent.add("id",        StringUtils::toString(itemInfo.id));
 		agent.add("serverId",  itemInfo.serverId);
 		agent.add("hostId",    itemInfo.hostIdInServer);
 		agent.add("brief",     itemInfo.brief.c_str());

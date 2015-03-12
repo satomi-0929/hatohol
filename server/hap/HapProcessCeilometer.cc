@@ -82,6 +82,8 @@ struct HapProcessCeilometer::Impl {
 	AcquireContext    acquireCtx;
 	vector<string>    instanceIds;
 	set<string>       targetItemNames;
+	vector<HistoryItemInfo> itemInfoVectl;
+	Mutex             infoVrctllock;
 
 	Impl(void)
 	{
@@ -107,6 +109,36 @@ struct HapProcessCeilometer::Impl {
 		ceilometerEP.clear();
 		novaEP.clear();
 		tokenExpires = SmartTime();
+	}
+
+	void clearItemInfoVectl()
+	{
+		infoVrctllock.lock();
+		itemInfoVectl.clear();
+		infoVrctllock.unlock();
+	}
+
+	void setItemInfoVectl(const HistoryItemInfo &iteminfo)
+	{
+		infoVrctllock.lock();
+		itemInfoVectl.push_back(iteminfo);
+		infoVrctllock.unlock();
+	}
+	
+	bool getItemInfoVectl(const ItemIdType &itemId, 
+			      std::string &targetItem, std::string &instanceId)
+	{
+		infoVrctllock.lock();
+		for (size_t count=0; count < itemInfoVectl.size(); count++) {
+			if (itemInfoVectl[count].id == itemId) {
+				targetItem = itemInfoVectl[count].targetItem;
+				instanceId = itemInfoVectl[count].instanceId;
+				infoVrctllock.unlock();
+				return true;
+			}
+		}
+		infoVrctllock.unlock();
+		return false;
 	}
 };
 
@@ -504,10 +536,6 @@ HatoholError HapProcessCeilometer::parseAlarmElement(
 	string alarmId;
 	if (!read(parser, "alarm_id", alarmId))
 		return HTERR_FAILED_TO_PARSE_JSON_DATA;
-	// TODO: Fix a structure to save ID.
-	// We temporarily generate the 64bit triggerID and host ID from UUID.
-	// Strictly speaking, this way is not safe.
-	const uint64_t triggerId = generateHashU64(alarmId);
 
 	// status
 	string state;
@@ -546,7 +574,7 @@ HatoholError HapProcessCeilometer::parseAlarmElement(
 	// fill
 	// TODO: Define ItemID without ZBX.
 	VariableItemGroupPtr grp;
-	grp->addNewItem(ITEM_ID_ZBX_TRIGGERS_TRIGGERID,   triggerId);
+	grp->addNewItem(ITEM_ID_ZBX_TRIGGERS_TRIGGERID,   alarmId);
 	grp->addNewItem(ITEM_ID_ZBX_TRIGGERS_VALUE,       status);
 	grp->addNewItem(ITEM_ID_ZBX_TRIGGERS_PRIORITY,    severity);
 	grp->addNewItem(ITEM_ID_ZBX_TRIGGERS_LASTCHANGE,
@@ -595,22 +623,29 @@ HatoholError HapProcessCeilometer::getAlarmHistories(void)
 	return err;
 }
 
+string HapProcessCeilometer::getHistoryTimeString(const timespec &ts)
+{
+	tm tm;
+	HATOHOL_ASSERT(
+	  gmtime_r(&ts.tv_sec, &tm),
+	  "Failed to call gmtime_r(): %ld.%09ld\n", ts.tv_sec, ts.tv_nsec);
+	string timeStr = StringUtils::sprintf(
+	  "%04d-%02d-%02dT%02d%%3A%02d%%3A%02d.%06ld",
+	  1900+tm.tm_year, tm.tm_mon + 1, tm.tm_mday, 
+	  tm.tm_hour, tm.tm_min, tm.tm_sec, ts.tv_nsec);
+	return timeStr;
+}
+
 string  HapProcessCeilometer::getHistoryQueryOption(
   const SmartTime &lastTime)
 {
 	if (!lastTime.hasValidTime())
 		return "";
 
-	tm tim;
 	const timespec &ts = lastTime.getAsTimespec();
-	HATOHOL_ASSERT(
-	  gmtime_r(&ts.tv_sec, &tim),
-	  "Failed to call gmtime_r(): %s\n", ((string)lastTime).c_str());
 	string query = StringUtils::sprintf(
-	  "?q.field=timestamp&q.op=gt&q.value="
-	  "%04d-%02d-%02dT%02d%%3A%02d%%3A%02d.%06ld",
-	  1900+tim.tm_year, tim.tm_mon + 1, tim.tm_mday,
-	  tim.tm_hour, tim.tm_min, tim.tm_sec, ts.tv_nsec/1000);
+	  "?q.field=timestamp&q.op=gt&q.value=%s",
+	  getHistoryTimeString(ts).c_str());
 	return query;
 }
 
@@ -682,13 +717,9 @@ HatoholError HapProcessCeilometer::parseReplyGetAlarmHistoryElement(
 	}
 
 	// Event ID
-	string eventIdStr;
-	if (!read(parser, "event_id", eventIdStr))
+	string eventId;
+	if (!read(parser, "event_id", eventId))
 		return HTERR_FAILED_TO_PARSE_JSON_DATA;
-	// TODO: Fix a structure to save ID.
-	// We temporarily generate the 64bit triggerID and host ID from UUID.
-	// Strictly speaking, this way is not safe.
-	const uint64_t eventId = generateHashU64(eventIdStr);
 
 	// Timestamp
 	string timestampStr;
@@ -713,10 +744,9 @@ HatoholError HapProcessCeilometer::parseReplyGetAlarmHistoryElement(
 	}
 
 	// Trigger ID (alarm ID)
-	string alarmIdStr;
-	if (!read(parser, "alarm_id", alarmIdStr))
+	string alarmId;
+	if (!read(parser, "alarm_id", alarmId))
 		return HTERR_FAILED_TO_PARSE_JSON_DATA;
-	const uint64_t alarmId = generateHashU64(alarmIdStr);
 
 	// Fill table.
 	// TODO: Define ItemID without ZBX.
@@ -882,6 +912,7 @@ HatoholError HapProcessCeilometer::fetchItem(const MessagingContext &msgCtx,
 					     const SmartBuffer &cmdBuf)
 {
 	MLPL_DBG("fetchItem\n");
+	m_impl->clearItemInfoVectl();
 	VariableItemTablePtr tablePtr;
 	HatoholError err(HTERR_OK);
 	for (size_t i = 0; i < m_impl->instanceIds.size(); i++) {
@@ -955,12 +986,17 @@ HatoholError HapProcessCeilometer::fetchItemsOfInstance(
 HatoholError HapProcessCeilometer::fetchHistory(const MessagingContext &msgCtx,
 						const SmartBuffer &cmdBuf)
 {
-	MLPL_INFO("HapProcessCeilometer::fetchHistory(): "
-		  "Not implemented yet\n");
+	HapiParamReqFetchHistory *params =
+		getCommandBody<HapiParamReqFetchHistory>(cmdBuf);
+
+	ItemTablePtr items =
+	  getHistory(static_cast<ItemIdType>(LtoN(params->itemId)),
+		     static_cast<time_t>(LtoN(params->beginTime)),
+		     static_cast<time_t>(LtoN(params->endTime)));
 
 	SmartBuffer resBuf;
 	setupResponseBuffer<void>(resBuf, 0, HAPI_RES_HISTORY, &msgCtx);
-	appendItemTable(resBuf, ItemTablePtr());
+	appendItemTable(resBuf, items);
 	reply(msgCtx, resBuf);
 
 	return HTERR_OK;
@@ -983,11 +1019,19 @@ HatoholError HapProcessCeilometer::parserResourceLink(
 		return HTERR_OK;
 	if (!read(parser, "href", href))
 		return HTERR_FAILED_TO_PARSE_JSON_DATA;
-	return getResource(tablePtr, href, instanceId);
+	HistoryItemInfo iteminfo;
+	HatoholError err = getResource(tablePtr, href, instanceId, iteminfo.id);
+	if (err == HTERR_OK) {
+		iteminfo.instanceId = instanceId;
+		iteminfo.targetItem = rel;
+		m_impl->setItemInfoVectl(iteminfo);
+	}
+
+	return err;
 }
 
 HatoholError HapProcessCeilometer::getResource(
-  VariableItemTablePtr &tablePtr, const string &_url, const string &instanceId)
+  VariableItemTablePtr &tablePtr, const string &_url, const string &instanceId, ItemIdType &iteminfo)
 {
 	string url = _url + "&limit=1";
 	HttpRequestArg arg(SOUP_METHOD_GET, url);
@@ -1059,5 +1103,75 @@ HatoholError HapProcessCeilometer::getResource(
 	grp->addNewItem(ITEM_ID_ZBX_ITEMS_VALUE_TYPE, zbxValueTypeFloat);
 	tablePtr->add(grp);
 
+	iteminfo = itemId;
+
 	return HTERR_OK;
+}
+
+ItemTablePtr HapProcessCeilometer::getHistory(
+      const ItemIdType &itemId, const time_t &beginTime, const time_t &endTime)
+{
+	VariableItemTablePtr tablePtr;
+	const timespec beginTimeSpec = {beginTime, 0};
+	const timespec endTimeSpec   = {endTime, 0};
+	string targetItem,instanceId;
+	if (!m_impl->getItemInfoVectl(itemId, targetItem, instanceId))
+		return ItemTablePtr(tablePtr);
+		
+	string url = StringUtils::sprintf(
+			"%s/v2/meters/%s"
+			"?q.field=resource_id&q.field=timestamp&q.field=timestamp"
+			"&q.op=eq&q.op=gt&q.op=lt"
+			"&q.value=%s&q.value=%s&q.value=%s",
+			m_impl->ceilometerEP.publicURL.c_str(),
+			targetItem.c_str(), 
+			instanceId.c_str(),
+			getHistoryTimeString(beginTimeSpec).c_str(), 
+			getHistoryTimeString(endTimeSpec).c_str());
+	HttpRequestArg arg(SOUP_METHOD_GET, url);
+	HatoholError err = sendHttpRequest(arg);
+	if (err != HTERR_OK)
+		return ItemTablePtr(tablePtr);
+	SoupMessage *msg = arg.msgPtr.get();
+	JSONParser parser(msg->response_body->data);
+	if (parser.hasError()) {
+		MLPL_ERR("Failed to parser %s\n", parser.getErrorMessage());
+		return ItemTablePtr(tablePtr);
+	}
+
+	const unsigned int element = parser.countElements();
+	if (element == 0) {
+		MLPL_WARN("Return count: %d, url: %s\n", element, url.c_str());
+		return ItemTablePtr(tablePtr);
+	}
+
+	for (unsigned int index = 0; index < element; index++){
+		JSONParser::PositionStack parserRewinder(parser);
+		if (!parserRewinder.pushElement(index)) {
+			MLPL_ERR("Failed to parse an element, index: %u\n", index);
+			return ItemTablePtr(tablePtr);
+		}
+		
+		double counter_volume;
+		if (!read(parser, "counter_volume", counter_volume)){
+			return ItemTablePtr(tablePtr);
+		}
+
+		string timestamp;
+		if (!read(parser, "timestamp", timestamp)){
+			return ItemTablePtr(tablePtr);;
+		}
+
+		const int timestampSec =
+			(int)parseStateTimestamp(timestamp).getAsTimespec().tv_sec;
+		
+		VariableItemGroupPtr grp;
+		grp->addNewItem(ITEM_ID_ZBX_HISTORY_ITEMID, itemId);
+		grp->addNewItem(ITEM_ID_ZBX_HISTORY_CLOCK,  timestampSec);
+		grp->addNewItem(ITEM_ID_ZBX_HISTORY_NS,     0);
+		grp->addNewItem(ITEM_ID_ZBX_HISTORY_VALUE, 
+				StringUtils::sprintf("%lf", counter_volume));
+		tablePtr->add(grp);
+	}
+	return ItemTablePtr(tablePtr);
 }
