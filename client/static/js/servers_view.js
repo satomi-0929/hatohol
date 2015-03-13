@@ -32,8 +32,11 @@ var ServersView = function(userProfile) {
       userProfile.hasFlag(hatohol.OPPRVLG_DELETE_ALL_SERVER)) {
     $("#delete-server-button").show();
   }
+  if (userProfile.hasFlag(hatohol.OPPRVLG_UPDATE_SERVER) ||
+      userProfile.hasFlag(hatohol.OPPRVLG_UPDATE_ALL_SERVER)) {
+    $("#update-tirgger-server-button").show();
+  }
   self.startConnection('server', updateCore);
-  $("#update-tirgger-server-button").show();
 
   $("#table").stupidtable();
   $("#table").bind('aftertablesort', function(event, data) {
@@ -253,8 +256,10 @@ var ServersView = function(userProfile) {
     $("#table tbody").append(drawTableBody(reply));
     self.setupCheckboxForDelete($("#delete-server-button"));
     self.setupCheckboxForDelete($("#update-tirgger-server-button"));
-    if (self.userProfile.hasFlag(hatohol.OPPRVLG_DELETE_SERVER) ||
-	self.userProfile.hasFlag(hatohol.OPPRVLG_DELETE_ALL_SERVER)) {
+    if (userProfile.hasFlag(hatohol.OPPRVLG_UPDATE_SERVER) ||
+	userProfile.hasFlag(hatohol.OPPRVLG_UPDATE_ALL_SERVER) ||
+	userProfile.hasFlag(hatohol.OPPRVLG_DELETE_SERVER) ||
+	userProfile.hasFlag(hatohol.OPPRVLG_DELETE_ALL_SERVER)) {
       $(".delete-selector").show();
     }
     setupEditButtons(reply);
