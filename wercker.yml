@@ -6,4 +6,4 @@ build:
         code: |
           docker -v
           docker build -t centos66/build-hatohol wercker/
-          mv /root/rpmbuild/RPMS/x86_64/*.rpm $WERCKER_OUTPUT_DIR
+          sudo mv /root/rpmbuild/RPMS/x86_64/*.rpm $WERCKER_OUTPUT_DIR
