@@ -93,3 +93,11 @@ class ZabbixAPI:
 
 		triggers = []
 		for trigger in res_dict["result"]:
+
+
+
+def check_response(response_dict):
+	if "error" in response_dict:
+		return False
+
+	return True
