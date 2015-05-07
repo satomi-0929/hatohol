@@ -52,7 +52,7 @@ class ZabbixAPI:
     # The following method gets not only hosts info but also host group membership.
     def get_hosts(self):
         params = {"output": "extend", "selectGroups": "refer", "monitored_hosts": True}
-        res_dict = get_response_dict("hosts.get", params, self.auth_token)
+        res_dict = get_response_dict("host.get", params, self.auth_token)
 
         self.result = check_response(res_dict)
         if not self.result:
