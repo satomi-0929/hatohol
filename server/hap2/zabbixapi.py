@@ -39,9 +39,19 @@ class ZabbixAPI:
         return res_dict["result"][0:3]
 
 
+    def get_itmes(self):
+        params = {"output": "extend", "selectApplications": "refer", "monitored": True}
+        res_dict = get_response_dict("item.get", params, self.auth_token)
+
+        self.result = check_response(res_dict)
+        if not self.result:
+            return
+
+
+
     # The following method gets not only hosts info but also host group membership.
     def get_hosts(self):
-        params = {"output":"extend", "selectGroups":"refer", "monitored_hosts":True}
+        params = {"output": "extend", "selectGroups": "refer", "monitored_hosts": True}
         res_dict = get_response_dict("hosts.get", params, self.auth_token)
 
         self.result = check_response(res_dict)
