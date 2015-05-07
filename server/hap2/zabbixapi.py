@@ -47,12 +47,12 @@ class ZabbixAPI:
         if not self.result:
             return
 
-        hosts = []
-        host_group_membership = []
+        hosts = list()
+        host_group_membership = list()
         for host in res_dict["result"]:
             hosts.append({"hostId":host["hostid"], "hostName":host["name"]})
 
-            group_ids = []
+            group_ids = list()
             for groups in host["groups"]:
                 group_ids.append(groups["groupid"])
 
@@ -69,7 +69,7 @@ class ZabbixAPI:
         if not self.result:
             return
 
-        host_groups = []
+        host_groups = list()
         for host_group in res_dict["result"]:
             host_groups.append({"hostId": host_group["hostid"], "groupName": host_group["name"]})
 
@@ -77,7 +77,33 @@ class ZabbixAPI:
 
 
     def get_triggers(self, requestSince = None):
-        params = {"output": ["extend", "description"], "monitored_hosts": True}
+        params = {"output": "extend", "selectHosts": ["name"], "active": True}
+        if requestSince is not None:
+            params["lastChangeSince"] = int(requestSince)
+
+        res_dict = get_response_dict("trigger.get", params, self.auth_token)
+        expanded_res_dict = self.get_trigger_expanded_description(requestSince)
+
+        self.result = check_response(res_dict)
+        if not self.result:
+            return
+
+        triggers = list()
+        for num, trigger in enumerate(res_dict["result"]):
+            triggers.append({"triggerId": trigger["triggerid"],
+                             "status": "OK",
+                             "severity": trigger["priority"],
+                             "lastChangeTime": translate_unix_time_to_hatohol_time(int(trigger["lastChange"])),
+                             "hostId": trigger["hosts"][0]["hostid"],
+                             "hostName": trigger["hosts"][0]["name"],
+                             "brief": trigger["description"],
+                             "extendedInfo": expanded_res_dict[num]["description"]})
+
+        return triggers
+
+
+    def get_trigger_expanded_description(self, requestSince = None):
+        params = {"output": "description", "expandDescription":1, "active": True}
         if requestSince is not None:
             params["lastChangeSince"] = int(requestSince)
 
@@ -87,38 +113,44 @@ class ZabbixAPI:
         if not self.result:
             return
 
-        triggers = []
-        for trigger in res_dict["result"]:
-            triggers.append({"triggerId": trigger["triggerid"],
-                             "status": "OK",
-                             "severity": trigger["priority"],
-                             "lastChangeTime": translate_unix_time_to_hatohol_time(int(trigger["lastChange"])),
-                             "hostId": trigger["hostid"],
-                             "hostName": trigger["hostName"],
-                             "brief": trigger["description"],
-                             "extendedInfo": trigger["description"]})
-
-        return triggers
+        return res_dict
 
 
-    def get_events(self, event_id_from, event_id_till = None):
-        params = {"output": "extend", "eventid_from": event_id_from}
-        if event_id_till is not None:
-            params["eventid_till"] = event_id_till
-
-        res_dict = get_response_dict("evnet.get", params, self.auth_token)
+    def get_select_trigger(self, trigger_id):
+        params = {"output": "extend", "triggers_id": trigger_id, "expandDescription": 1}
+        res_dict = get_response_dict("trigger.get", params, self.auth_token)
 
         self.result = check_response(res_dict)
         if not self.result:
             return
 
-        events = []
+        return res_dict
+
+
+    def get_events(self, event_id_from, event_id_till = None):
+        params = {"output": "extend", "eventid_from": event_id_from, "selectHosts": ["name"]}
+        if event_id_till is not None:
+            params["eventid_till"] = event_id_till
+
+        res_dict = get_response_dict("event.get", params, self.auth_token)
+
+        self.result = check_response(res_dict)
+        if not self.result:
+            return
+
+        events = list()
         for event in res_dict["result"]:
+            trigger = self.get_select_trigger(event["objectid"])
             events.append({"eventId": event["eventid"],
                            "time": translate_unix_time_to_hatohol_time(int(event["clock"]) + event["ns"]),
-                           "type": EVENT_TYPE[event["value"]]
-                           "status": TRIGGER_STATUS[event["value"]]
-                           "triggerId": event["objectid"],
+                           "type": EVENT_TYPE[event["value"]],
+                           "triggerId": trigger["triggerid"],
+                           "status": TRIGGER_STATUS[event["value"]],
+                           "severity": trigger["severity"],
+                           "hostId": event["hosts"][0]["hostid"],
+                           "hostName": event["hosts"][0]["name"],
+                           "brief": trigger["description"]
+                           "extendedInfo": ""})
 
 
         return events

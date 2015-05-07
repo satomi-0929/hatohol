@@ -31,11 +31,9 @@ class HapZabbixProcedures(haplib.BaseProcedures):
 
 class PreviousHostsInfo:
     def __init__():
-        self.hosts = []
-        self.host_groups = []
-        self.host_group_membeship = []
-
-
+        self.hosts = list()
+        self.host_groups = list()
+        self.host_group_membeship = list()
 
 
 def routine_update():
