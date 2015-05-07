@@ -3,6 +3,7 @@
 
 import urllib2
 import json
+import math
 
 TRIGGER_SEVERITY = {-1: "ALL", 0: "UNKNOWN", 1: "INFO", 2: "WARNING", 3:"ERROR", 4: "CRITICAL", 5: "EMERGENCY"}
 TRIGGER_STATUS = {0: "GOOD", 1: "NG", 2: "UNKNOWN"}
@@ -142,7 +143,7 @@ class ZabbixAPI:
         for event in res_dict["result"]:
             trigger = self.get_select_trigger(event["objectid"])
             events.append({"eventId": event["eventid"],
-                           "time": translate_unix_time_to_hatohol_time(int(event["clock"]) + event["ns"]),
+                           "time": translate_unix_time_to_hatohol_time(int(event["clock"]) + (float(event["ns"])/(10 ** int(math.log10(event["ns"]) + 1))),
                            "type": EVENT_TYPE[event["value"]],
                            "triggerId": trigger["triggerid"],
                            "status": TRIGGER_STATUS[event["value"]],
