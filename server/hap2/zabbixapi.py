@@ -118,14 +118,8 @@ class ZabbixAPI:
                            "time": translate_unix_time_to_hatohol_time(int(event["clock"]) + event["ns"]),
                            "type": EVENT_TYPE[event["value"]]
                            "status": TRIGGER_STATUS[event["value"]]
-                           #"hostId": event["hostid"],
                            "triggerId": event["objectid"],
-                           "acknowledged": event["acknowledged"])
 
-            if self.api_version == "2.0":
-                events[-1]["value_changed"] == event["value_changed"]
-            else:
-                events[-1]["value_changed"] == None
 
         return events
 
