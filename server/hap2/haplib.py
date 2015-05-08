@@ -6,7 +6,7 @@ from datetime import datetime
 
 class BaseProcedures:
     def __init__():
-        self.valid_procedures_of_server = {"exchangeProfile":True, "gertMonitoringServer":True, "getLastInfo":True, "putItems":True, "putHistory":True, "updateHosts":True, "updateHostGroups":True, "updateHostGroupMembership":True, "updateTriggers":True, "updateEvents":True, "updateHostParent":True, "updateArmInfo":True}
+        self.valid_procedures_of_server = {"exchangeProfile":False, "gertMonitoringServer":False, "getLastInfo":False, "putItems":False, "putHistory":False, "updateHosts":False, "updateHostGroups":False, "updateHostGroupMembership":False, "updateTriggers":False, "updateEvents":False, "updateHostParent":False, "updateArmInfo":False}
 
     def exchangeProfile(self):
         print "Not implement"
@@ -153,3 +153,8 @@ def translate_unix_time_to_hatohol_time(float_unix_time):
 
 def translate_hatohol_time_to_unix_time(hatohol_time):
     return datetime.strptime(hatohol_unix_time, "%Y%m%d%H%M%S.%f")
+
+
+def optimize_server_procedures(valid_procedures_dict, procedures):
+    for procedure in procedures:
+        valid_procedures_dict[procedure] = True

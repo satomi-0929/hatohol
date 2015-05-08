@@ -8,7 +8,7 @@ import zabbixapi
 
 class HapZabbixProcedures(haplib.BaseProcedures):
     def exchangeProfile(self, params):
-        optimize_server_procedures(self.valid_procedures_of_server, params)
+        haplib.optimize_server_procedures(self.valid_procedures_of_server, params)
         my_procedures = haplib.get_implement_procedures(HapZabbixProcedures)
         push_profile("response", my_procedures)
 
