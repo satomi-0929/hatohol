@@ -12,7 +12,7 @@ EVENT_TYPE = {0: "GOOD", 1: "BAD", 2: "UNKNOWN", 3: "NOTIFICATION"}
 class ZabbixAPI:
     HEADER = {"Content-Type":"application/json-rpc"}
     def __init__(self, monitoring_server_info):
-        self.url = "http://" + monitoring_server_info.ip_address + "/zabbix/api_jsonrpc.php"
+        self.url = monitoring_server_info.url
         self.auth_token = self.get_auth_token(monitoring_server_info.user_name,
                                 monitoring_server_info.user_passwd)
         self.api_version = self.get_api_version()
@@ -179,7 +179,7 @@ class ZabbixAPI:
 
 
     def get_response_dict(self, method_name, params, auth_token = None):
-        post = json.dumps({"jsonrpc": "2.0", "method": method_name, "params": params, "auth": self.auth_token, "id": 1})
+        post = json.dumps({"jsonrpc": "2.0", "method": method_name, "params": params, "auth": auth_token, "id": 1})
         request = urllib2.Request(self.url, post, HEADER)
         response = urllib2.urlopen(request)
         res_str = response.read()
