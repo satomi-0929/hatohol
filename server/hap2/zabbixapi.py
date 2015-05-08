@@ -60,6 +60,33 @@ class ZabbixAPI:
             return items
 
 
+    def get_history(self, item_id, begin_time, end_time, limit):
+        params = {"output":"extend", "itemids": item_id, "history":get_item_value_type(item_id), "sortfield": "clock", "sortorder": "ASC", "limit": limit, "time_from": begin_time, "time_till": end_time}
+        res_dict = get_response_dict("history.get", params, self.auth_token)
+
+        self.result = check_response(res_dict)
+        if not self.result:
+            return
+
+        history = list()
+        for history_data in res_dict["result"]
+            history.append({"value": history_data["value"],
+                            "time": translate_unix_time_to_hatohol_time(int(history_data["clock"]) + (float(history_data["ns"])/(10 ** int(math.log10(history_data["ns"]) + 1))))})
+
+        return {res_dict["result"][0]["itemid"]: history}
+
+
+    def get_item_value_type(self, item_id):
+        params = {"output": ["value_type"], "itemids": [item_id]}
+        res_dict = get_response_dict("item.get", params, self.auth_token)
+
+        self.result = check_response(res_dict)
+        if not self.result:
+            return
+
+        return res_dict[0]["value_type"]
+
+
     # The following method gets not only hosts info but also host group membership.
     def get_hosts(self):
         params = {"output": "extend", "selectGroups": "refer", "monitored_hosts": True}
