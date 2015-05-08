@@ -2,10 +2,11 @@
 # coding: UTF-8
 
 import json
-from datetime import datatime
+from datetime import datetime
 
 class BaseProcedures:
-    self.valid_procedures_of_server = {"exchangeProfile":True, "gertMonitoringServer":True, "getLastInfo":True, "putItems":True, "putHistory":True, "updateHosts":True, "updateHostGroups":True, "updateHostGroupMembership":True, "updateTriggers":True, "updateEvents":True, "updateHostParent":True, "updateArmInfo":True}
+    def __init__():
+        self.valid_procedures_of_server = {"exchangeProfile":True, "gertMonitoringServer":True, "getLastInfo":True, "putItems":True, "putHistory":True, "updateHosts":True, "updateHostGroups":True, "updateHostGroupMembership":True, "updateTriggers":True, "updateEvents":True, "updateHostParent":True, "updateArmInfo":True}
 
     def exchangeProfile(self):
         print "Not implement"
@@ -40,9 +41,9 @@ class MonitoringServerInfo:
         self.extended_info = ms_info_dict["extendedInfo"]
 
 
-def push_hosts(option, params):
-
-def push_host_group_membership():
+#def push_hosts(option, params):
+#
+#def push_host_group_membership():
 
 def get_error_dict():
     error_dict = {"-32700":"Parse error" , "-32600":"invalid Request", "-32601":"Method not found", "-32602":"invalid params", "-32603":"Internal error"}
@@ -104,7 +105,8 @@ def create_request_json(procedure_name, params):
     return json.dumps(request_dict)
 
 
-def create_response_json(req_id):
+#def create_response_json(req_id):
+
 
 def create_error_json(error_code, req_id = "null"):
     error_dict = get_error_dictdd()
@@ -124,12 +126,12 @@ def check_request(json_string):
         return
 
     result = check_implement_method(json_dict["method"])
-    if result in not None:
+    if result is not None:
         send_json_to_que(create_error_json(result, json_dict["id"]))
         return
 
     result = check_argument_is_correct(json_dict["method"])
-    if result in not None:
+    if result is not None:
         send_json_to_que(create_error_json(result, json_dict["id"]))
         return
 
@@ -138,10 +140,11 @@ def check_request(json_string):
 
 def call_procedure(json_string):
     valid_json_dict = check_request(json_string)
-        if valid_json_dict is None:
-            return
-    locals().[valid_json_dict["method"]](valid_json_dict("params"))
-        #ToDo How do pass arguments to the params
+    if valid_json_dict is None:
+        return
+
+    locals()[valid_json_dict["method"]](valid_json_dict("params"))
+    #ToDo How do pass arguments to the params
 
 
 def translate_unix_time_to_hatohol_time(float_unix_time):

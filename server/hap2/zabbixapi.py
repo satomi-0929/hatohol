@@ -52,10 +52,10 @@ class ZabbixAPI:
             items.append({"itemId": item["itemid"],
                           "hostid": item["hostid"],
                           "brief": item["name"],
-                          "lastValueTime": translate_unix_time_to_hatohol_time(int(item["clock"]) + (float(item["ns"])/(10 ** int(math.log10(item["ns"]) + 1))),
-                          "lastValue": item["lastvalue"]
-                          "itemGroupName": get_item_groups(item["applications"])
-                          "unit": item["units"]
+                          "lastValueTime": translate_unix_time_to_hatohol_time(int(item["clock"]) + (float(item["ns"])/(10 ** int(math.log10(item["ns"]) + 1)))),
+                          "lastValue": item["lastvalue"],
+                          "itemGroupName": get_item_groups(item["applications"]),
+                          "unit": item["units"]})
 
             return items
 
@@ -69,7 +69,7 @@ class ZabbixAPI:
             return
 
         history = list()
-        for history_data in res_dict["result"]
+        for history_data in res_dict["result"]:
             history.append({"value": history_data["value"],
                             "time": translate_unix_time_to_hatohol_time(int(history_data["clock"]) + (float(history_data["ns"])/(10 ** int(math.log10(history_data["ns"]) + 1))))})
 
@@ -191,14 +191,14 @@ class ZabbixAPI:
         for event in res_dict["result"]:
             trigger = self.get_select_trigger(event["objectid"])
             events.append({"eventId": event["eventid"],
-                           "time": translate_unix_time_to_hatohol_time(int(event["clock"]) + (float(event["ns"])/(10 ** int(math.log10(event["ns"]) + 1))),
+                           "time": translate_unix_time_to_hatohol_time(int(event["clock"]) + (float(event["ns"])/(10 ** int(math.log10(event["ns"]) + 1)))),
                            "type": EVENT_TYPE[event["value"]],
                            "triggerId": trigger["triggerid"],
                            "status": TRIGGER_STATUS[event["value"]],
                            "severity": trigger["severity"],
                            "hostId": event["hosts"][0]["hostid"],
                            "hostName": event["hosts"][0]["name"],
-                           "brief": trigger["description"]
+                           "brief": trigger["description"],
                            "extendedInfo": ""})
 
 
