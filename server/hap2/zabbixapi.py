@@ -39,14 +39,25 @@ class ZabbixAPI:
         return res_dict["result"][0:3]
 
 
-    def get_itmes(self):
-        params = {"output": "extend", "selectApplications": "refer", "monitored": True}
+    def get_items(self):
+        params = {"output": "extend", "selectAppllications": ["name"], "monitored": True}
         res_dict = get_response_dict("item.get", params, self.auth_token)
 
         self.result = check_response(res_dict)
         if not self.result:
             return
 
+        items = list()
+        for item in res_dict["result"]:
+            items.append({"itemId": item["itemid"],
+                          "hostid": item["hostid"],
+                          "brief": item["name"],
+                          "lastValueTime": translate_unix_time_to_hatohol_time(int(item["clock"]) + (float(item["ns"])/(10 ** int(math.log10(item["ns"]) + 1))),
+                          "lastValue": item["lastvalue"]
+                          "itemGroupName": get_item_groups(item["applications"])
+                          "unit": item["units"]
+
+            return items
 
 
     # The following method gets not only hosts info but also host group membership.
@@ -174,6 +185,23 @@ class ZabbixAPI:
         res_str = response.read()
 
         return json.loads(res_str)
+
+
+def get_last_info_from_array_dict(value_name, array_dict):
+    last_info = None
+    for each_dict in array_dict:
+        if last_info < each_dict[value_name]:
+            last_info = each_dict[value_name]
+
+    return last_info
+
+
+def get_item_groups(applications):
+    item_groups = list()
+    for application in applications:
+        item_groups.append(application["name"])
+
+    return item_groups
 
 
 def check_response(response_dict):
