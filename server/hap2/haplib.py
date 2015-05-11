@@ -4,7 +4,7 @@
 import json
 from datetime import datetime
 
-class BaseProcedures:
+class PluginProcedures:
     def __init__():
         self.valid_procedures_of_server = {"exchangeProfile":False, "getMonitoringServerInfo":False, "getLastInfo":False, "putItems":False, "putHistory":False, "updateHosts":False, "updateHostGroups":False, "updateHostGroupMembership":False, "updateTriggers":False, "updateEvents":False, "updateHostParent":False, "updateArmInfo":False}
 
