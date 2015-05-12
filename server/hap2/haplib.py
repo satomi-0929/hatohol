@@ -3,6 +3,7 @@
 
 import json
 from datetime import datetime
+import pika
 
 class PluginProcedures:
     def __init__():
@@ -41,31 +42,33 @@ class MonitoringServerInfo:
         self.extended_info = ms_info_dict["extendedInfo"]
 
 
-#def push_hosts(option, params):
-#
-#def push_host_group_membership():
+class RabbitMQ:
+    def __init__(self, host, queue_name, user_name, user_password):
+        self.queue_name = queue_name
+        credentials = pika.PlaneCredentials(user_name, user_password)
+        param = pika.ConnectionParameter(host = host, credentials = credentials)
+        connection = pika.BlockingConnenction(param)
+        self.channel = connection.channel()
+        self.channel.queue_declare(queue = queue_name)
+
+
+    def send_message_to_que(json_string):
+        self.channel.basic_publish(exchange = '', routing_key = self.queue_name, body = json_string)
+
 
 def get_error_dict():
-    error_dict = {"-32700":"Parse error" , "-32600":"invalid Request", "-32601":"Method not found", "-32602":"invalid params", "-32603":"Internal error"}
+    error_dict = {-32700: "Parse error" , -32600: "invalid Request", -32601: "Method not found", -32602: "invalid params", -32603: "Internal error"}
     for num in range(-32000,-32100):
         error_dict[str(num)] = "Server error"
 
     return error_dict
 
 
-def send_json_to_que(string):
-    print string
-
-
-def receive_json_from_que():
-    print "Not implement"
-
-
 def convert_string_to_dict(json_string):
     try:
         json_dict = json.loads(json_string)
     except Exception:
-        return "-32700"
+        return -32700
     else:
         return json_dict
 
@@ -75,7 +78,7 @@ def check_method_is_implemented(method_name):
         if method_name == method:
             return "IMPLEMENT"
         else:
-            return "-32601"
+            return -32601
 
 
 def check_argument_is_correct(json_dict):
@@ -83,7 +86,8 @@ def check_argument_is_correct(json_dict):
     for argument in json_dict["params"]:
         if argument in args:
             result = "OK"
-    return "-32602"
+
+    return -32602
 # ToDo Think about algorithm. In case of param is object.
 
 
@@ -98,7 +102,7 @@ def get_implement_procedures(class_name):
 
 
 def create_request_json(procedure_name, params):
-    request_dict = {"jsonrpc":"2.0", "method":procedure_name, "params": params, "id":get_request_id()}
+    request_dict = {"jsonrpc": "2.0", "method": procedure_name, "params": params, "id": get_request_id()}
     for param_key, param_value in params.items():
         request_dict["params"][param_key] = param_value
 
