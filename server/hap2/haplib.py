@@ -74,6 +74,7 @@ class RabbitMQPublisher(RabbitMQConnector):
 
 class RabbitMQConsumer(RabbitMQConnector):
     def __init__(self):
+        RabbitMQConnector.__init__(self)
         self.base_procedures = BaseProcedures()
         self.procedures_instance_name = "self.base_procedures"
 
