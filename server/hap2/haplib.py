@@ -20,6 +20,7 @@ class PluginProcedures:
                                            "updateHostParent":False,
                                            "updateArmInfo":False}
 
+
     def exchangeProfile(self):
         print "Not implement"
 
@@ -53,7 +54,7 @@ class MonitoringServerInfo:
         self.extended_info = ms_info_dict["extendedInfo"]
 
 
-class RabbitMQ:
+class RabbitMQConnector:
     def __init__(self, host, queue_name, user_name, user_password):
         self.queue_name = queue_name
         credentials = pika.PlaneCredentials(user_name, user_password)
@@ -63,13 +64,18 @@ class RabbitMQ:
         self.channel.queue_declare(queue = queue_name)
 
 
+class RabbitMQPublisher(RabbitMQConnector):
     def send_message_to_que(json_string):
         self.channel.basic_publish(exchange = '',
                                    routing_key = self.queue_name,
-                                body = json_string)
+                                   body = json_string)
 
 
-def push_hosts
+class RabbitMQConsumer(RabbitMQConnector):
+    def Not_implement():
+        print "Not implement"
+
+
 def get_error_dict():
     error_dict = {-32700: "Parse error" , -32600: "invalid Request",
                   -32601: "Method not found", -32602: "invalid params",
