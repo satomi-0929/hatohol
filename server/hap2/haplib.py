@@ -73,8 +73,8 @@ class RabbitMQPublisher(RabbitMQConnector):
 
 
 class RabbitMQConsumer(RabbitMQConnector):
-    def __init__(self):
-        RabbitMQConnector.__init__(self)
+    def __init__(self, host, queue_name, user_name, user_password):
+        RabbitMQConnector.__init__(self, host, queue_name, user_name, user_password)
         self.base_procedures = BaseProcedures()
         self.procedures_instance_name = "self.base_procedures"
 

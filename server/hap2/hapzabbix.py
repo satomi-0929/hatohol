@@ -3,6 +3,8 @@
 
 import daemon
 import json
+import multiprocessing
+
 import haplib
 import zabbixapi
 
@@ -36,12 +38,17 @@ class PreviousHostsInfo:
         self.host_group_membeship = list()
 
 
-def routine_update():
-    print "Not implement"
+class HAPZabbixRabbitMQConsumer(haplib.RabbitMQConsumer):
+	def callback_handler(self):
+		print "Not implement"
 
-def main():
-    daemon_runner = daemon.runner.DaemonRunner()
+
+class HAPZabbixRabbitMQPublisher(haplib.RabbitMQPublisher):
+    def routine_update(self):
+        print "Not implement"
 
 
 if __name__ == '__main__':
+	with daemon.DaemonContext():
+		hap_zabbix_daemon = HAPZabbixDaemon
     main()
