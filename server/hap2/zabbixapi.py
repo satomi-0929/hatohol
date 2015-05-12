@@ -6,7 +6,8 @@ import json
 import math
 import haplib
 
-TRIGGER_SEVERITY = {-1: "ALL", 0: "UNKNOWN", 1: "INFO", 2: "WARNING", 3:"ERROR", 4: "CRITICAL", 5: "EMERGENCY"}
+TRIGGER_SEVERITY = {-1: "ALL", 0: "UNKNOWN", 1: "INFO", 2: "WARNING",
+                    3:"ERROR", 4: "CRITICAL", 5: "EMERGENCY"}
 TRIGGER_STATUS = {0: "GOOD", 1: "NG", 2: "UNKNOWN"}
 EVENT_TYPE = {0: "GOOD", 1: "BAD", 2: "UNKNOWN", 3: "NOTIFICATION"}
 
@@ -61,7 +62,10 @@ class ZabbixAPI:
 
 
     def get_history(self, item_id, begin_time, end_time, limit):
-        params = {"output":"extend", "itemids": item_id, "history":get_item_value_type(item_id), "sortfield": "clock", "sortorder": "ASC", "limit": limit, "time_from": begin_time, "time_till": end_time}
+        params = {"output":"extend", "itemids": item_id,
+                  "history":get_item_value_type(item_id), "sortfield": "clock",
+                  "sortorder": "ASC", "limit": limit, "time_from": begin_time,
+                  "time_till": end_time}
         res_dict = self.get_response_dict("history.get", params, self.auth_token)
 
         self.result = check_response(res_dict)
@@ -111,7 +115,8 @@ class ZabbixAPI:
 
 
     def get_host_groups(self):
-        params = {"output": "extend", "selectHosts": "refer", "real_hosts": True, "monitored_hosts": True}
+        params = {"output": "extend", "selectHosts": "refer",
+                  "real_hosts": True, "monitored_hosts": True}
         res_dict = self.get_response_dict("hostgroup.get", params, self.auth_token)
 
         self.result = check_response(res_dict)
@@ -207,7 +212,8 @@ class ZabbixAPI:
 
     def get_response_dict(self, method_name, params, auth_token = None):
         HEADER = {"Content-Type":"application/json-rpc"}
-        post = json.dumps({"jsonrpc": "2.0", "method": method_name, "params": params, "auth": auth_token, "id": 1})
+        post = json.dumps({"jsonrpc": "2.0", "method": method_name,
+                           "params": params, "auth": auth_token, "id": 1})
         request = urllib2.Request(self.url, post, HEADER)
         response = urllib2.urlopen(request)
         res_str = response.read()

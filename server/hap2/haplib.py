@@ -7,7 +7,18 @@ import pika
 
 class PluginProcedures:
     def __init__():
-        self.valid_procedures_of_server = {"exchangeProfile":False, "getMonitoringServerInfo":False, "getLastInfo":False, "putItems":False, "putHistory":False, "updateHosts":False, "updateHostGroups":False, "updateHostGroupMembership":False, "updateTriggers":False, "updateEvents":False, "updateHostParent":False, "updateArmInfo":False}
+        self.valid_procedures_of_server = {"exchangeProfile":False,
+                                           "getMonitoringServerInfo":False,
+                                           "getLastInfo":False,
+                                           "putItems":False,
+                                           "putHistory":False,
+                                           "updateHosts":False,
+                                           "updateHostGroups":False,
+                                           "updateHostGroupMembership":False,
+                                           "updateTriggers":False,
+                                           "updateEvents":False,
+                                           "updateHostParent":False,
+                                           "updateArmInfo":False}
 
     def exchangeProfile(self):
         print "Not implement"
@@ -53,11 +64,16 @@ class RabbitMQ:
 
 
     def send_message_to_que(json_string):
-        self.channel.basic_publish(exchange = '', routing_key = self.queue_name, body = json_string)
+        self.channel.basic_publish(exchange = '',
+                                   routing_key = self.queue_name,
+                                body = json_string)
 
 
+def push_hosts
 def get_error_dict():
-    error_dict = {-32700: "Parse error" , -32600: "invalid Request", -32601: "Method not found", -32602: "invalid params", -32603: "Internal error"}
+    error_dict = {-32700: "Parse error" , -32600: "invalid Request",
+                  -32601: "Method not found", -32602: "invalid params",
+                  -32603: "Internal error"}
     for num in range(-32000,-32100):
         error_dict[str(num)] = "Server error"
 
