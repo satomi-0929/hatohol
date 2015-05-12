@@ -73,8 +73,17 @@ class RabbitMQPublisher(RabbitMQConnector):
 
 
 class RabbitMQConsumer(RabbitMQConnector):
+    def __init__(self):
+        self.base_procedures = BaseProcedures()
+        self.procedures_instance_name = "self.base_procedures"
+
+
     def callback_handler(ch, method, properties, body):
-            print "Not implement"
+        valid_json_dict = check_request(json_string)
+        if valid_json_dict is None:
+            return
+
+        eval(self.procedures_instance_name + valid_json_dict["method"])(valid_json_dict)
 
 
     def start_receiving(self):
@@ -169,15 +178,6 @@ def check_request(json_string):
         return
 
     return json_dict
-
-
-def call_procedure(json_string):
-    valid_json_dict = check_request(json_string)
-    if valid_json_dict is None:
-        return
-
-    locals()[valid_json_dict["method"]](valid_json_dict("params"))
-    #ToDo How do pass arguments to the params
 
 
 def translate_unix_time_to_hatohol_time(float_unix_time):
