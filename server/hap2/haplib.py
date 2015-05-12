@@ -4,6 +4,7 @@
 import json
 from datetime import datetime
 import pika
+import multiprocessing
 
 class PluginProcedures:
     def __init__():
@@ -65,15 +66,21 @@ class RabbitMQConnector:
 
 
 class RabbitMQPublisher(RabbitMQConnector):
-    def send_message_to_que(json_string):
-        self.channel.basic_publish(exchange = '',
+    def send_message_to_queue(json_string):
+        self.channel.basic_publish(exchange = "",
                                    routing_key = self.queue_name,
                                    body = json_string)
 
 
 class RabbitMQConsumer(RabbitMQConnector):
-    def Not_implement():
-        print "Not implement"
+    def callback_handler(ch, method, properties, body):
+            print "Not implement"
+
+
+    def start_receiving(self):
+        self.channel.basic_consume(self.callback_handler,
+                                   queue = self.queue_name, no_ack = True)
+        self.channel.start_consuming()
 
 
 def get_error_dict():
