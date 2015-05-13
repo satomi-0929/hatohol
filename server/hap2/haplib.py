@@ -91,6 +91,7 @@ class RabbitMQPublisher(RabbitMQConnector):
         while True:
             response_dict = self.queue.get()
             if request_id == response_dict["id"]:
+                return response_dict["result"]
 
 
     def get_last_info(self, element):
