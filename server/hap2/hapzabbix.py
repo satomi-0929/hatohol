@@ -9,7 +9,7 @@ import argparse
 import haplib
 import zabbixapi
 
-class HapZabbixProcedures(haplib.BaseProcedures):
+class HapZabbixProcedures(haplib.PluginProcedures):
     def exchangeProfile(self, params):
         haplib.optimize_server_procedures(self.valid_procedures_of_server, params)
         my_procedures = haplib.get_implement_procedures(HapZabbixProcedures)
