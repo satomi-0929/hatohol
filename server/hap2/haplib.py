@@ -56,10 +56,10 @@ class MonitoringServerInfo:
 
 
 class RabbitMQConnector:
-    def __init__(self, host, queue_name, user_name, user_password):
+    def __init__(self, host, port, queue_name, user_name, user_password):
         self.queue_name = queue_name
         credentials = pika.PlaneCredentials(user_name, user_password)
-        param = pika.ConnectionParameter(host = host, credentials = credentials)
+        param = pika.ConnectionParameter(host = host, port = port, credentials = credentials)
         connection = pika.BlockingConnenction(param)
         self.channel = connection.channel()
         self.channel.queue_declare(queue = queue_name)
@@ -73,14 +73,14 @@ class RabbitMQPublisher(RabbitMQConnector):
 
 
 class RabbitMQConsumer(RabbitMQConnector):
-    def __init__(self, host, queue_name, user_name, user_password):
-        RabbitMQConnector.__init__(self, host, queue_name, user_name, user_password)
+    def __init__(self, host, port, queue_name, user_name, user_password):
+        RabbitMQConnector.__init__(self, host, port, queue_name, user_name, user_password)
         self.base_procedures = BaseProcedures()
         self.procedures_instance_name = "self.base_procedures"
 
 
     def callback_handler(ch, method, properties, body):
-        valid_json_dict = check_request(json_string)
+        valid_json_dict = check_request(body)
         if valid_json_dict is None:
             return
 
