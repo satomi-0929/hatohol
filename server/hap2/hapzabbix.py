@@ -54,6 +54,34 @@ class HAPZabbixRabbitMQPublisher(haplib.RabbitMQPublisher):
         self.queue = queue
         ms_dict = self.get_monitoring_server_info()
         self.ms_info = haplib.MonitoringServerInfo(ms_dict)
+        api = zabbixapi.ZabbixAPI(self.ms_info)
+
+
+    def put_items(self, host_id = None, fetch_id = None):
+        params = {"items": api.get_items(host_id)}
+        if fetch_id is not None:
+            params["fetchId"] = fetch_id
+
+        request_id = haplib.get_request_id()
+        self.send_request_to_queue("putItems", params, request_id)
+
+        while True:
+            response_dict = self.queue.get()
+            if request_id == response_dict["id"]:
+                return
+
+
+    def put_history(self, item_id, fetch_id):
+        params = {"itemId": item_id, "histories": api.get_history(item_id), "fetchId": fetch_id}
+
+        request_id = haplib.get_request_id()
+        self.send_request_to_queue("putHistory", params, request_id)
+
+        while True:
+            response_dict = self.queue.get()
+            if request_id == response_dict["id"]:
+                return
+
 
     def routine_update(self):
         print "Not implement"

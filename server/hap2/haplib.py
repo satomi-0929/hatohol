@@ -91,7 +91,7 @@ class RabbitMQPublisher(RabbitMQConnector):
         while True:
             response_dict = self.queue.get()
             if request_id == response_dict["id"]:
-                return response_dict["result"]
+                return
 
 
     def get_last_info(self, element):
@@ -102,7 +102,7 @@ class RabbitMQPublisher(RabbitMQConnector):
         while True:
             response_dict = self.queue.get()
             if request_id == response_dict["id"]:
-                return response_dict["result"]
+                return
 
 
     def exchange_profile(self, procedures ,response_id = None):
@@ -113,8 +113,7 @@ class RabbitMQPublisher(RabbitMQConnector):
             while True:
                 response_dict = self.queue.get()
                 if request_id == response_dict["id"]:
-                    return response_dict["result"]
-
+                    return
 
         else:
             self.send_response_to_queue(procedures, response_id)
