@@ -59,6 +59,7 @@ class HAPZabbixDaemon:
 
 
 	def start(self):
+
 		consumer = HAPZabbixRabbitMQConsumer(self.host, self.port, "c_" + self.queue_name,
 				                             self.user_name, self.user_password)
 		subprocess = multiprocessing.Process(target = consumer.start_receiving)
@@ -72,7 +73,7 @@ class HAPZabbixDaemon:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--server",
+    parser.add_argument("--host",
                         dest="host",
                         type=str,
                         default="localhost",
