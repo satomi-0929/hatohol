@@ -40,8 +40,11 @@ class ZabbixAPI:
         return res_dict["result"][0:3]
 
 
-    def get_items(self):
-        params = {"output": "extend", "selectAppllications": ["name"], "monitored": True}
+    def get_items(self, host_id = None):
+        params = {"output": "extend", "selectApplications": ["name"], "monitored": True}
+        if host_id is not None:
+            params["hostids"] = host_id
+
         res_dict = self.get_response_dict("item.get", params, self.auth_token)
 
         self.result = check_response(res_dict)
@@ -50,34 +53,43 @@ class ZabbixAPI:
 
         items = list()
         for item in res_dict["result"]:
+            if int(item["lastns"]) == 0:
+                ns = 0
+            else:
+                ns = float(item["lastns"])/(10 ** math.log10(int(item["lastns"])) + 1)
+
             items.append({"itemId": item["itemid"],
-                          "hostid": item["hostid"],
+                          "hostId": item["hostid"],
                           "brief": item["name"],
-                          "lastValueTime": haplib.translate_unix_time_to_hatohol_time(int(item["lastclock"]) + (float(item["ns"])/(10 ** int(math.log10(item["lastns"]) + 1)))),
+                          "lastValueTime": haplib.translate_unix_time_to_hatohol_time(int(item["lastclock"]) + ns),
                           "lastValue": item["lastvalue"],
                           "itemGroupName": get_item_groups(item["applications"]),
                           "unit": item["units"]})
 
-            return items
+        return items
 
 
-    def get_history(self, item_id, begin_time, end_time, limit):
+    def get_history(self, item_id, begin_time, end_time):
         params = {"output":"extend", "itemids": item_id,
                   "history":get_item_value_type(item_id), "sortfield": "clock",
-                  "sortorder": "ASC", "limit": limit, "time_from": begin_time,
-                  "time_till": end_time}
+                  "sortorder": "ASC", "time_from": begin_time, "time_till": end_time}
         res_dict = self.get_response_dict("history.get", params, self.auth_token)
 
         self.result = check_response(res_dict)
         if not self.result:
             return
 
-        history = list()
-        for history_data in res_dict["result"]:
-            history.append({"value": history_data["value"],
-                            "time": haplib.translate_unix_time_to_hatohol_time(int(history_data["clock"]) + (float(history_data["ns"])/(10 ** int(math.log10(history_data["ns"]) + 1))))})
+        histories = list()
+        for history in res_dict["result"]:
+            if int(history["ns"]) == 0:
+                ns = 0
+            else:
+                ns = float(history["ns"])/(10 ** math.log10(int(history["ns"])) + 1)
 
-        return {res_dict["result"][0]["itemid"]: history}
+            histories.append({"value": history["value"],
+                            "time": haplib.translate_unix_time_to_hatohol_time(int(history["clock"]) + ns)})
+
+        return histories
 
 
     def get_item_value_type(self, item_id):
@@ -130,13 +142,15 @@ class ZabbixAPI:
         return host_groups
 
 
-    def get_triggers(self, requestSince = None):
+    def get_triggers(self, requestSince = None, host_id = None):
         params = {"output": "extend", "selectHosts": ["name"], "active": True}
         if requestSince is not None:
             params["lastChangeSince"] = int(requestSince)
+        if host_id is not None:
+            params["hostids"] = host_id
 
         res_dict = self.get_response_dict("trigger.get", params, self.auth_token)
-        expanded_res_dict = self.get_trigger_expanded_description(requestSince)
+        expanded_res_dict = self.get_trigger_expanded_description(requestSince, host_id)
 
         self.result = check_response(res_dict)
         if not self.result:
@@ -147,7 +161,7 @@ class ZabbixAPI:
             triggers.append({"triggerId": trigger["triggerid"],
                              "status": "OK",
                              "severity": trigger["priority"],
-                             "lastChangeTime": haplib.translate_unix_time_to_hatohol_time(int(trigger["lastChange"])),
+                             "lastChangeTime": haplib.translate_unix_time_to_hatohol_time(int(trigger["lastchange"])),
                              "hostId": trigger["hosts"][0]["hostid"],
                              "hostName": trigger["hosts"][0]["name"],
                              "brief": trigger["description"],
@@ -156,10 +170,12 @@ class ZabbixAPI:
         return triggers
 
 
-    def get_trigger_expanded_description(self, requestSince = None):
+    def get_trigger_expanded_description(self, requestSince = None, host_id = None):
         params = {"output": "description", "expandDescription":1, "active": True}
         if requestSince is not None:
             params["lastChangeSince"] = int(requestSince)
+        if host_id is not None:
+            params["hostids"] = host_id
 
         res_dict = self.get_response_dict("trigger.get", params, self.auth_token)
 
@@ -194,9 +210,14 @@ class ZabbixAPI:
 
         events = list()
         for event in res_dict["result"]:
+            if int(event["ns"]) == 0:
+                ns = 0
+            else:
+                ns = float(event["ns"])/(10 ** math.log10(int(event["ns"])) + 1)
+
             trigger = self.get_select_trigger(event["objectid"])
             events.append({"eventId": event["eventid"],
-                           "time": haplib.translate_unix_time_to_hatohol_time(int(event["clock"]) + (float(event["ns"])/(10 ** int(math.log10(event["ns"]) + 1)))),
+                           "time": haplib.translate_unix_time_to_hatohol_time(int(event["clock"]) + ns),
                            "type": EVENT_TYPE[event["value"]],
                            "triggerId": trigger["triggerid"],
                            "status": TRIGGER_STATUS[event["value"]],
