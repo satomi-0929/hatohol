@@ -5,6 +5,7 @@ import json
 from datetime import datetime
 import pika
 import multiprocessing
+import random
 
 class PluginProcedures:
     def __init__():
@@ -66,10 +67,24 @@ class RabbitMQConnector:
 
 
 class RabbitMQPublisher(RabbitMQConnector):
-    def send_message_to_queue(json_string):
+    def send_message_to_queue(procedure_name, params, request_id):
+        message = json.dumps({"jsonrpc": "2.0", "method":procedure_name,
+                              "params": params, "id": request_id})
         self.channel.basic_publish(exchange = "",
                                    routing_key = self.queue_name,
-                                   body = json_string)
+                                   body = message)
+
+
+    def get_monitoring_server_info(self):
+        params = ""
+        request_id = get_request_id()
+	self.send_message_to_queue("getMonitoringServerInfo", params, request_id)
+
+        while True:
+            response_dict = self.queue.get()
+            if request_id == response_dict["id"]:
+                return response_dict["result"]
+
 
 
 class RabbitMQConsumer(RabbitMQConnector):
@@ -158,8 +173,7 @@ def create_error_json(error_code, req_id = "null"):
 
 
 def get_request_id():
-    return random.int()
-    #ToDo How management ID
+    return random.randint(1, 2048)
 
 
 def check_request(json_string):

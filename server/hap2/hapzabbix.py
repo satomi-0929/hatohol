@@ -50,9 +50,10 @@ class HAPZabbixRabbitMQConsumer(haplib.RabbitMQConsumer):
 
 class HAPZabbixRabbitMQPublisher(haplib.RabbitMQPublisher):
 	def __init__(self, host, port, queue_name, user_name, user_password, queue):
-        RabbitMQpublisher.__init__(self, host, port, queue_name, user_name, user_password)
+        RabbitMQPublisher.__init__(self, host, port, queue_name, user_name, user_password)
 		self.queue = queue
-
+		ms_dict = self.get_monitoring_server_info()
+		self.ms_info = haplib.MonitoringServerInfo(ms_dict)
 
     def routine_update(self):
         print "Not implement"
