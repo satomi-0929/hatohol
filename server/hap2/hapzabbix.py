@@ -4,6 +4,7 @@
 import daemon
 import json
 import multiprocessing
+import argparse
 
 import haplib
 import zabbixapi
@@ -48,7 +49,57 @@ class HAPZabbixRabbitMQPublisher(haplib.RabbitMQPublisher):
         print "Not implement"
 
 
+class HAPZabbixDaemon:
+	def __init__(self, host, port, queue_name, user_name, user_password):
+		self.host = host
+		self.port = port
+		self.queue_name = queue_name
+		self.user_name = user_name
+		self.user_password = user_password
+
+
+	def start(self):
+		consumer = HAPZabbixRabbitMQConsumer(self.host, self.port, "c_" + self.queue_name,
+				                             self.user_name, self.user_password)
+		subprocess = multiprocessing.Process(target = consumer.start_receiving)
+		subprocess.daemon = True
+		subprocess.start()
+
+		publisher = HAPZabbixRabbitMQPublisher(self.host, self.port, "p_" + self.queue_name,
+				                               self.user_name, self.user_password)
+		publisher.routine_update()
+
+
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--server",
+                        dest="host",
+                        type=str,
+                        default="localhost",
+                        help="RabbitMQ host")
+    parser.add_argument("--port",
+                        dest="rabbitmq_port",
+                        type=int,
+                        default=None,
+                        help="RabbitMQ port")
+    parser.add_argument("--user_name",
+                        dest="user_name",
+                        type=str,
+                        required=True,
+                        help="RabbitMQ host user name")
+    parser.add_argument("--user_password",
+                        dest="user_password",
+                        type=str,
+                        required=True,
+                        help="RabbitMQ host user password")
+    parser.add_argument("--queue",
+                        dest="queue_name",
+                        type=str,
+                        required=True,
+                        help="RabbitMQ queue")
+    args = parser.parse_args()
+
 	with daemon.DaemonContext():
-		hap_zabbix_daemon = HAPZabbixDaemon
-    main()
+		hap_zabbix_daemon = HAPZabbixDaemon(args.host, args.port, args.queue_name,
+				                            args.user_name, args.user_password)
+        hap_zabbix_daemon.start()
