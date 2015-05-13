@@ -41,7 +41,7 @@ class PreviousHostsInfo:
 
 class HAPZabbixRabbitMQConsumer(haplib.RabbitMQConsumer):
 	def __init__(self, host, port, queue_name, user_name, user_password, queue):
-        RabbitMQCosumer.__init__(self, host, port, queue_name, user_name, user_password)
+        RabbitMQConsumer.__init__(self, host, port, queue_name, user_name, user_password)
 		self.queue = queue
 
 	def callback_handler(self):
