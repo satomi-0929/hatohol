@@ -40,11 +40,20 @@ class PreviousHostsInfo:
 
 
 class HAPZabbixRabbitMQConsumer(haplib.RabbitMQConsumer):
+	def __init__(self, host, port, queue_name, user_name, user_password, queue):
+        RabbitMQCosumer.__init__(self, host, port, queue_name, user_name, user_password)
+		self.queue = queue
+
 	def callback_handler(self):
 		print "Not implement"
 
 
 class HAPZabbixRabbitMQPublisher(haplib.RabbitMQPublisher):
+	def __init__(self, host, port, queue_name, user_name, user_password, queue):
+        RabbitMQpublisher.__init__(self, host, port, queue_name, user_name, user_password)
+		self.queue = queue
+
+
     def routine_update(self):
         print "Not implement"
 
@@ -59,15 +68,15 @@ class HAPZabbixDaemon:
 
 
 	def start(self):
-
+		queue = multioprocessing.Queue()
 		consumer = HAPZabbixRabbitMQConsumer(self.host, self.port, "c_" + self.queue_name,
-				                             self.user_name, self.user_password)
+				                             self.user_name, self.user_password, queue)
 		subprocess = multiprocessing.Process(target = consumer.start_receiving)
 		subprocess.daemon = True
 		subprocess.start()
 
 		publisher = HAPZabbixRabbitMQPublisher(self.host, self.port, "p_" + self.queue_name,
-				                               self.user_name, self.user_password)
+				                               self.user_name, self.user_password, queue)
 		publisher.routine_update()
 
 
