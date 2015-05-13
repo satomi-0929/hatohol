@@ -40,45 +40,45 @@ class PreviousHostsInfo:
 
 
 class HAPZabbixRabbitMQConsumer(haplib.RabbitMQConsumer):
-	def __init__(self, host, port, queue_name, user_name, user_password, queue):
+    def __init__(self, host, port, queue_name, user_name, user_password, queue):
         RabbitMQConsumer.__init__(self, host, port, queue_name, user_name, user_password)
-		self.queue = queue
+        self.queue = queue
 
-	def callback_handler(self):
-		print "Not implement"
+    def callback_handler(self):
+        print "Not implement"
 
 
 class HAPZabbixRabbitMQPublisher(haplib.RabbitMQPublisher):
-	def __init__(self, host, port, queue_name, user_name, user_password, queue):
+    def __init__(self, host, port, queue_name, user_name, user_password, queue):
         RabbitMQPublisher.__init__(self, host, port, queue_name, user_name, user_password)
-		self.queue = queue
-		ms_dict = self.get_monitoring_server_info()
-		self.ms_info = haplib.MonitoringServerInfo(ms_dict)
+        self.queue = queue
+        ms_dict = self.get_monitoring_server_info()
+        self.ms_info = haplib.MonitoringServerInfo(ms_dict)
 
     def routine_update(self):
         print "Not implement"
 
 
 class HAPZabbixDaemon:
-	def __init__(self, host, port, queue_name, user_name, user_password):
-		self.host = host
-		self.port = port
-		self.queue_name = queue_name
-		self.user_name = user_name
-		self.user_password = user_password
+    def __init__(self, host, port, queue_name, user_name, user_password):
+        self.host = host
+        self.port = port
+        self.queue_name = queue_name
+        self.user_name = user_name
+        self.user_password = user_password
 
 
-	def start(self):
-		queue = multioprocessing.Queue()
-		consumer = HAPZabbixRabbitMQConsumer(self.host, self.port, "c_" + self.queue_name,
-				                             self.user_name, self.user_password, queue)
-		subprocess = multiprocessing.Process(target = consumer.start_receiving)
-		subprocess.daemon = True
-		subprocess.start()
+    def start(self):
+        queue = multioprocessing.Queue()
+        consumer = HAPZabbixRabbitMQConsumer(self.host, self.port, "c_" + self.queue_name,
+                                             self.user_name, self.user_password, queue)
+        subprocess = multiprocessing.Process(target = consumer.start_receiving)
+        subprocess.daemon = True
+        subprocess.start()
 
-		publisher = HAPZabbixRabbitMQPublisher(self.host, self.port, "p_" + self.queue_name,
-				                               self.user_name, self.user_password, queue)
-		publisher.routine_update()
+        publisher = HAPZabbixRabbitMQPublisher(self.host, self.port, "p_" + self.queue_name,
+                                               self.user_name, self.user_password, queue)
+        publisher.routine_update()
 
 
 if __name__ == '__main__':
@@ -110,7 +110,7 @@ if __name__ == '__main__':
                         help="RabbitMQ queue")
     args = parser.parse_args()
 
-	with daemon.DaemonContext():
-		hap_zabbix_daemon = HAPZabbixDaemon(args.host, args.port, args.queue_name,
-				                            args.user_name, args.user_password)
+    with daemon.DaemonContext():
+        hap_zabbix_daemon = HAPZabbixDaemon(args.host, args.port, args.queue_name,
+                                            args.user_name, args.user_password)
         hap_zabbix_daemon.start()
