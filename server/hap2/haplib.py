@@ -7,22 +7,21 @@ import pika
 import multiprocessing
 import random
 
+SERVER_PROCEDURES = {"exchangeProfile":True,
+                     "getMonitoringServerInfo":True,
+                     "getLastInfo":True,
+                     "putItems":True,
+                     "putHistory":True,
+                     "updateHosts":True,
+                     "updateHostGroups":True,
+                     "updateHostGroupMembership":True,
+                     "updateTriggers":True,
+                     "updateEvents":True,
+                     "updateHostParent":True,
+                     "updateArmInfo":True}
+
+
 class PluginProcedures:
-    def __init__():
-        self.valid_procedures_of_server = {"exchangeProfile":False,
-                                           "getMonitoringServerInfo":False,
-                                           "getLastInfo":False,
-                                           "putItems":False,
-                                           "putHistory":False,
-                                           "updateHosts":False,
-                                           "updateHostGroups":False,
-                                           "updateHostGroupMembership":False,
-                                           "updateTriggers":False,
-                                           "updateEvents":False,
-                                           "updateHostParent":False,
-                                           "updateArmInfo":False}
-
-
     def exchangeProfile(self):
         print "Not implement"
 
@@ -67,24 +66,57 @@ class RabbitMQConnector:
 
 
 class RabbitMQPublisher(RabbitMQConnector):
-    def send_message_to_queue(procedure_name, params, request_id):
-        message = json.dumps({"jsonrpc": "2.0", "method":procedure_name,
+    def send_request_to_queue(procedure_name, params, request_id):
+        request = json.dumps({"jsonrpc": "2.0", "method":procedure_name,
                               "params": params, "id": request_id})
         self.channel.basic_publish(exchange = "",
                                    routing_key = self.queue_name,
-                                   body = message)
+                                   body = request)
+
+
+    def send_response_to_queue(result, response_id):
+        response = json.dumps({"jsonrpc": "2.0", "result": result,
+                               "id": request_id})
+        self.channel.basic_publish(exchange = "",
+                                   routing_key = self.queue_name,
+                                   body = response)
 
 
     def get_monitoring_server_info(self):
         params = ""
         request_id = get_request_id()
-	self.send_message_to_queue("getMonitoringServerInfo", params, request_id)
+        self.send_request_to_queue("getMonitoringServerInfo", params, request_id)
+
+        # We should set time out in this loop condition.
+        while True:
+            response_dict = self.queue.get()
+            if request_id == response_dict["id"]:
+
+
+    def get_last_info(self, element):
+        params = element
+        request_id = get_request_id()
+        self.send_request_to_queue("getLastInfo", params, request_id)
 
         while True:
             response_dict = self.queue.get()
             if request_id == response_dict["id"]:
                 return response_dict["result"]
 
+
+    def exchange_profile(self, procedures ,response_id = None):
+        if response_id == None:
+            request_id = get_request_id()
+            self.send_request_to_queue("getLastInfo", procedures, request_id)
+
+            while True:
+                response_dict = self.queue.get()
+                if request_id == response_dict["id"]:
+                    return response_dict["result"]
+
+
+        else:
+            self.send_response_to_queue(procedures, response_id)
 
 
 class RabbitMQConsumer(RabbitMQConnector):
