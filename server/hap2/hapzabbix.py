@@ -56,6 +56,8 @@ class HAPZabbixRabbitMQPublisher(haplib.RabbitMQPublisher):
         self.ms_info = haplib.MonitoringServerInfo(ms_dict)
         self.api = zabbixapi.ZabbixAPI(self.ms_info)
         self.previous_hosts_info = PreviousHostsInfo()
+        self.trigger_last_info = None
+        self.event_last_info = None
 
 
     def put_items(self, host_id = None, fetch_id = None):
@@ -100,7 +102,7 @@ class HAPZabbixRabbitMQPublisher(haplib.RabbitMQPublisher):
 
 
     def update_host_groups(self, previous_host_groups)
-		host_groups = api.get_host_groups()
+        host_groups = api.get_host_groups()
         host_groups.sort()
         if previous_host_groups != host_groups:
             hosts_params = {"updateType": "ALL", "hostGroups": host_groups}
@@ -108,6 +110,26 @@ class HAPZabbixRabbitMQPublisher(haplib.RabbitMQPublisher):
             self.send_request_to_queue("updateHostGroups", params, request_id)
             haplib.get_response_and_check_id(self.queue, request_id)
             previous_host_groups = host_groups
+
+
+    def update_triggers(self, requests_since = None, host_id = None, fetchId = None)
+        if self.trigger_last_info is None:
+            self.trigger_last_info = self.get_last_info("trigger")
+
+        triggers = self.api.get_triggers(self.trigger_last_info, host_id)
+        self.trigger_last_info = haplib.find_last_info_from_dict_array(triggers, "lastChangeTime")
+
+        params = {"triggers": triggers, "updateType": "UPDATED",
+                  "lastInfo": self.trigger_last_info}
+
+        if fetch_id is not None:
+            params["fetchId"] = fetch_id
+            params["updateType"] = "ALL"
+
+        request_id = haplib.get_request_id()
+        self.send_request_to_queue("updateTriggers", params, request_id)
+
+        haplib.get_response_and_check_id(self.queue, request_id)
 
 
     def routine_update(self):
