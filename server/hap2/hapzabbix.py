@@ -79,24 +79,35 @@ class HAPZabbixRabbitMQPublisher(haplib.RabbitMQPublisher):
         haplib.get_response_and_check_id(self.queue, request_id)
 
 
-    def update_hosts_and_host_group_membership(self, previous_hosts_info):
+    def update_hosts_and_host_group_membership(self, previous_hosts, previous_host_group_membership):
         hosts, hg_membership = self.api.get_hosts()
 
         hosts.sort()
-        if previous_hosts_info.hosts != hosts:
+        if previous_hosts != hosts:
             hosts_params = {"updateType": "ALL", "hosts": hosts}
             request_id = haplib.get_request_id()
             self.send_request_to_queue("updateHosts", params, request_id)
             haplib.get_response_and_check_id(self.queue, request_id)
-            previous_hosts_info.hosts = hosts
+            previous_hosts = hosts
 
         hg_membership.sort()
-        if previous_hosts_info.host_group_membership != hg_membership:
+        if previous_host_group_membership != hg_membership:
             hg_membership_params = {"updateType": "ALL", "hostGroupMembership": hg_membership}
             request_id = haplib.get_request_id()
             self.send_request_to_queue("updateHostGroupMembership", params, request_id)
             haplib.get_response_and_check_id(self.queue, request_id)
-            previous_hosts_info.host_group_membership = hg_membership
+            previous_host_group_membership = hg_membership
+
+
+    def update_host_groups(self, previous_host_groups)
+		host_groups = api.get_host_groups()
+        host_groups.sort()
+        if previous_host_groups != host_groups:
+            hosts_params = {"updateType": "ALL", "hostGroups": host_groups}
+            request_id = haplib.get_request_id()
+            self.send_request_to_queue("updateHostGroups", params, request_id)
+            haplib.get_response_and_check_id(self.queue, request_id)
+            previous_host_groups = host_groups
 
 
     def routine_update(self):
