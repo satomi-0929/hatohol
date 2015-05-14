@@ -86,12 +86,7 @@ class RabbitMQPublisher(RabbitMQConnector):
         params = ""
         request_id = get_request_id()
         self.send_request_to_queue("getMonitoringServerInfo", params, request_id)
-
-        # We should set time out in this loop condition.
-        while True:
-            response_dict = self.queue.get()
-            if request_id == response_dict["id"]:
-                return
+        get_response_and_check_id(self.queue, request_id)
 
 
     def get_last_info(self, element):
@@ -99,22 +94,14 @@ class RabbitMQPublisher(RabbitMQConnector):
         request_id = get_request_id()
         self.send_request_to_queue("getLastInfo", params, request_id)
 
-        while True:
-            response_dict = self.queue.get()
-            if request_id == response_dict["id"]:
-                return
+        get_response_and_check_id(self.queue, request_id)
 
 
     def exchange_profile(self, procedures ,response_id = None):
         if response_id == None:
             request_id = get_request_id()
             self.send_request_to_queue("getLastInfo", procedures, request_id)
-
-            while True:
-                response_dict = self.queue.get()
-                if request_id == response_dict["id"]:
-                    return
-
+            get_response_and_check_id(self.queue, request_id)
         else:
             self.send_response_to_queue(procedures, response_id)
 
@@ -238,3 +225,11 @@ def translate_hatohol_time_to_unix_time(hatohol_time):
 def optimize_server_procedures(valid_procedures_dict, procedures):
     for procedure in procedures:
         valid_procedures_dict[procedure] = True
+
+
+def get_response_and_check_id(message_queue, request_id):
+    # We should set time out in this loop condition.
+    while True:
+        response_dict = self.queue.get()
+        if request_id == response_dict["id"]:
+            return
