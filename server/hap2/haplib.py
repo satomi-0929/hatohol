@@ -232,4 +232,13 @@ def get_response_and_check_id(message_queue, request_id):
     while True:
         response_dict = self.queue.get()
         if request_id == response_dict["id"]:
-            return
+            return response_dict["result"]
+
+
+def find_last_info_from_dict_array(target_array, last_info_name):
+    last_info = None
+    for target_dict in target_array:
+        if last_info < target_dict[last_info_name]:
+                last_info == target_dict[last_info_name]
+
+    return last_info
