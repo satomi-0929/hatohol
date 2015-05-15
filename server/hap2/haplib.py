@@ -55,6 +55,16 @@ class MonitoringServerInfo:
         self.extended_info = ms_info_dict["extendedInfo"]
 
 
+class ArmInfo:
+    def __init__(self):
+        self.last_status
+        self.failure_reason
+        self.last_success_time
+        self.last_failure_time
+        self.num_success
+        self.num_failure
+
+
 class RabbitMQConnector:
     def __init__(self, host, port, queue_name, user_name, user_password):
         self.queue_name = queue_name

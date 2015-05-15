@@ -161,6 +161,10 @@ class HAPZabbixRabbitMQPublisher(haplib.RabbitMQPublisher):
             haplib.get_response_and_check_id(self.queue, request_id)
 
 
+    def update_arm_info(self):
+        print "Not implement"
+
+
     def routine_update(self):
         print "Not implement"
 
