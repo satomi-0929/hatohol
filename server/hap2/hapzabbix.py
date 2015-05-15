@@ -33,31 +33,36 @@ class HAPZabbixRabbitMQConsumer(haplib.RabbitMQConsumer, haplib PluginProcedures
         if valid_json_dict is None:
             return
 
-		eval("self." + valid_json_dict["method"])(valid_json_dict["params"],
-				                                  valid_json_dict["id"])
+        eval("self." + valid_json_dict["method"])(valid_json_dict["params"],
+                                                  valid_json_dict["id"])
 
 
     def exchangeProfile(self, params, request_id):
         haplib.optimize_server_procedures(SERVER_PROCEDURES, params)
         my_procedures = haplib.get_implement_procedures(HapZabbixProcedures)
-		self.exchange_profile(my_procedures, request_id)
+        self.exchange_profile(my_procedures, request_id)
 
 
-    def fetchItems(self):
-        print "Not implement"
+    def fetchItems(self, params, request_id):
+        self.send_response_to_queue("SUCCESS", request_id)
+        self.publisher.put_items(params["hostId"], params["fetchId"])
 
 
-    def fetchHistory(self):
-        print "Not implement"
+    def fetchHistory(self, params, request_id):
+        self.send_response_to_queue("SUCCESS", request_id)
+        self.publisher.put_history(params["itemId"], params["fetchId"])
 
 
-    def fetchTriggers(self):
-        print "Not implement"
+    def fetchTriggers(self, params, request_id):
+        self.send_response_to_queue("SUCCESS", request_id)
+        self.publisher.put_items(params["lastChangeTime"], params["hostId"],
+                                 params["fetchId"])
 
 
-    def fetchEvents(self):
-        print "Not implement"
-
+    def fetchEvents(self, params, request_id):
+        self.send_response_to_queue("SUCCESS", request_id)
+        self.publisher.put_items(params["lastInfo"], params["count"],
+                                 params["direction"], params["fetchId"])
 
 
 class HAPZabbixRabbitMQPublisher(haplib.RabbitMQPublisher):
