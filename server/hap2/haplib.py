@@ -108,7 +108,7 @@ class RabbitMQPublisher(RabbitMQConnector):
 
 
     def exchange_profile(self, procedures ,response_id = None):
-        if response_id == None:
+        if response_id is None:
             request_id = get_request_id()
             self.send_request_to_queue("exchangeProfile", procedures, request_id)
             get_response_and_check_id(self.queue, request_id)
