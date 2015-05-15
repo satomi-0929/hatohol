@@ -9,11 +9,38 @@ import argparse
 import haplib
 import zabbixapi
 
-class HapZabbixProcedures(haplib.PluginProcedures):
-    def exchangeProfile(self, params):
-        haplib.optimize_server_procedures(self.valid_procedures_of_server, params)
+class PreviousHostsInfo:
+    def __init__():
+        self.hosts = list()
+        self.host_groups = list()
+        self.host_group_membeship = list()
+
+
+class HAPZabbixRabbitMQConsumer(haplib.RabbitMQConsumer, haplib PluginProcedures):
+    def __init__(self, host, port, queue_name, user_name, user_password, queue):
+        RabbitMQConsumer.__init__(self, host, port, "c_" + queue_name, user_name,
+                                  user_password)
+        self.queue = queue
+        self.publisher = HAPZabbixRabbitMQPublisher(host, port,
+                                                    "p_" + queue_name,
+                                                    user_name, user_password,
+                                                    queue)
+
+    # basic_consume insert the following arguments to callback function.
+    # But I don't use other than body.
+    def callback_handler(ch, method, properties, body):
+        valid_json_dict = check_request(body)
+        if valid_json_dict is None:
+            return
+
+		eval("self." + valid_json_dict["method"])(valid_json_dict["params"],
+				                                  valid_json_dict["id"])
+
+
+    def exchangeProfile(self, params, request_id):
+        haplib.optimize_server_procedures(SERVER_PROCEDURES, params)
         my_procedures = haplib.get_implement_procedures(HapZabbixProcedures)
-        push_profile("response", my_procedures)
+		self.exchange_profile(my_procedures, request_id)
 
 
     def fetchItems(self):
@@ -31,21 +58,6 @@ class HapZabbixProcedures(haplib.PluginProcedures):
     def fetchEvents(self):
         print "Not implement"
 
-
-class PreviousHostsInfo:
-    def __init__():
-        self.hosts = list()
-        self.host_groups = list()
-        self.host_group_membeship = list()
-
-
-class HAPZabbixRabbitMQConsumer(haplib.RabbitMQConsumer):
-    def __init__(self, host, port, queue_name, user_name, user_password, queue):
-        RabbitMQConsumer.__init__(self, host, port, queue_name, user_name, user_password)
-        self.queue = queue
-
-    def callback_handler(self):
-        print "Not implement"
 
 
 class HAPZabbixRabbitMQPublisher(haplib.RabbitMQPublisher):
@@ -180,7 +192,7 @@ class HAPZabbixDaemon:
 
     def start(self):
         queue = multioprocessing.Queue()
-        consumer = HAPZabbixRabbitMQConsumer(self.host, self.port, "c_" + self.queue_name,
+        consumer = HAPZabbixRabbitMQConsumer(self.host, self.port, self.queue_name,
                                              self.user_name, self.user_password, queue)
         subprocess = multiprocessing.Process(target = consumer.start_receiving)
         subprocess.daemon = True
