@@ -7,18 +7,18 @@ import pika
 import multiprocessing
 import random
 
-SERVER_PROCEDURES = {"exchangeProfile":True,
-                     "getMonitoringServerInfo":True,
-                     "getLastInfo":True,
-                     "putItems":True,
-                     "putHistory":True,
-                     "updateHosts":True,
-                     "updateHostGroups":True,
-                     "updateHostGroupMembership":True,
-                     "updateTriggers":True,
-                     "updateEvents":True,
-                     "updateHostParent":True,
-                     "updateArmInfo":True}
+SERVER_PROCEDURES = {"exchangeProfile": True,
+                     "getMonitoringServerInfo": True,
+                     "getLastInfo": True,
+                     "putItems": True,
+                     "putHistory": True,
+                     "updateHosts": True,
+                     "updateHostGroups": True,
+                     "updateHostGroupMembership": True,
+                     "updateTriggers": True,
+                     "updateEvents": True,
+                     "updateHostParent": True,
+                     "updateArmInfo": True}
 
 
 class PluginProcedures:
@@ -69,27 +69,27 @@ class RabbitMQConnector:
     def __init__(self, host, port, queue_name, user_name, user_password):
         self.queue_name = queue_name
         credentials = pika.PlaneCredentials(user_name, user_password)
-        param = pika.ConnectionParameter(host = host, port = port, credentials = credentials)
+        param = pika.ConnectionParameter(host=host, port=port, credentials=credentials)
         connection = pika.BlockingConnenction(param)
         self.channel = connection.channel()
-        self.channel.queue_declare(queue = queue_name)
+        self.channel.queue_declare(queue=queue_name)
 
 
 class RabbitMQPublisher(RabbitMQConnector):
     def send_request_to_queue(procedure_name, params, request_id):
-        request = json.dumps({"jsonrpc": "2.0", "method":procedure_name,
+        request = json.dumps({"jsonrpc": "2.0", "method": procedure_name,
                               "params": params, "id": request_id})
-        self.channel.basic_publish(exchange = "",
-                                   routing_key = self.queue_name,
-                                   body = request)
+        self.channel.basic_publish(exchange="",
+                                   routing_key=self.queue_name,
+                                   body=request)
 
 
     def send_response_to_queue(result, response_id):
         response = json.dumps({"jsonrpc": "2.0", "result": result,
                                "id": request_id})
-        self.channel.basic_publish(exchange = "",
-                                   routing_key = self.queue_name,
-                                   body = response)
+        self.channel.basic_publish(exchange="",
+                                   routing_key=self.queue_name,
+                                   body=response)
 
 
     def get_monitoring_server_info(self):
@@ -107,7 +107,7 @@ class RabbitMQPublisher(RabbitMQConnector):
         get_response_and_check_id(self.queue, request_id)
 
 
-    def exchange_profile(self, procedures ,response_id = None):
+    def exchange_profile(self, procedures, response_id=None):
         if response_id is None:
             request_id = get_request_id()
             self.send_request_to_queue("exchangeProfile", procedures, request_id)
@@ -133,15 +133,15 @@ class RabbitMQConsumer(RabbitMQConnector):
 
     def start_receiving(self):
         self.channel.basic_consume(self.callback_handler,
-                                   queue = self.queue_name, no_ack = True)
+                                   queue=self.queue_name, no_ack=True)
         self.channel.start_consuming()
 
 
 def get_error_dict():
-    error_dict = {-32700: "Parse error" , -32600: "invalid Request",
+    error_dict = {-32700: "Parse error", -32600: "invalid Request",
                   -32601: "Method not found", -32602: "invalid params",
                   -32603: "Internal error"}
-    for num in range(-32000,-32100):
+    for num in range(-32000, -32100):
         error_dict[str(num)] = "Server error"
 
     return error_dict
@@ -178,7 +178,7 @@ def get_implement_procedures(class_name):
     procedures = ()
     modules = dir(eval(class_name))
     for module in modules:
-        if inspect.ismethod(eval(class_name + "." + module)) and eval("BaseProcedures." + module).im_func != eval(class_name + "." +module).im_func:
+        if inspect.ismethod(eval(class_name + "." + module)) and eval("BaseProcedures." + module).im_func != eval(class_name + "." + module).im_func:
             procedures = procedures + (module,)
 
     return procedures
@@ -198,7 +198,7 @@ def create_request_json(procedure_name, params):
 def create_error_json(error_code, req_id = "null"):
     error_dict = get_error_dictdd()
     #ToDo Create place
-    return '{"jsonrpc": "2.0", "error": {"code":' + error_code + ', "message":' + error_dict[error_code]+ '}, "id":' + req_id + '"}}'
+    return '{"jsonrpc": "2.0", "error": {"code":' + error_code + ', "message":' + error_dict[error_code] + '}, "id":' + req_id + '"}}'
 
 
 def get_request_id():
