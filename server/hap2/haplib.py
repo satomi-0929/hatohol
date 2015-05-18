@@ -76,6 +76,11 @@ class RabbitMQConnector:
 
 
 class RabbitMQPublisher(RabbitMQConnector):
+    def __init__(self, host, port, queue_name, user_name, user_password):
+        RabbitMQConnector.__init__(self, host, port, queue_name, user_name, user_password)
+        self.requested_ids = set()
+
+
     def send_request_to_queue(procedure_name, params, request_id):
         request = json.dumps({"jsonrpc": "2.0", "method": procedure_name,
                               "params": params, "id": request_id})
@@ -92,35 +97,11 @@ class RabbitMQPublisher(RabbitMQConnector):
                                    body=response)
 
 
-    def get_monitoring_server_info(self):
-        params = ""
-        request_id = get_request_id()
-        self.send_request_to_queue("getMonitoringServerInfo", params, request_id)
-        get_response_and_check_id(self.queue, request_id)
-
-
-    def get_last_info(self, element):
-        params = element
-        request_id = get_request_id()
-        self.send_request_to_queue("getLastInfo", params, request_id)
-
-        get_response_and_check_id(self.queue, request_id)
-
-
-    def exchange_profile(self, procedures, response_id=None):
-        if response_id is None:
-            request_id = get_request_id()
-            self.send_request_to_queue("exchangeProfile", procedures, request_id)
-            get_response_and_check_id(self.queue, request_id)
-        else:
-            self.send_response_to_queue(procedures, response_id)
-
-
 class RabbitMQConsumer(RabbitMQConnector):
     def __init__(self, host, port, queue_name, user_name, user_password):
         RabbitMQConnector.__init__(self, host, port, queue_name, user_name, user_password)
-        self.base_procedures = BaseProcedures()
-        self.procedures_instance_name = "self.base_procedures"
+        self.plugin_procedures = PluginProcedures()
+        self.procedures_instance_name = "self.plugin_procedures"
 
 
     def callback_handler(ch, method, properties, body):
@@ -178,21 +159,10 @@ def get_implement_procedures(class_name):
     procedures = ()
     modules = dir(eval(class_name))
     for module in modules:
-        if inspect.ismethod(eval(class_name + "." + module)) and eval("BaseProcedures." + module).im_func != eval(class_name + "." + module).im_func:
+        if inspect.ismethod(eval(class_name + "." + module)) and eval("PluginProcedures." + module).im_func != eval(class_name + "." + module).im_func:
             procedures = procedures + (module,)
 
     return procedures
-
-
-def create_request_json(procedure_name, params):
-    request_dict = {"jsonrpc": "2.0", "method": procedure_name, "params": params, "id": get_request_id()}
-    for param_key, param_value in params.items():
-        request_dict["params"][param_key] = param_value
-
-    return json.dumps(request_dict)
-
-
-#def create_response_json(req_id):
 
 
 def create_error_json(error_code, req_id = "null"):
@@ -201,8 +171,11 @@ def create_error_json(error_code, req_id = "null"):
     return '{"jsonrpc": "2.0", "error": {"code":' + error_code + ', "message":' + error_dict[error_code] + '}, "id":' + req_id + '"}}'
 
 
-def get_request_id():
-    return random.randint(1, 2048)
+def get_and_save_request_id(requested_ids):
+    request_id = random.randint(1,2048)
+    requested_ids.add(request_id)
+
+    return request_id
 
 
 def check_request(json_string):
@@ -235,14 +208,6 @@ def translate_hatohol_time_to_unix_time(hatohol_time):
 def optimize_server_procedures(valid_procedures_dict, procedures):
     for procedure in procedures:
         valid_procedures_dict[procedure] = True
-
-
-def get_response_and_check_id(message_queue, request_id):
-    # We should set time out in this loop condition.
-    while True:
-        response_dict = self.queue.get()
-        if request_id == response_dict["id"]:
-            return response_dict["result"]
 
 
 def find_last_info_from_dict_array(target_array, last_info_name):
