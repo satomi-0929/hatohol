@@ -74,6 +74,7 @@ class HAPZabbixRabbitMQPublisher(haplib.RabbitMQPublisher):
         self.api = zabbixapi.ZabbixAPI(self.ms_info)
         self.previous_hosts_info = PreviousHostsInfo()
         self.trigger_last_info = None
+        self.event_last_info = None
 
 
     def put_items(self, host_id = None, fetch_id = None):
@@ -147,7 +148,10 @@ class HAPZabbixRabbitMQPublisher(haplib.RabbitMQPublisher):
         haplib.get_response_and_check_id(self.queue, request_id)
 
 
-    def update_events(self, last_info, count = None, direction = "ASC", fetch_id = None):
+    def update_events(self, last_info=None, count=None, direction="ASC", fetch_id=None):
+        if last_info is None:
+            last_info = self.get_last_info("event")
+
         if direction == "ASC":
             event_id_from = last_info
             event_id_till = None
@@ -166,16 +170,19 @@ class HAPZabbixRabbitMQPublisher(haplib.RabbitMQPublisher):
             send_events = events[start: start + 1000]
             last_info = haplib.find_last_info_from_dict_array(send_events,
                                                               "eventId")
-            params = {"events": send_events, "lastInfo": last_info}
+            params = {"events": send_events, "lastInfo": last_info, "updateType": "UPDATE"}
 
             if fetch_id is not None:
                 params["fetchId"] = fetch_id
+
             if num < count - 1:
                 params["mayMoreFlag"] = True
 
             request_id = haplib.get_request_id()
             self.send_request_to_queue("updateTriggers", params, request_id)
             haplib.get_response_and_check_id(self.queue, request_id)
+
+        self.event_last_info = last_info
 
 
     def update_arm_info(self):
