@@ -213,7 +213,7 @@ class HAPBaseMainPlugin:
     def __init__(self, host, port, vhost, queue_name, user_name,
                  user_password, main_request_queue, ms_info=None):
         self.main_request_queue = main_request_queue
-        self.sender =  HAPBaseSender(host, port, vhost, queue_name, user_name,
+        self._sender = HAPBaseSender(host, port, vhost, queue_name, user_name,
                                      user_password,main_request_queue, ms_info)
         self.procedures = {"exchangeProfile": self.hap_exchange_profile,
                            "fetchItems": self.hap_fetch_items,
@@ -224,10 +224,16 @@ class HAPBaseMainPlugin:
         # I want to get its dynamically to to use function.
         self.implement_procedures = ["exchengeProfile"]
 
+    def get_sender(self):
+        return self._sender
+
+    def set_sender(self, sender):
+        return self._sender = sender
+
     def hap_exchange_profile(self, params, request_id):
         HAPUtils.optimize_server_procedures(SERVER_PROCEDURES, params["procedures"])
         #ToDo Output to log that is connect finish message with params["name"]
-        self.sender.exchange_profile(self.implement_procedures, request_id)
+        self._sender.exchange_profile(self.implement_procedures, request_id)
 
     def hap_fetch_items(self, params, request_id):
         pass
@@ -242,7 +248,7 @@ class HAPBaseMainPlugin:
         pass
 
     def hap_return_error(self, error_code, response_id):
-        self.sender.send_error_to_queue(error_code, response_id)
+        self._sender.send_error_to_queue(error_code, response_id)
 
     def get_request_loop(self):
         while True:
