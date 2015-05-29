@@ -287,14 +287,14 @@ class HAPUtils:
                                   message_dict["method"], implement_procedures)
         if isinstance(error_code, int):
             try:
-                return (error_code, message_dict["id"]))
+                return (error_code, message_dict["id"])
             except KeyError:
                 return (error_code, None)
 
         error_code = HAPUtils.check_argument_is_correct(message_dict["method"])
         if isinstance(error_code, int):
             try:
-                return (error_code, message_dict["id"]))
+                return (error_code, message_dict["id"])
             except KeyError:
                 return (error_code, None)
 

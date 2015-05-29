@@ -43,7 +43,7 @@ class HAPZabbixMainPlugin(HAPBaseMainPlugin):
                  ms_info=None):
         HAPBaseMainPlugin.__init__(self, host, port, vhost, queue_name,
                                    user_name, user_password, main_request_queue,
-                                   ms_info=None):
+                                   ms_info=None)
         self.sender = HAPZabbixSender(host, port, vhost, queue_name, user_name,
                                       user_password, main_response_queue,
                                       ms_info)
