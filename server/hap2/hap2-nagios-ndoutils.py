@@ -29,7 +29,7 @@ import argparse
 class HandledException:
     pass
 
-class NagiosNDOUtilsPoller(haplib.RabbitMQPublisher):
+class NagiosNDOUtilsPoller:
 
     def __init__(self):
         self._pollingInterval = 30

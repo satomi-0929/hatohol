@@ -143,6 +143,7 @@ class TestHaplib(unittest.TestCase):
         test_main_plugin = MainPluginForTest(self.test_queue)
         self.test_queue.put({"method":"exchangeProfile", "id":1, "params":{"procedures": ["exchangeProfile"], "name":"test_name"}})
         try:
+            test_main_plugin.get_sender().get_connector().set_finish_reply()
             test_main_plugin.get_request_loop()
         except Exception as exception:
             self.assertEquals("finish", exception)
@@ -163,13 +164,12 @@ class SenderForTest(haplib.HAPBaseSender):
 
     def __init__(self, test_queue, change_get_response_and_check_id_flag=False):
         self.sender_queue = test_queue
-        self.connector = ConnectorForTest(test_queue)
+        self.set_connector(ConnectorForTest(test_queue))
         self.requested_ids = set()
 
         if change_get_response_and_check_id_flag:
             def get_response_and_check_id(self):
                 return
-
 
 class ConnectorForTest(transporter.Transporter):
 
@@ -207,4 +207,4 @@ class ReceiverForTest(haplib.HAPBaseReceiver):
 class MainPluginForTest(haplib.HAPBaseMainPlugin):
 
     def __init__(self, test_queue):
-        self.sender = SenderForTest(test_queue, True)
+        self.set_sender(SenderForTest(test_queue, True))

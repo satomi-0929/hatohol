@@ -73,10 +73,10 @@ class HAPBaseSender:
                  user_password, sender_queue, ms_info=None):
         # Currentory, RabbitMQConnector only.
         #I want to add way of select connection to use argument.
-        self.connector = Factory.create(RabbitMQConnector)
-        self.connector.connect(broker=host, port=port, vhost=vhost,
-                               queue_name=queue_name, user_name=user_name,
-                               password=user_password)
+        self._connector = Factory.create(RabbitMQConnector)
+        self._connector.connect(broker=host, port=port, vhost=vhost,
+                                queue_name=queue_name, user_name=user_name,
+                                password=user_password)
         self.sender_queue = sender_queue
         self.requested_ids = set()
         if ms_info is None:
@@ -85,23 +85,29 @@ class HAPBaseSender:
         else:
             self.ms_info = ms_info
 
+    def get_connector(self):
+        return self._connector
+
+    def set_connector(self, connector):
+        self._connector = connector
+
     def send_request_to_queue(self, procedure_name, params, request_id):
         request = json.dumps({"jsonrpc": "2.0", "method": procedure_name,
                               "params": params, "id": request_id})
         self.sender_queue.put(self.requested_ids)
-        self.connector.call(request)
+        self._connector.call(request)
 
     def send_response_to_queue(self, result, response_id):
         response = json.dumps({"jsonrpc": "2.0", "result": result,
                                "id": response_id})
-        self.connector.reply(result)
+        self._connector.reply(result)
 
     def send_error_to_queue(self, error_code, response_id):
         response = json.dumps({"jsonrpc": "2.0",
                                "error": {"code": error_code,
                                          "message": ERROR_DICT[error_code]},
                                "id": response_id})
-        self.connector.reply(response)
+        self._connector.reply(response)
 
     def get_monitoring_server_info(self):
         params = ""
@@ -173,8 +179,8 @@ class HAPBaseReceiver:
 
         self.connector = Factory.create(RabbitMQConnector)
         self.connector.connect(broker=host, port=port, vhost=vhost,
-                               queue_name=queue_name, user_name=user_name,
-                               password=user_password)
+                                queue_name=queue_name, user_name=user_name,
+                                password=user_password)
         self.connector.set_receiver(self.message_manager)
 
     def message_manager(self, ch, body):
@@ -228,7 +234,7 @@ class HAPBaseMainPlugin:
         return self._sender
 
     def set_sender(self, sender):
-        return self._sender = sender
+        self._sender = sender
 
     def hap_exchange_profile(self, params, request_id):
         HAPUtils.optimize_server_procedures(SERVER_PROCEDURES, params["procedures"])
