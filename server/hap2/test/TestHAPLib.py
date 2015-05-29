@@ -30,18 +30,17 @@ class TestHaplib(unittest.TestCase):
 
     def test_send_request_to_queue(self):
         test_sender = SenderForTest(self.test_queue, True)
-        self.WheatherFunctionPasses(test_sender.send_request_to_queue,
-                                    "test_procedure_name", "test_param", 1)
+        self._assertNotRaises(test_sender.send_request_to_queue,
+                              "test_procedure_name", "test_param", 1)
 
     def test_send_response_to_queue(self):
         test_sender = SenderForTest(self.test_queue, True)
-        self.WheatherFunctionPasses(test_sender.send_response_to_queue,
-                                    "test_result", 1)
+        self._assertNotRaises(test_sender.send_response_to_queue,
+                              "test_result", 1)
 
     def test_send_error_to_queue(self):
         test_sender = SenderForTest(self.test_queue, True)
-        self.WheatherFunctionPasses(test_sender.send_error_to_queue,
-                                    -32700, 1)
+        self._assertNotRaises(test_sender.send_error_to_queue, -32700, 1)
 
     def test_get_response_and_check_id(self):
         test_sender = SenderForTest(self.test_queue)
@@ -64,28 +63,24 @@ class TestHaplib(unittest.TestCase):
 
     def test_get_monitoring_server_info(self):
         test_sender = SenderForTest(self.test_queue, True)
-        self.WheatherFunctionPasses(test_sender.get_monitoring_server_info)
+        self._assertNotRaises(test_sender.get_monitoring_server_info)
 
     def test_get_last_info(self):
         test_sender = SenderForTest(self.test_queue, True)
-        self.WheatherFunctionPasses(test_sender.get_last_info,
-                                    "test_element")
+        self._assertNotRaises(test_sender.get_last_info, "test_element")
 
     def test_exchange_profile_request(self):
         test_sender = SenderForTest(self.test_queue, True)
-        self.WheatherFunctionPasses(test_sender.exchange_profile,
-                                    "test_params")
+        self._assertNotRaises(test_sender.exchange_profile, "test_params")
 
     def test_exchange_profile_response(self):
         test_sender = SenderForTest(self.test_queue, True)
-        self.WheatherFunctionPasses(test_sender.exchange_profile,
-                                    "test_params", 1)
+        self._assertNotRaises(test_sender.exchange_profile, "test_params", 1)
 
     def test_udpate_arm_info(self):
         test_sender = SenderForTest(self.test_queue, True)
         test_arm_info = haplib.ArmInfo()
-        self.WheatherFunctionPasses(test_sender.update_arm_info,
-                                    test_arm_info)
+        self._assertNotRaises(test_sender.update_arm_info, test_arm_info)
 
 # The above tests is HAPBaseSender tests.
 # The following tests is HAPBaseReceiver tests.
@@ -95,8 +90,8 @@ class TestHaplib(unittest.TestCase):
         test_receiver.poller_queue.put(set[1])
         test_json_string = '{"id":1}'
         exact_json_dict = json.loads(test_json_string)
-        self.WheatherFunctionPasses(test_receiver.message_manager, None,
-                                    test_json_string)
+        self._assertNotRaises(test_receiver.message_manager, None,
+                              test_json_string)
         result = test_receiver.poller_queue.get()
 
         self.assertEquals(exact_json_dict, result)
@@ -106,8 +101,8 @@ class TestHaplib(unittest.TestCase):
         test_receiver.main_response_queue(set[1])
         test_json_string = '{"id":1}'
         exact_json_dict = json.loads(test_json_string)
-        self.WheatherFunctionPasses(test_receiver.message_manager, None,
-                                    test_json_string)
+        self._assertNotRaises(test_receiver.message_manager, None,
+                              test_json_string)
         result = test_receiver.main_response_queue.get()
 
         self.assertEquals(exact_json_dict, result)
@@ -117,8 +112,8 @@ class TestHaplib(unittest.TestCase):
         test_receiver.main_request_queue = multiprocessing.JoinableQueue()
         test_json_string = '{"id":1}'
         exact_json_dict = json.loads(test_json_string)
-        self.WheatherFunctionPasses(test_receiver.message_manager, None,
-                                    test_json_string)
+        self._assertNotRaises(test_receiver.message_manager, None,
+                              test_json_string)
         result = test_receiver.main_request_queue.get()
 
         self.assertEquals(exact_json_dict, result)
@@ -128,8 +123,8 @@ class TestHaplib(unittest.TestCase):
         test_receiver.main_request_queue = multiprocessing.JoinableQueue()
         test_json_string = '{"notification":"test"}'
         exact_json_dict = json.loads(test_json_string)
-        self.WheatherFunctionPasses(test_receiver.message_manager, None,
-                                    test_json_string)
+        self._assertNotRaises(test_receiver.message_manager, None,
+                              test_json_string)
         result = test_receiver.main_request_queue.get()
 
         self.assertEquals(exact_json_dict, result)
@@ -140,8 +135,8 @@ class TestHaplib(unittest.TestCase):
 
     def test_hap_exchange_profile(self):
         test_main_plugin = MainPluginForTest(self.test_queue)
-        self.WheatherFunctionPasses(test_main_plugin.hap_exchange_profile,
-                                    ["exchangeProfile",], 1)
+        self._assertNotRaises(test_main_plugin.hap_exchange_profile,
+                              ["exchangeProfile",], 1)
 
     def test_get_request_loop(self):
         test_main_plugin = MainPluginForTest(self.test_queue)
@@ -151,11 +146,11 @@ class TestHaplib(unittest.TestCase):
         except Exception as exception:
             self.assertEquals("finish", exception)
 
-    def WheatherFunctionPasses(self, func, *args, **kwargs):
+    def _assertNotRaises(self, func, *args, **kwargs):
         try:
             func(*args, **kwargs)
-        except Exception as exception:
-            print "Happened: " + str(exception)
+        except Exception:
+            raise
 
         if "exception" not in locals():
             exception = None
