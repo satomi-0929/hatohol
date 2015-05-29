@@ -175,6 +175,7 @@ class ConnectorForTest(transporter.Transporter):
 
     def __init__(self, test_queue):
         self._test_queue = test_queue
+        self._finish_reply = False
 
     def call(self, msg):
         self._test_queue.get()
@@ -184,10 +185,14 @@ class ConnectorForTest(transporter.Transporter):
 
     def reply(self, msg):
         # This raise is used in test_get_request_loop
-        raise Exception("finish")
+        if self._finish_reply:
+            raise Exception("finish")
 
     def set_receiver(self, receiver):
         return
+
+    def set_finish_reply(value=True):
+        self._finish_reply = value
 
 
 class ReceiverForTest(haplib.HAPBaseReceiver):
