@@ -20,6 +20,7 @@
 import unittest
 import multiprocessing
 import haplib
+import transporter
 from haplib import HAPUtils
 
 class TestHaplib(unittest.TestCase):
@@ -170,22 +171,22 @@ class SenderForTest(haplib.HAPBaseSender):
                 return
 
 
-class ConnectorForTest:
+class ConnectorForTest(transporter.Transporter):
 
     def __init__(self, test_queue):
-        self.test_queue = test_queue
+        self._test_queue = test_queue
 
-    def call(request):
-        self.test_queue.get()
-        self.test_queue.task_done()
-        self.test_queue.put({"id": 1, "result": None})
-        self.test_queue.task_done()
+    def call(self, msg):
+        self._test_queue.get()
+        self._test_queue.task_done()
+        self._test_queue.put({"id": 1, "result": None})
+        self._test_queue.task_done()
 
-    def reply(result):
+    def reply(self, msg):
         # This raise is used in test_get_request_loop
         raise Exception("finish")
 
-    def set_receiver(func):
+    def set_receiver(self, receiver):
         return
 
 
