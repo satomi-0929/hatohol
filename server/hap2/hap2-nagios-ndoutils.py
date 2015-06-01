@@ -20,11 +20,10 @@
 """
 
 import sys
-import stdhap2process
 import MySQLdb
-import logging
 import time
-import argparse
+import haplib
+import stdhap2process
 
 class HandledException:
     pass
@@ -74,24 +73,14 @@ class NagiosNDOUtilsPoller:
     def exchangeProfile(self):
         pass
 
-class HapNagiosNDOUtils(stdhap2process.StdHap2Process):
-    pass
+class HapNagiosNDOUtilsMain(haplib.HAPBaseMainPlugin):
+    def __init__(*args, **kwargs):
+        haplib.HAPBaseMainPlugin.__init__(*args, **kwargs)
 
-def setup_logging(args):
-    numeric_level = getattr(logging, args.loglevel.upper(), None)
-    if not isinstance(numeric_level, int):
-        raise ValueError('Invalid log level: %s' % loglevel)
-    logging.basicConfig(level=numeric_level)
+class HapNagiosNDOUtils(stdhap2process.StdHap2Process):
+    def create_main_plugin(self, *args, **kwargs):
+        return HapNagiosNDOUtilsMain(*args, **kwargs)
 
 if __name__ == '__main__':
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--log",
-                        dest="loglevel",
-                        choices=("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"),
-                        default="INFO")
-    args = parser.parse_args()
-    setup_logging(args)
-
-    poller = HapNagiosNDOUtils()
-    poller.run()
+    hap = HapNagiosNDOUtils()
+    hap.run()
