@@ -20,7 +20,7 @@
 """
 
 import sys
-import haplib
+import stdhap2process
 import MySQLdb
 import logging
 import time
@@ -74,6 +74,9 @@ class NagiosNDOUtilsPoller:
     def exchangeProfile(self):
         pass
 
+class HapNagiosNDOUtils(stdhap2process.StdHap2Process):
+    pass
+
 def setup_logging(args):
     numeric_level = getattr(logging, args.loglevel.upper(), None)
     if not isinstance(numeric_level, int):
@@ -90,5 +93,5 @@ if __name__ == '__main__':
     args = parser.parse_args()
     setup_logging(args)
 
-    poller = NagiosNDOUtilsPoller()
+    poller = HapNagiosNDOUtils()
     poller.run()
