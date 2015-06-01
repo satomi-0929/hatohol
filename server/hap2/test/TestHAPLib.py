@@ -191,7 +191,7 @@ class ConnectorForTest(transporter.Transporter):
     def set_receiver(self, receiver):
         return
 
-    def set_finish_reply(value=True):
+    def set_finish_reply(self, value=True):
         self._finish_reply = value
 
 
