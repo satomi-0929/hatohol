@@ -18,8 +18,28 @@
   <http://www.gnu.org/licenses/>.
 """
 
+import multiprocessing
+
 class StdHap2Process:
 
-    def run(self):
-        pass
+    def create_main_plugin(self):
+        assert False, "create_main_plugin shall be overriden"
 
+    """
+    An abstract method to create poller process.
+
+    @return
+    A class for poller. The class shall have run method.
+    If this method returns None, no poller process is created.
+    """
+    def create_poller(self):
+        return None
+
+    def run(self):
+        main_plugin = create_main_plugin()
+        poller = create_poller()
+        if poller is not None:
+            poll_process = multiprocessing.Process(target=poller.run)
+            poll_process.daemon = True
+            poll_process.start()
+        main_plugin.run()
