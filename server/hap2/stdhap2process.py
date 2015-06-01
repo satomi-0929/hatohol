@@ -21,10 +21,17 @@
 import multiprocessing
 import argparse
 import logging
+import time
+import sys
+import traceback
 
 class StdHap2Process:
 
+    DEFAULT_ERROR_SLEEP_TIME = 10
+
     def __init__(self):
+        self.__error_sleep_time = self.DEFAULT_ERROR_SLEEP_TIME
+
         parser = argparse.ArgumentParser()
 
         choices = ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")
@@ -77,6 +84,19 @@ class StdHap2Process:
         return args
 
     def run(self):
+        while True:
+            try:
+                self.__run()
+            except KeyboardInterrupt:
+                break
+            except:
+                (ty, val, tb) = sys.exc_info()
+                logging.error("type: " + str(ty) + ", value: " + str(val) + "\n"
+                              + traceback.format_exc())
+            logging.info("Rerun after %d sec" % self.__error_sleep_time)
+            time.sleep(self.__error_sleep_time)
+
+    def __run(self):
         args = self.__parse_argument()
 
         main_req_que = multiprocessing.JoinableQueue()
