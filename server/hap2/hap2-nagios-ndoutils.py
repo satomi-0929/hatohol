@@ -31,23 +31,23 @@ class HandledException:
 class NagiosNDOUtilsPoller:
 
     def __init__(self):
-        self._pollingInterval = 30
-        self._retryInterval = 10
-        self._db_server = "localhost"
-        self._db_user = "root"
-        self._db_passwd = ""
+        self.__pollingInterval = 30
+        self.__retryInterval = 10
+        self.__db_server = "localhost"
+        self.__db_user = "root"
+        self.__db_passwd = ""
 
     def run(self):
         while (True):
-            self._poll()
+            self.__poll()
 
-    def _poll(self):
+    def __poll(self):
         logging.debug("Start polling.")
         sleepTime = self._retryInterval
         try:
-            self._connect_ndoutils_db()
-            self._get_hosts()
-            sleepTime = self._pollingInterval
+            self.__connect_ndoutils_db()
+            self.__get_hosts()
+            sleepTime = self.__pollingInterval
         except HandledException:
             pass
         except:
@@ -58,7 +58,7 @@ class NagiosNDOUtilsPoller:
         #       from the queue.
         time.sleep(sleepTime)
 
-    def _connect_ndoutils_db(self):
+    def __connect_ndoutils_db(self):
         try:
             db = MySQLdb.connect(host=self._db_server,
                                  user=self._db_user, passwd=self._db_passwd)
@@ -67,10 +67,7 @@ class NagiosNDOUtilsPoller:
             logging.error('MySQL Error [%d]: %s' % (errno, msg))
             raise HandledException
 
-    def _get_hosts(self):
-        pass
-
-    def exchangeProfile(self):
+    def __get_hosts(self):
         pass
 
 class HapNagiosNDOUtilsMain(haplib.HAPBaseMainPlugin):
