@@ -103,7 +103,8 @@ class StdHap2Process:
         poller = self.create_poller()
         if poller is None:
             return
-        poll_process = multiprocessing.Process(target=poller.run)
+        logging.info("created poller plugin.")
+        poll_process = multiprocessing.Process(target=poller)
         poll_process.daemon = True
         poll_process.start()
 
