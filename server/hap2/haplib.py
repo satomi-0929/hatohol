@@ -340,8 +340,12 @@ class HAPUtils:
 
     @staticmethod
     def get_and_save_request_id(requested_ids):
-        request_id = random.randint(1, 2048)
-        requested_ids.add(request_id)
+        while True:
+            request_id = random.randint(1, 2048)
+            if request_id in requested_ids:
+                continue
+            requested_ids.add(request_id)
+            break
 
         return request_id
 
