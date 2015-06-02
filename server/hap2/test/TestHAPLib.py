@@ -230,11 +230,6 @@ class TestHaplib(unittest.TestCase):
         except Exception:
             raise
 
-        if "exception" not in locals():
-            exception = None
-
-        self.assertIsNone(exception)
-
 
 class SenderForTest(haplib.HAPBaseSender):
 
@@ -281,8 +276,6 @@ class ConnectorForTest(transporter.Transporter):
 
     def call(self, msg):
         self._test_queue.get()
-        self._test_queue.task_done()
-        self._test_queue.put({"id": 1, "result": None})
         self._test_queue.task_done()
 
     def reply(self, msg):
