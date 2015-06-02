@@ -280,13 +280,13 @@ class HAPBaseMainPlugin:
 class HAPUtils:
 
     PROCEDURES_ARGS = {"exchangeProfile": {"procedures":list(), "name": unicode()},
-                       "fetchItems": {"hostIds":list(), "fetchIds": unicode()},
+                       "fetchItems": {"hostIds":list(), "fetchId": unicode()},
                        "fetchHistory": {"hostId":unicode(),"itemId": unicode(),
-                                        "beginTime": unicode(), "entTime": unicode(),
-                                        "fetchIds": unicode()},
-                       "fetchTriggers": {"hostIds":list(), "fetchIds": unicode()},
+                                        "beginTime": unicode(), "endTime": unicode(),
+                                        "fetchId": unicode()},
+                       "fetchTriggers": {"hostIds":list(), "fetchId": unicode()},
                        "fetchEvents": {"lastInfo":unicode(),"count":int(),
-                                       "direction": unicode(),"fetchIds": unicode()}}
+                                       "direction": unicode(),"fetchId": unicode()}}
 
     # ToDo Currently, this method does not have notification filter.
     # If we implement notification procedures, should insert notification filter.
