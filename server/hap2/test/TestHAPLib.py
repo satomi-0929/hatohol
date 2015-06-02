@@ -26,7 +26,7 @@ import haplib
 import transporter
 from haplib import HAPUtils
 
-class TestHaplib(unittest.TestCase):
+class TestHAPLib(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -197,13 +197,13 @@ class TestHaplib(unittest.TestCase):
         result = HAPUtils.check_procedure_is_implemented("test_procedure_name", ["exchangeProfile"])
         self.assertEquals(result, -32601)
 
-    def check_argument_is_correct_success(self):
+    def test_check_argument_is_correct_success(self):
         test_json_string = '{"method": "exchangeProfile", "params": {"name":"test_name", "procedures":["exchangeProfile"]}}'
         test_json_dict = json.loads(test_json_string)
         result = HAPUtils.check_argument_is_correct(test_json_dict)
         self.assertIsNone(result)
 
-    def check_argument_is_correct_failure(self):
+    def test_check_argument_is_correct_failure(self):
         test_json_string = '{"method": "exchangeProfile", "params": {"name":"test_name", "procedures":"exchangeProfile"}}'
         test_json_dict = json.loads(test_json_string)
         result = HAPUtils.check_argument_is_correct(test_json_dict)
