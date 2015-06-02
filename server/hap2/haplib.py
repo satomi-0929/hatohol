@@ -70,50 +70,51 @@ class ArmInfo:
 
 
 class Sender:
-    def __init__(self, host, port, vhost, queue_name, user_name,
-                 user_password, sender_queue, ms_info=None):
+    def __init__(self, host, port, vhost, queue_name, user_name, user_password):
         # Currentory, RabbitMQConnector only.
-        #I want to add way of select connection to use argument.
-        self._connector = Factory.create(RabbitMQConnector)
-        self._connector.connect(broker=host, port=port, vhost=vhost,
-                                queue_name=queue_name, user_name=user_name,
-                                password=user_password)
-        self.sender_queue = sender_queue
-        self.requested_ids = set()
-        if ms_info is None:
-            ms_dict = self.get_monitoring_server_info()
-            self.ms_info = MonitoringServerInfo(ms_dict)
-        else:
-            self.ms_info = ms_info
+        # I want to add way of select connection to use argument.
+        self.__connector = Factory.create(RabbitMQConnector)
+        self.__connector.connect(broker=host, port=port, vhost=vhost,
+                                 queue_name=queue_name, user_name=user_name,
+                                 password=user_password)
 
-    def get_connector(self):
-        return self._connector
+    def get__connector(self):
+        return self.__connector
 
-    def set_connector(self, connector):
-        self._connector = connector
+    def set__connector(self, connector):
+        self.__connector = connector
 
     def request(self, procedure_name, params, request_id):
         request = json.dumps({"jsonrpc": "2.0", "method": procedure_name,
                               "params": params, "id": request_id})
         self.sender_queue.put(self.requested_ids)
-        self._connector.call(request)
+        self.__connector.call(request)
 
     def response(self, result, response_id):
         response = json.dumps({"jsonrpc": "2.0", "result": result,
                                "id": response_id})
-        self._connector.reply(result)
+        self.__connector.reply(result)
 
     def send_error_to_queue(self, error_code, response_id):
         response = json.dumps({"jsonrpc": "2.0",
                                "error": {"code": error_code,
                                          "message": ERROR_DICT[error_code]},
                                "id": response_id})
-        self._connector.reply(response)
+        self.__connector.reply(response)
+
+"""
+Issue HAPI requests and responses.
+Some APIs blocks unti
+"""
+class HapiProcessor:
+    def __init__(self, sender):
+        self.__sender = sender
+        self.__queue = multiprocessing.JoinableQueue()
 
     def get_monitoring_server_info(self):
         params = ""
-        request_id = HAPUtils.get_and_save_request_id(self.requested_ids)
-        self.request("getMonitoringServerInfo", params, request_id)
+        request_id = HAPUtils.generate_request_id()
+        self.__sender.request("getMonitoringServerInfo", params, request_id)
         return self.get_response_and_check_id(request_id)
 
     def get_last_info(self, element):
@@ -145,20 +146,23 @@ class Sender:
 
     def get_response_and_check_id(self, request_id):
         try:
-            self.sender_queue.join()
-            response_dict = self.sender_queue.get(True, 30)
-            self.sender_queue.task_done()
+            self.__queue.join()
+            response = self.__reply_queue.get(True, 30)
+            self.__queue.task_done()
 
-            if request_id == response_dict["id"]:
-                self.requested_ids.remove(request_id)
+            responsed_id = response["id"]
+            if responsed_id != request_id:
+                msg = "Got unexpected repsponse. req: " + str(request_id)
+                logging.error(msg)
+                raise Exception(msg)
+            return response["result"]
 
-                return response_dict["result"]
         except ValueError as exception:
             if str(exception) == "task_done() called too many times" and      \
                                             request_id == response_dict["id"]:
                 self.requested_ids.remove(request_id)
 
-                return response_dict["result"]
+                return response["result"]
             else:
                 return
         except Queue.Empty:
@@ -167,69 +171,57 @@ class Sender:
             return
 
 
-class HAPBaseReceiver:
+class DispatchableReceiver:
     def __init__(self, host, port, vhost, queue_name, user_name,
                  user_password, rpc_queue):
-        self.main_request_queue = main_request_queue
-        self.main_response_queue = main_response_queue
-        self.poller_queue = poller_queue
-        self.main_requested_ids = set()
-        self.poller_requested_ids = set()
+        self.__reply_queues = []
+        self.__connector = Factory.create(RabbitMQConnector)
+        self.__connector.connect(broker=host, port=port, vhost=vhost,
+                                 queue_name=queue_name, user_name=user_name,
+                                 password=user_password)
+        self.__rpc_queue = rpc_queue
+        self.__connector.set_receiver(self.__dispatch)
+        self.__id_res_q_map = {}
 
-        self.connector = Factory.create(RabbitMQConnector)
-        self.connector.connect(broker=host, port=port, vhost=vhost,
-                                queue_name=queue_name, user_name=user_name,
-                                password=user_password)
-        self.connector.set_receiver(self.message_manager)
-        #ToDo Will implement set_implement_procedures function.
-        #And I want to implement get_implement_procedures function to HAPUtils.
-        self.implement_procedures = ["exchangeProfile",
-                                     "fetchItems",
-                                     "fetchHistory",
-                                     "fetchTriggers",
-                                     "fetchEvents"]
+    def attach_reply_queue(self, queue):
+        self.__reply_queues.append(queue)
 
-    def message_manager(self, ch, body):
-        valid_request = HAPUtils.check_message(body, self.implement_procedures)
-        if isinstance(valid_request, tuple):
-            self.main_request_queue.put(valid_request)
+    def __dispatch(self, ch, body):
+        # TODO: Make it easier to see the result (OK or ERROR)
+        msg = HAPUtils.check_message(body)
+        if isinstance(msg, tuple):
+            self.__rpc_queue.put(msg)
             return
 
-        try:
-            self.poller_requested_ids = self.poller_queue.get(False)
-            self.poller_queue.task_done()
-        except Queue.Empty:
-            #ToDo print to logging
-            pass
+        # pick up new wait IDs
+        for queue in self.__reply_queues:
+            if queue.empty():
+                continue
+            wait_id = queue.get(False)
+            queue.task_done()
 
-        try:
-            self.main_requested_ids = self.main_response_queue.get(False)
-            self.main_requested_ids.task_done()
-        except Queue.Empty:
-            #ToDo print to logging
-            pass
+            if wait_id in self.__id_res_q_map:
+                logging.error("Ignored duplicated ID: " + str(wait_id))
+                continue
+            self.__id_res_q_map[wait_id] = queue
 
-        try:
-            if valid_request["id"] in self.poller_requested_ids:
-                self.poller_queue.put(valid_request)
-            elif valid_request["id"] in self.main_requested_ids:
-                self.main_response_queue.put(valid_request)
-            else:
-                self.main_request_queue.put(valid_request)
-        except KeyError:
-            #The following sentence is used in case of receive notification.
-            self.main_request_queue.put(valid_request)
+        # dispatch the received message
+        response_id = msg["id"]
+        target_queue = self.__id_res_q_map.get(response_id)
+        if target_queue is None:
+            target_queue = self.__rpc_queue
+        target_queue.put(msg)
 
     def __call__(self):
+        # TODO: handle exceptions
         self.__connector.run_receive_loop()
 
 
 class BaseMainPlugin:
-    def __init__(self, host, port, vhost, queue_name, user_name,
-                 user_password, ms_info=None):
+    def __init__(self, host, port, vhost, queue_name, user_name, user_password):
         self.__rpc_queue = multiprocessing.JoinableQueue()
         self.__sender = Sender(host, port, vhost, queue_name, user_name,
-                               user_password, ms_info)
+                               user_password)
         self.procedures = {"exchangeProfile": self.hap_exchange_profile,
                            "fetchItems": self.hap_fetch_items,
                            "fetchHistory": self.hap_fetch_history,
@@ -240,11 +232,12 @@ class BaseMainPlugin:
         self.implement_procedures = ["exchangeProfile"]
 
         # launch receiver process
-        receiver = HAPBaseReceiver(host, port, vhost, queue_name,
-                                   user_name, user_password, self.__rpc_queue)
+        receiver = DispatchableReceiver(host, port, vhost, queue_name,
+                                        user_name, user_password,
+                                        self.__rpc_queue)
         receiver_process = multiprocessing.Process(target=receiver)
-        receive_process.daemon = True
-        receive_process.start()
+        receiver_process.daemon = True
+        receiver_process.start()
 
     def get_sender(self):
         return self._sender
@@ -355,14 +348,8 @@ class HAPUtils:
         return
 
     @staticmethod
-    def get_and_save_request_id(requested_ids):
-        while True:
-            request_id = random.randint(1, 2048)
-            if request_id in requested_ids:
-                continue
-            requested_ids.add(request_id)
-            break
-
+    def generate_request_id():
+        request_id = random.randint(1, 2048)
         return request_id
 
     @staticmethod

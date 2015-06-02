@@ -70,6 +70,9 @@ class StdHap2Process:
     def on_parsed_argument(self, args):
         pass
 
+    def on_got_monitoring_server_info(self, ms_info):
+        pass
+
     def __setup_logging_level(self, args):
         numeric_level = getattr(logging, args.loglevel.upper(), None)
         if not isinstance(numeric_level, int):
@@ -115,4 +118,6 @@ class StdHap2Process:
                                               user_password=args.amqp_password)
         assert main_plugin is not None
         self.__launch_poller()
+        ms_info = main_plugin.get_monitoring_server_info()
+        self.on_got_monitoring_server_info(ms_info)
         main_plugin()
