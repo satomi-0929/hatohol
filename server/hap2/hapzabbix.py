@@ -59,7 +59,8 @@ class HAPZabbixMainPlugin(HAPBaseMainPlugin):
 
     def hap_fetch_history(self, params, request_id):
         self.sender.send_response_to_queue("SUCCESS", request_id)
-        self.sender.put_history(params["itemId"], params["fetchId"])
+        self.sender.put_history(params["itemId"], params["beginTime"],
+                                params["endTime"], params["fetchId"])
 
     def hap_fetch_triggers(self, params, request_id):
         self.sender.send_response_to_queue("SUCCESS", request_id)
@@ -92,9 +93,9 @@ class HAPZabbixSender(HAPBaseSender):
 
         self.get_response_and_check_id(request_id)
 
-    def put_history(self, item_id, fetch_id):
+    def put_history(self, item_id, begin_time, end_time, fetch_id):
         params = {"itemId": item_id,
-                  "histories": self.api.get_history(item_id),
+                  "histories": self.api.get_history(item_id, begin_time, end_time),
                   "fetchId": fetch_id}
 
         request_id = HAPUtils.get_and_save_request_id(self.requested_ids)
