@@ -151,6 +151,90 @@ class TestHaplib(unittest.TestCase):
         except Exception as exception:
             self.assertEquals("finish", exception)
 
+# The above tests is HAPBaseMainPlugin tests.
+# The following tests is HAPUtils tests.
+
+    def test_check_message_invalid_json(self):
+        test_message = "invalid_message"
+        result = HAPUtils.check_message(test_message, None)
+
+        self.assertEquals((-32700, None), result)
+
+    def test_check_message_not_implement(self):
+        test_message = '{"method": "test_procedure", "params": "test_params", "id": 1, "jsonrpc": "2.0"}'
+        result = HAPUtils.check_message(test_message, ["exchangeProfile"])
+
+        self.assertEquals((-32601, 1), result)
+
+    def test_check_message_invalid_argument(self):
+        test_message = '{"method": "exchangeProfile", "params": {"name":1, "procedures":"test"}, "id": 1, "jsonrpc": "2.0"}'
+        result = HAPUtils.check_message(test_message, ["exchangeProfile"])
+
+        self.assertEquals((-32602, 1), result)
+
+    def test_check_message_valid_json(self):
+        test_message = '{"method": "exchangeProfile", "params": {"name":"test_name", "procedures":["exchangeProfile"]}, "id": 1, "jsonrpc": "2.0"}'
+        result = HAPUtils.check_message(test_message, ["exchangeProfile"])
+
+        exact_dict = json.loads(test_message)
+        self.assertEquals(exact_dict,result)
+
+    def test_check_message_response(self):
+        test_message = '{"result":"test_result","id":1,"jsonrpc": "2.0"}'
+        result = HAPUtils.check_message(test_message, ["exchangeProfile"])
+
+        exact_dict = json.loads(test_message)
+        self.assertEquals(exact_dict,result)
+
+    def test_convert_string_to_dict_success(self):
+        test_json_string = '{"test_key":"test_value"}'
+
+        exact_result = json.loads(test_json_string)
+        unnesessary_result, result = HAPUtils.convert_string_to_dict(test_json_string)
+        self.assertEquals(result, exact_result)
+
+    def test_convert_string_to_dict_failure(self):
+        test_json_string = '{"test_key": test_value}'
+
+        exact_result = (-32700, None)
+        result = HAPUtils.convert_string_to_dict(test_json_string)
+        self.assertEquals(result, exact_result)
+
+    def test_check_procedures_is_implemented_success(self):
+        result = HAPUtils.check_procedure_is_implemented("exchangeProfile", ["exchangeProfile"])
+        self.assertIsNone(result)
+
+    def test_check_procedures_is_implemented_failure(self):
+        result = HAPUtils.check_procedure_is_implemented("test_procedure_name", ["exchangeProfile"])
+        self.assertEquals(result, -32601)
+
+    def check_argument_is_correct_success(self):
+        test_json_string = '{"method": "exchangeProfile", "params": {"name":"test_name", "procedures":["exchangeProfile"]}}'
+        test_json_dict = json.loads(test_json_string)
+        result = HAPUtils.check_argument_is_correct(test_json_dict)
+        self.assertIsNone(result)
+
+    def check_argument_is_correct_failure(self):
+        test_json_string = '{"method": "exchangeProfile", "params": {"name":"test_name", "procedures":"exchangeProfile"}}'
+        test_json_dict = json.loads(test_json_string)
+        result = HAPUtils.check_argument_is_correct(test_json_dict)
+        self.assertEquals(result, -32602)
+
+    def test_get_and_save_request_id(self):
+        test_ids = set([])
+        result = HAPUtils.get_and_save_request_id(test_ids)
+
+        self.assertTrue(0 <= result <=2048)
+        self.assertTrue(result in test_ids)
+
+    def test_translate_unit_time_to_hatohol_time(self):
+        result = HAPUtils.translate_unix_time_to_hatohol_time(0)
+        self.assertEquals(result, "19700101090000.000000")
+
+    def test_translate_hatohol_time_time_to_unix_time(self):
+        result = HAPUtils.translate_hatohol_time_to_unix_time("19700101090000.000000")
+        self.assertEquals(result, 0)
+
     def _assertNotRaises(self, func, *args, **kwargs):
         try:
             func(*args, **kwargs)
