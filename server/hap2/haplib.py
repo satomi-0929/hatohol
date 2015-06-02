@@ -184,7 +184,7 @@ class HAPBaseReceiver:
         self.implement_procedures = ["exchangeProfile"]
 
     def message_manager(self, ch, body):
-        valid_request = HAPUtils.check_message(body)
+        valid_request = HAPUtils.check_message(body, self.implement_procedures)
         if isinstance(valid_request, tuple):
             self.main_request_queue.put(valid_request)
             return
@@ -303,7 +303,7 @@ class HAPUtils:
             except KeyError:
                 return (error_code, None)
 
-        error_code = HAPUtils.check_argument_is_correct(message_dict["method"])
+        error_code = HAPUtils.check_argument_is_correct(message_dict)
         if isinstance(error_code, int):
             try:
                 return (error_code, message_dict["id"])
@@ -323,17 +323,17 @@ class HAPUtils:
 
     @staticmethod
     def check_procedure_is_implemented(procedure_name, implement_procedures):
-        if procedures_name in implement_procedures:
+        if procedure_name in implement_procedures:
             return
         else:
             return -32601
 
     @staticmethod
     def check_argument_is_correct(json_dict):
-        args_dict = HAPUtils.PROCEDURES_ARGS(json_dict["method"])
-        for arg_name, arg_value in json_dict["params"].itervalues():
+        args_dict = HAPUtils.PROCEDURES_ARGS[json_dict["method"]]
+        for arg_name, arg_value in json_dict["params"].iteritems():
             try:
-                if type(arg_dict[arg_name]) != type(arg_value):
+                if type(args_dict[arg_name]) != type(arg_value):
                     return -32602
             except KeyError:
                 return -32602
