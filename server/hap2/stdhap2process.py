@@ -61,7 +61,7 @@ class StdHap2Process:
     An abstract method to create poller process.
 
     @return
-    A class for poller. The class shall have run method.
+    A class for poller. The class shall be callable.
     If this method returns None, no poller process is created.
     """
     def create_poller(self):
@@ -83,7 +83,7 @@ class StdHap2Process:
         self.on_parsed_argument(args)
         return args
 
-    def run(self):
+    def __call__(self):
         while True:
             try:
                 self.__run()
@@ -96,21 +96,23 @@ class StdHap2Process:
             logging.info("Rerun after %d sec" % self.__error_sleep_time)
             time.sleep(self.__error_sleep_time)
 
+    def __launch_poller(self):
+        poller = self.create_poller()
+        if poller is None:
+            return
+        poll_process = multiprocessing.Process(target=poller.run)
+        poll_process.daemon = True
+        poll_process.start()
+
     def __run(self):
         args = self.__parse_argument()
 
-        main_req_que = multiprocessing.JoinableQueue()
         main_plugin = self.create_main_plugin(host=args.amqp_broker,
                                               port=args.amqp_port,
                                               vhost=args.amqp_vhost,
                                               queue_name=args.amqp_queue,
                                               user_name=args.amqp_user,
-                                              user_password=args.amqp_password,
-                                              main_request_queue=main_req_que)
+                                              user_password=args.amqp_password)
         assert main_plugin is not None
-        poller = self.create_poller()
-        if poller is not None:
-            poll_process = multiprocessing.Process(target=poller.run)
-            poll_process.daemon = True
-            poll_process.start()
-        main_plugin.run()
+        self.__launch_poller()
+        main_plugin()

@@ -26,6 +26,7 @@ import pika
 import random
 import Queue
 import logging
+import multiprocessing
 
 from transporter import Factory
 from rabbitmqconnector import RabbitMQConnector
@@ -168,8 +169,7 @@ class HAPBaseSender:
 
 class HAPBaseReceiver:
     def __init__(self, host, port, vhost, queue_name, user_name,
-                 user_password, poller_queue, main_request_queue,
-                 main_response_queue):
+                 user_password, rpc_queue):
         self.main_request_queue = main_request_queue
         self.main_response_queue = main_response_queue
         self.poller_queue = poller_queue
@@ -220,13 +220,16 @@ class HAPBaseReceiver:
             #The following sentence is used in case of receive notification.
             self.main_request_queue.put(valid_request)
 
+    def __call__(self):
+        self.__connector.run_receive_loop()
+
 
 class HAPBaseMainPlugin:
     def __init__(self, host, port, vhost, queue_name, user_name,
-                 user_password, main_request_queue, ms_info=None):
-        self.main_request_queue = main_request_queue
-        self._sender = HAPBaseSender(host, port, vhost, queue_name, user_name,
-                                     user_password,main_request_queue, ms_info)
+                 user_password, ms_info=None):
+        self.__rpc_queue = multiprocessing.JoinableQueue()
+        self.__sender = HAPBaseSender(host, port, vhost, queue_name, user_name,
+                                      user_password, ms_info)
         self.procedures = {"exchangeProfile": self.hap_exchange_profile,
                            "fetchItems": self.hap_fetch_items,
                            "fetchHistory": self.hap_fetch_history,
@@ -235,6 +238,13 @@ class HAPBaseMainPlugin:
         #ToDo Currently, implement_method is fixed.
         # I want to get its dynamically to to use function.
         self.implement_procedures = ["exchangeProfile"]
+
+        # launch receiver process
+        receiver = HAPBaseReceiver(host, port, vhost, queue_name,
+                                   user_name, user_password, self.__rpc_queue)
+        receiver_process = multiprocessing.Process(target=receiver)
+        receive_process.daemon = True
+        receive_process.start()
 
     def get_sender(self):
         return self._sender
@@ -262,9 +272,9 @@ class HAPBaseMainPlugin:
     def hap_return_error(self, error_code, response_id):
         self._sender.send_error_to_queue(error_code, response_id)
 
-    def get_request_loop(self):
+    def __call__(self):
         while True:
-            request = self.main_request_queue.get()
+            request = self.rpc_queue.get()
             try:
                 self.procedures[request["method"]](request["params"],
                                                    request["id"])

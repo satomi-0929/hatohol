@@ -37,7 +37,7 @@ class NagiosNDOUtilsPoller:
         self.__db_user = "root"
         self.__db_passwd = ""
 
-    def run(self):
+    def __call__(self):
         while (True):
             self.__poll()
 
@@ -80,4 +80,4 @@ class HapNagiosNDOUtils(stdhap2process.StdHap2Process):
 
 if __name__ == '__main__':
     hap = HapNagiosNDOUtils()
-    hap.run()
+    hap()
