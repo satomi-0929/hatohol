@@ -87,7 +87,6 @@ class Sender:
     def request(self, procedure_name, params, request_id):
         request = json.dumps({"jsonrpc": "2.0", "method": procedure_name,
                               "params": params, "id": request_id})
-        self.sender_queue.put(self.requested_ids)
         self.__connector.call(request)
 
     def response(self, result, response_id):
@@ -107,13 +106,18 @@ Issue HAPI requests and responses.
 Some APIs blocks unti
 """
 class HapiProcessor:
-    def __init__(self, sender):
+    def __init__(self, sender, component_code):
         self.__sender = sender
-        self.__queue = multiprocessing.JoinableQueue()
+        self.__reply_queue = multiprocessing.JoinableQueue()
+        self.__component_code = component_code
+
+    def get_reply_queue(self):
+        return self.__reply_queue
 
     def get_monitoring_server_info(self):
         params = ""
-        request_id = HAPUtils.generate_request_id()
+        request_id = HAPUtils.generate_request_id(self.__component_code)
+        self.__reply_queue.put(request_id)
         self.__sender.request("getMonitoringServerInfo", params, request_id)
         return self.get_response_and_check_id(request_id)
 
@@ -146,9 +150,9 @@ class HapiProcessor:
 
     def get_response_and_check_id(self, request_id):
         try:
-            self.__queue.join()
+            self.__reply_queue.join()
             response = self.__reply_queue.get(True, 30)
-            self.__queue.task_done()
+            self.__reply_queue.task_done()
 
             responsed_id = response["id"]
             if responsed_id != request_id:
@@ -193,7 +197,7 @@ class DispatchableReceiver:
             self.__rpc_queue.put(msg)
             return
 
-        # pick up new wait IDs
+        # collect newly arrived wait IDs
         for queue in self.__reply_queues:
             if queue.empty():
                 continue
@@ -205,7 +209,7 @@ class DispatchableReceiver:
                 continue
             self.__id_res_q_map[wait_id] = queue
 
-        # dispatch the received message
+        # dispatch the received message from the transport layer
         response_id = msg["id"]
         target_queue = self.__id_res_q_map.get(response_id)
         if target_queue is None:
@@ -217,11 +221,17 @@ class DispatchableReceiver:
         self.__connector.run_receive_loop()
 
 
-class BaseMainPlugin:
+class BaseMainPlugin(HapiProcessor):
+    __COMPONENT_CODE = 0x10
+
     def __init__(self, host, port, vhost, queue_name, user_name, user_password):
-        self.__rpc_queue = multiprocessing.JoinableQueue()
+        # TODO: consider if HapiProcessor has Sender instance
+        #       instread of this class
         self.__sender = Sender(host, port, vhost, queue_name, user_name,
                                user_password)
+        HapiProcessor.__init__(self, self.__sender, self.__COMPONENT_CODE)
+
+        self.__rpc_queue = multiprocessing.JoinableQueue()
         self.procedures = {"exchangeProfile": self.hap_exchange_profile,
                            "fetchItems": self.hap_fetch_items,
                            "fetchHistory": self.hap_fetch_history,
@@ -348,9 +358,12 @@ class HAPUtils:
         return
 
     @staticmethod
-    def generate_request_id():
-        request_id = random.randint(1, 2048)
-        return request_id
+    def generate_request_id(component_code):
+        assert component_code <= 0x7f, \
+               "Invalid component code: " + str(component_code)
+        req_id = random.randint(1, 0xffffff)
+        req_id |= component_code << 0x1000000
+        return req_id
 
     @staticmethod
     def translate_unix_time_to_hatohol_time(float_unix_time):
