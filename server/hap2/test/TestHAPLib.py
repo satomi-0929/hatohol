@@ -286,12 +286,17 @@ class ReceiverForTest(haplib.HAPBaseReceiver):
 
     def __init__(self):
         self.main_response_queue = multiprocessing.JoinableQueue()
+        self.main_request_queue = multiprocessing.JoinableQueue()
         self.poller_queue = multiprocessing.JoinableQueue()
         self.main_requested_ids = set()
         self.poller_requested_ids = set()
+        self.implement_procedures = ["exchangeProfile"]
 
 
 class MainPluginForTest(haplib.HAPBaseMainPlugin):
 
     def __init__(self, test_queue):
+        self.main_request_queue = test_queue
+        self.procedures = {"exchangeProfile": self.hap_exchange_profile}
+        self.implement_procedures = ["exchangeProfile"]
         self.set_sender(SenderForTest(test_queue, True))
