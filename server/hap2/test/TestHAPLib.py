@@ -224,6 +224,29 @@ class TestHaplib(unittest.TestCase):
         result = HAPUtils.translate_hatohol_time_to_unix_time("19700101090000.000000")
         self.assertEquals(result, 0)
 
+    def test_optimize_server_procedures(self):
+        test_procedures_dict = {"exchangeProfile": True, "updateTriggers": True}
+        test_procedures = ["exchangeProfile"]
+
+        HAPUtils.optimize_server_procedures(test_procedures_dict,
+                                            test_procedures)
+        self.assertTrue(test_procedures_dict["exchangeProfile"])
+        self.assertFalse(test_procedures_dict["updateTriggers"])
+
+    def test_find_last_info_from_dict_array(self):
+        test_target_array = [{"test_value": 3},
+                             {"test_value": 7},
+                             {"test_value": 9}]
+        result = HAPUtils.find_last_info_from_dict_array(test_target_array,
+                                                         "test_value")
+        self.assertEquals(result, 9)
+
+    def test_get_current_hatohol_time(self):
+        result = HAPUtils.get_current_hatohol_time()
+
+        self.assertEquals(len(result), 21)
+        self.assertEquals(result[15: 21], "000000")
+
     def _assertNotRaises(self, func, *args, **kwargs):
         try:
             func(*args, **kwargs)
