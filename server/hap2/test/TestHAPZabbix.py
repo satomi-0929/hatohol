@@ -23,6 +23,47 @@ import multiprocessing
 
 from TestHAPLib import ConnectorForTest
 
+class TestHAPZabbix(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.test_queue = multiprocessing.JoinableQueue()
+
+    def test_hap_fetch_items(self):
+        test_main_plugin = MainPluginForTest(self.test_queue)
+        test_params = {"hostId": "1", "fetchId": 1}
+        self._assertNotRaises(test_main_plugin.hap_fetch_items, test_params, 1)
+
+    def test_hap_fetch_history(self):
+        test_main_plugin = MainPluginForTest(self.test_queue)
+        test_params = {"itemId": "1", "beginTime": None, "endTime": None, "fetchId": 1}
+        self._assertNotRaises(test_main_plugin.hap_fetch_history, test_params, 1)
+
+    def test_hap_fetch_triggers(self):
+        test_main_plugin = MainPluginForTest(self.test_queue)
+        test_params = {"hostId": ["1"], "fetchId": 1}
+        self._assertNotRaises(test_main_plugin.hap_fetch_triggers, test_params, 1)
+
+    def test_hap_fetch_events(self):
+        test_main_plugin = MainPluginForTest(self.test_queue)
+        test_params = {"lastInfo": 1, "count": 10, "direction": "ASC",
+                       "fetchId": 1}
+        self._assertNotRaises(test_main_plugin.hap_fetch_events, test_params, 1)
+
+# The above tests is HAPZabbixMainPlugin tests.
+# The following tests is HAPZabbixPoller tests.
+
+    def test_update_lump(self):
+        test_poller = PollerForTest(self.test_queue)
+        self._assertNotRaises(test_poller.update_lump)
+
+    def _assertNotRaises(self, func, *args, **kwargs):
+        try:
+            func(*args, **kwargs)
+        except Exception:
+            raise
+
+
 class SenderForTest(hapzabbix.HAPZabbixSender):
 
     def __init__(self, test_queue):
