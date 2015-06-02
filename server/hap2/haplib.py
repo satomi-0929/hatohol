@@ -273,15 +273,14 @@ class HAPBaseMainPlugin:
 
 class HAPUtils:
 
-    PROCEDURES_ARGS = {"exchangeProfile": {"procedures":list(), "name": str()},
-                       "fetchItems": {"hostIds":list(), "fetchIds": str()},
-                       "fetchHistory": {"hostId":str(),"itemId": str(),
-                                        "beginTime": str(), "entTime": str(),
-                                        "fetchIds": str()},
-                       "fetchTriggers": {"hostIds":list(), "fetchIds": str()},
-                       "fetchEvents": {"lastInfo":str(),"count":int(),
-                                       "direction": str(),"fetchIds": str()}}
-
+    PROCEDURES_ARGS = {"exchangeProfile": {"procedures":list(), "name": unicode()},
+                       "fetchItems": {"hostIds":list(), "fetchIds": unicode()},
+                       "fetchHistory": {"hostId":unicode(),"itemId": unicode(),
+                                        "beginTime": unicode(), "entTime": unicode(),
+                                        "fetchIds": unicode()},
+                       "fetchTriggers": {"hostIds":list(), "fetchIds": unicode()},
+                       "fetchEvents": {"lastInfo":unicode(),"count":int(),
+                                       "direction": unicode(),"fetchIds": unicode()}}
     @staticmethod
     def check_message(message, implement_procedures):
         error_code, message_dict = HAPUtils.convert_string_to_dict(message)
