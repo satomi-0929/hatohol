@@ -22,3 +22,93 @@ import hapzabbix
 import multiprocessing
 
 from TestHAPLib import ConnectorForTest
+
+class SenderForTest(hapzabbix.HAPZabbixSender):
+
+    def __init__(self, test_queue):
+        self.set_connector(ConnectorForTest(test_queue))
+        self.sender_queue = test_queue
+        self.requested_ids = set([1])
+        self.api = APIForTest()
+        self.previous_hosts_info = hapzabbix.PreviousHostsInfo()
+        self.trigger_last_info = None
+        self.event_last_info = None
+
+    def get_response_and_check_id(self, request_id):
+        return
+
+
+class MainPluginForTest(hapzabbix.HAPZabbixMainPlugin):
+
+    def __init__(self, test_queue):
+        self.sender = SenderForTest(test_queue)
+        self.procedures = {"exchangeProfile": self.hap_exchange_profile,
+                           "fetchItems": self.hap_fetch_items,
+                           "fetchHistory": self.hap_fetch_history,
+                           "fetchTriggers": self.hap_fetch_triggers,
+                           "fetchEvents": self.hap_fetch_events}
+        self.implement_procedures = ["fetchItems","fetchHistory",
+                                     "fetchTriggers", "fetchEvents"]
+
+
+class PollerForTest(hapzabbix.HAPZabbixPoller):
+
+    def __init__(self, test_queue):
+        self.sender = SenderForTest(test_queue)
+
+
+class APIForTest:
+
+    def get_items(self, host_id=None):
+        test_items = [{"unit": "example unit",
+                       "itemGroupName": "example name",
+                       "lastValue": "example value",
+                       "lastValueTime": "20150410175500",
+                       "brief": "example brief",
+                       "hostId": "1",
+                       "itemId": "1"}]
+
+        return test_items
+
+    def get_history(self, item_id, begin_time, end_time):
+        test_history = [{"time": "20150323113000", "value": "exampleValue"},
+                        {"time": "20150323113012", "value": "exampleValue2"}]
+
+        return test_history
+
+    def get_hosts(self):
+        test_hosts = [{"hostId": "1", "hostName": "test_host_name"}]
+        test_host_group_membership = [{"hostId": "1", "groupIds": ["1", "2"]}]
+
+        return (test_hosts, test_host_group_membership)
+
+    def get_host_groups(self):
+        test_host_groups = [{"groupId": "1", "groupName": "test_group"}]
+
+        return test_host_groups
+
+    def get_triggers(self, request_since=None, host_id=None):
+        test_triggers = [{"extendedInfo": "sample extended info",
+                          "brief": "example brief",
+                          "hostName": "exampleName",
+                          "hostId": "1",
+                          "lastChangeTime": "20150323175800",
+                          "severity": "INFO",
+                          "status": "OK",
+                          "triggerId": "1"}]
+
+        return test_triggers
+
+    def get_events(self, event_id_from, event_id_till=None):
+        test_events = [{"extendedInfo": "sampel extended info",
+                        "brief": "example brief",
+                        "eventId": "1",
+                        "time": "20150323151300",
+                        "type": "GOOD",
+                        "triggerId": 2,
+                        "status": "OK",
+                        "severity": "INFO",
+                        "hostId": 3,
+                        "hostName": "exampleName"}]
+
+        return test_events
