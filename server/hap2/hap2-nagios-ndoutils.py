@@ -70,9 +70,9 @@ class NagiosNDOUtilsPoller:
     def __get_hosts(self):
         pass
 
-class HapNagiosNDOUtilsMain(haplib.HAPBaseMainPlugin):
+class HapNagiosNDOUtilsMain(haplib.BaseMainPlugin):
     def __init__(*args, **kwargs):
-        haplib.HAPBaseMainPlugin.__init__(*args, **kwargs)
+        haplib.BaseMainPlugin.__init__(*args, **kwargs)
 
 class HapNagiosNDOUtils(stdhap2process.StdHap2Process):
     def create_main_plugin(self, *args, **kwargs):

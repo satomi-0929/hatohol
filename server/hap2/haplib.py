@@ -69,7 +69,7 @@ class ArmInfo:
         self.num_failure = int()
 
 
-class HAPBaseSender:
+class Sender:
     def __init__(self, host, port, vhost, queue_name, user_name,
                  user_password, sender_queue, ms_info=None):
         # Currentory, RabbitMQConnector only.
@@ -92,13 +92,13 @@ class HAPBaseSender:
     def set_connector(self, connector):
         self._connector = connector
 
-    def send_request_to_queue(self, procedure_name, params, request_id):
+    def request(self, procedure_name, params, request_id):
         request = json.dumps({"jsonrpc": "2.0", "method": procedure_name,
                               "params": params, "id": request_id})
         self.sender_queue.put(self.requested_ids)
         self._connector.call(request)
 
-    def send_response_to_queue(self, result, response_id):
+    def response(self, result, response_id):
         response = json.dumps({"jsonrpc": "2.0", "result": result,
                                "id": response_id})
         self._connector.reply(result)
@@ -113,23 +113,23 @@ class HAPBaseSender:
     def get_monitoring_server_info(self):
         params = ""
         request_id = HAPUtils.get_and_save_request_id(self.requested_ids)
-        self.send_request_to_queue("getMonitoringServerInfo", params, request_id)
+        self.request("getMonitoringServerInfo", params, request_id)
         return self.get_response_and_check_id(request_id)
 
     def get_last_info(self, element):
         params = element
         request_id = HAPUtils.get_and_save_request_id(self.requested_ids)
-        self.send_request_to_queue("getLastInfo", params, request_id)
+        self.request("getLastInfo", params, request_id)
 
         return self.get_response_and_check_id(request_id)
 
     def exchange_profile(self, procedures, response_id=None):
         if response_id is None:
             request_id = HAPUtils.get_and_save_request_id(self.requested_ids)
-            self.send_request_to_queue("exchangeProfile", procedures, request_id)
+            self.request("exchangeProfile", procedures, request_id)
             self.get_response_and_check_id(request_id)
         else:
-            self.send_response_to_queue(procedures, response_id)
+            self.response(procedures, response_id)
 
     def update_arm_info(self, arm_info):
         params = {"lastStatus": arm_info.last_status,
@@ -140,7 +140,7 @@ class HAPBaseSender:
                   "numFailure": arm_info.num_failure}
 
         request_id = HAPUtils.get_and_save_request_id(self.requested_ids)
-        self.send_request_to_queue("updateArmInfo", params, request_id)
+        self.request("updateArmInfo", params, request_id)
         self.get_response_and_check_id(request_id)
 
     def get_response_and_check_id(self, request_id):
@@ -224,12 +224,12 @@ class HAPBaseReceiver:
         self.__connector.run_receive_loop()
 
 
-class HAPBaseMainPlugin:
+class BaseMainPlugin:
     def __init__(self, host, port, vhost, queue_name, user_name,
                  user_password, ms_info=None):
         self.__rpc_queue = multiprocessing.JoinableQueue()
-        self.__sender = HAPBaseSender(host, port, vhost, queue_name, user_name,
-                                      user_password, ms_info)
+        self.__sender = Sender(host, port, vhost, queue_name, user_name,
+                               user_password, ms_info)
         self.procedures = {"exchangeProfile": self.hap_exchange_profile,
                            "fetchItems": self.hap_fetch_items,
                            "fetchHistory": self.hap_fetch_history,
