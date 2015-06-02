@@ -259,7 +259,6 @@ class SenderForTest(haplib.HAPBaseSender):
     def __init__(self, test_queue, change_contents=False):
         self.sender_queue = test_queue
         self.set_connector(ConnectorForTest(test_queue))
-        self.requested_ids = set()
         self._change_contents = change_contents
         self.requested_ids = set([1])
 
