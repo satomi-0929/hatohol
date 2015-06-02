@@ -19,4 +19,6 @@
 """
 import unittest
 import hapzabbix
+import multiprocessing
 
+from TestHAPLib import ConnectorForTest
