@@ -111,7 +111,7 @@ class TestHAPLib(unittest.TestCase):
 
         self.assertEquals(exact_json_dict, result)
 
-    def test_message_manager_main_request(self):
+    def test_message_manager_exchange_profile(self):
         test_receiver = ReceiverForTest()
         test_json_string = '{"method":"exchangeProfile", "id":1, "params":{"procedures": ["exchangeProfile"], "name":"test_name"}}'
         exact_json_dict = json.loads(test_json_string)
@@ -120,6 +120,34 @@ class TestHAPLib(unittest.TestCase):
         result = test_receiver.main_request_queue.get()
 
         self.assertEquals(exact_json_dict, result)
+
+    def test_message_manager_fetch_items(self):
+        test_receiver = ReceiverForTest()
+        test_json_string = '{"method":"fetchItems", "id":1, "params":{"hostIds": ["1"], "fetchId":"1"}}'
+        self._assertNotRaises(test_receiver.message_manager, None,
+                              test_json_string)
+        test_receiver.main_request_queue.get()
+
+    def test_message_manager_fetch_history(self):
+        test_receiver = ReceiverForTest()
+        test_json_string = '{"method":"fetchHistory", "id":1, "params":{"hostId": "1", "fetchId": "1", "itemId": "1", "beginTime": "test_time", "endTime": "test_time"}}'
+        self._assertNotRaises(test_receiver.message_manager, None,
+                              test_json_string)
+        test_receiver.main_request_queue.get()
+
+    def test_message_manager_fetch_triggers(self):
+        test_receiver = ReceiverForTest()
+        test_json_string = '{"method":"fetchTriggers", "id":1, "params":{"hostIds": ["1"], "fetchId":"1"}}'
+        self._assertNotRaises(test_receiver.message_manager, None,
+                              test_json_string)
+        test_receiver.main_request_queue.get()
+
+    def test_message_manager_fetch_events(self):
+        test_receiver = ReceiverForTest()
+        test_json_string = '{"method":"fetchEvents", "id":1, "params":{"lastInfo": "test_info", "count": 1, "direction": "ASC", "fetchId":"1"}}'
+        self._assertNotRaises(test_receiver.message_manager, None,
+                              test_json_string)
+        test_receiver.main_request_queue.get()
 
 # The above tests is HAPBaseReceiver tests.
 # The following tests is HAPBaseMainPlugin tests.
@@ -320,7 +348,11 @@ class ReceiverForTest(haplib.HAPBaseReceiver):
         self.poller_queue = multiprocessing.JoinableQueue()
         self.main_requested_ids = set()
         self.poller_requested_ids = set()
-        self.implement_procedures = ["exchangeProfile"]
+        self.implement_procedures = ["exchangeProfile",
+                                     "fetchItems",
+                                     "fetchHistory",
+                                     "fetchTriggers",
+                                     "fetchEvents"]
 
 
 class MainPluginForTest(haplib.HAPBaseMainPlugin):
