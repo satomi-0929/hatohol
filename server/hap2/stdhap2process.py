@@ -117,7 +117,13 @@ class StdHap2Process:
                                               user_name=args.amqp_user,
                                               user_password=args.amqp_password)
         assert main_plugin is not None
-        self.__launch_poller()
+        logging.info("created main plugin.")
+
         ms_info = main_plugin.get_monitoring_server_info()
+        logging.info("got monitoring server info.")
         self.on_got_monitoring_server_info(ms_info)
+
+        self.__launch_poller()
+        logging.info("launched poller plugin.")
+
         main_plugin()

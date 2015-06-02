@@ -74,9 +74,10 @@ class Sender:
         # Currentory, RabbitMQConnector only.
         # I want to add way of select connection to use argument.
         self.__connector = Factory.create(RabbitMQConnector)
+        send_queue_name = queue_name + "-S"
         self.__connector.connect(broker=host, port=port, vhost=vhost,
-                                 queue_name=queue_name, user_name=user_name,
-                                 password=user_password)
+                                 queue_name=send_queue_name,
+                                 user_name=user_name, password=user_password)
 
     def get__connector(self):
         return self.__connector
@@ -103,7 +104,7 @@ class Sender:
 
 """
 Issue HAPI requests and responses.
-Some APIs blocks unti
+Some APIs blocks until the response is arrived.
 """
 class HapiProcessor:
     def __init__(self, sender, component_code):
@@ -119,20 +120,20 @@ class HapiProcessor:
         request_id = HAPUtils.generate_request_id(self.__component_code)
         self.__reply_queue.put(request_id)
         self.__sender.request("getMonitoringServerInfo", params, request_id)
-        return self.get_response_and_check_id(request_id)
+        return self.get_response(request_id)
 
     def get_last_info(self, element):
         params = element
         request_id = HAPUtils.get_and_save_request_id(self.requested_ids)
         self.request("getLastInfo", params, request_id)
 
-        return self.get_response_and_check_id(request_id)
+        return self.get_response(request_id)
 
     def exchange_profile(self, procedures, response_id=None):
         if response_id is None:
             request_id = HAPUtils.get_and_save_request_id(self.requested_ids)
             self.request("exchangeProfile", procedures, request_id)
-            self.get_response_and_check_id(request_id)
+            self.get_response(request_id)
         else:
             self.response(procedures, response_id)
 
@@ -146,9 +147,9 @@ class HapiProcessor:
 
         request_id = HAPUtils.get_and_save_request_id(self.requested_ids)
         self.request("updateArmInfo", params, request_id)
-        self.get_response_and_check_id(request_id)
+        self.get_response(request_id)
 
-    def get_response_and_check_id(self, request_id):
+    def get_response(self, request_id):
         try:
             self.__reply_queue.join()
             response = self.__reply_queue.get(True, 30)
@@ -180,8 +181,10 @@ class DispatchableReceiver:
                  user_password, rpc_queue):
         self.__reply_queues = []
         self.__connector = Factory.create(RabbitMQConnector)
+        recv_queue_name = queue_name + "-T"
         self.__connector.connect(broker=host, port=port, vhost=vhost,
-                                 queue_name=queue_name, user_name=user_name,
+                                 queue_name=recv_queue_name,
+                                 user_name=user_name,
                                  password=user_password)
         self.__rpc_queue = rpc_queue
         self.__connector.set_receiver(self.__dispatch)
@@ -192,7 +195,7 @@ class DispatchableReceiver:
 
     def __dispatch(self, ch, body):
         # TODO: Make it easier to see the result (OK or ERROR)
-        msg = HAPUtils.check_message(body)
+        msg = HAPUtils.check_message(body, {})
         if isinstance(msg, tuple):
             self.__rpc_queue.put(msg)
             return
@@ -277,7 +280,7 @@ class BaseMainPlugin(HapiProcessor):
 
     def __call__(self):
         while True:
-            request = self.rpc_queue.get()
+            request = self.__rpc_queue.get()
             try:
                 self.procedures[request["method"]](request["params"],
                                                    request["id"])
@@ -362,7 +365,7 @@ class HAPUtils:
         assert component_code <= 0x7f, \
                "Invalid component code: " + str(component_code)
         req_id = random.randint(1, 0xffffff)
-        req_id |= component_code << 0x1000000
+        req_id |= component_code << 24
         return req_id
 
     @staticmethod
