@@ -281,18 +281,17 @@ class HAPUtils:
                        "fetchTriggers": {"hostIds":list(), "fetchIds": unicode()},
                        "fetchEvents": {"lastInfo":unicode(),"count":int(),
                                        "direction": unicode(),"fetchIds": unicode()}}
+
+    # ToDo Currently, this method does not have notification filter.
+    # If we implement notification procedures, should insert notification filter.
     @staticmethod
     def check_message(message, implement_procedures):
         error_code, message_dict = HAPUtils.convert_string_to_dict(message)
         if isinstance(error_code, int):
             return (error_code, None)
 
-        try:
-            message_dict["result"]
-            message_dict["id"]
+        if message_dict.get("result") and message_dict.get("id"):
             return message_dict
-        except KeyError:
-            pass
 
         error_code = HAPUtils.check_procedure_is_implemented(               \
                                   message_dict["method"], implement_procedures)
