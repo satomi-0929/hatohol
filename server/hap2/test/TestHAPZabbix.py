@@ -57,6 +57,21 @@ class TestHAPZabbix(unittest.TestCase):
         test_poller = PollerForTest(self.test_queue)
         self._assertNotRaises(test_poller.update_lump)
 
+# The above tests is HAPZabbixPoller tests.
+# The following tests is HAPZabbixSender tests.
+
+    def test_put_items(self):
+
+    def test_put_history(self):
+
+    def test_update_hosts_and_host_group_membership(self):
+
+    def test_host_groups(self):
+
+    def test_update_triggers(self):
+
+    def test_update_events(self):
+
     def _assertNotRaises(self, func, *args, **kwargs):
         try:
             func(*args, **kwargs)
