@@ -181,7 +181,13 @@ class HAPBaseReceiver:
                                 queue_name=queue_name, user_name=user_name,
                                 password=user_password)
         self.connector.set_receiver(self.message_manager)
-        self.implement_procedures = ["exchangeProfile"]
+        #ToDo Will implement set_implement_procedures function.
+        #And I want to implement get_implement_procedures function to HAPUtils.
+        self.implement_procedures = ["exchangeProfile",
+                                     "fetchItems",
+                                     "fetchHistory",
+                                     "fetchTriggers",
+                                     "fetchEvents"]
 
     def message_manager(self, ch, body):
         valid_request = HAPUtils.check_message(body, self.implement_procedures)
