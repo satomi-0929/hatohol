@@ -91,8 +91,8 @@ class TestHaplib(unittest.TestCase):
 
     def test_message_manager_poller(self):
         test_receiver = ReceiverForTest()
-        test_receiver.poller_queue.put(set[1])
-        test_json_string = '{"id":1}'
+        test_receiver.poller_requested_ids.add(1)
+        test_json_string = '{"id": 1, "result": "SUCCESS"}'
         exact_json_dict = json.loads(test_json_string)
         self._assertNotRaises(test_receiver.message_manager, None,
                               test_json_string)
@@ -102,8 +102,8 @@ class TestHaplib(unittest.TestCase):
 
     def test_message_manager_main_response(self):
         test_receiver = ReceiverForTest()
-        test_receiver.main_response_queue(set[1])
-        test_json_string = '{"id":1}'
+        test_receiver.main_requested_ids.add(1)
+        test_json_string = '{"id": 1, "result": "SUCCESS"}'
         exact_json_dict = json.loads(test_json_string)
         self._assertNotRaises(test_receiver.message_manager, None,
                               test_json_string)
@@ -113,26 +113,13 @@ class TestHaplib(unittest.TestCase):
 
     def test_message_manager_main_request(self):
         test_receiver = ReceiverForTest()
-        test_receiver.main_request_queue = multiprocessing.JoinableQueue()
-        test_json_string = '{"id":1}'
+        test_json_string = '{"method":"exchangeProfile", "id":1, "params":{"procedures": ["exchangeProfile"], "name":"test_name"}}'
         exact_json_dict = json.loads(test_json_string)
         self._assertNotRaises(test_receiver.message_manager, None,
                               test_json_string)
         result = test_receiver.main_request_queue.get()
 
         self.assertEquals(exact_json_dict, result)
-
-    def test_message_manager_main_notification(self):
-        test_receiver = ReceiverForTest()
-        test_receiver.main_request_queue = multiprocessing.JoinableQueue()
-        test_json_string = '{"notification":"test"}'
-        exact_json_dict = json.loads(test_json_string)
-        self._assertNotRaises(test_receiver.message_manager, None,
-                              test_json_string)
-        result = test_receiver.main_request_queue.get()
-
-        self.assertEquals(exact_json_dict, result)
-
 
 # The above tests is HAPBaseReceiver tests.
 # The following tests is HAPBaseMainPlugin tests.
@@ -140,16 +127,18 @@ class TestHaplib(unittest.TestCase):
     def test_hap_exchange_profile(self):
         test_main_plugin = MainPluginForTest(self.test_queue)
         self._assertNotRaises(test_main_plugin.hap_exchange_profile,
-                              ["exchangeProfile",], 1)
+                              {"name":"test_name",
+                               "procedures":["exchangeProfile",]}, 1)
 
     def test_get_request_loop(self):
         test_main_plugin = MainPluginForTest(self.test_queue)
         self.test_queue.put({"method":"exchangeProfile", "id":1, "params":{"procedures": ["exchangeProfile"], "name":"test_name"}})
+        self.test_queue.task_done()
         try:
             test_main_plugin.get_sender().get_connector().set_finish_reply()
             test_main_plugin.get_request_loop()
         except Exception as exception:
-            self.assertEquals("finish", exception)
+            self.assertEquals("finish", str(exception))
 
 # The above tests is HAPBaseMainPlugin tests.
 # The following tests is HAPUtils tests.
@@ -249,14 +238,40 @@ class TestHaplib(unittest.TestCase):
 
 class SenderForTest(haplib.HAPBaseSender):
 
-    def __init__(self, test_queue, change_get_response_and_check_id_flag=False):
+    def __init__(self, test_queue, change_contents=False):
         self.sender_queue = test_queue
         self.set_connector(ConnectorForTest(test_queue))
         self.requested_ids = set()
+        self._change_contents = change_contents
+        self.requested_ids = set([1])
 
-        if change_get_response_and_check_id_flag:
-            def get_response_and_check_id(self):
+    def get_response_and_check_id(self, request_id):
+        if self._change_contents:
+            return
+        # The following else process same as HAPBaseSender one without timeout time.
+        else:
+            try:
+                self.sender_queue.join()
+                response_dict = self.sender_queue.get(True, 1)
+                self.sender_queue.task_done()
+
+                if request_id == response_dict["id"]:
+                    self.requested_ids.remove(request_id)
+
+                    return response_dict["result"]
+            except ValueError as exception:
+                if str(exception) == "task_done() called too many times" and          \
+                                                request_id == response_dict["id"]:
+                    self.requested_ids.remove(request_id)
+
+                    return response_dict["result"]
+                else:
+                    return
+            except Queue.Empty:
+                self.requested_ids.remove(request_id)
+                logging.error("Request failed")
                 return
+
 
 class ConnectorForTest(transporter.Transporter):
 
