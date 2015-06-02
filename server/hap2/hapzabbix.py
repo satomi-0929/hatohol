@@ -34,7 +34,7 @@ class PreviousHostsInfo:
     def __init__(self):
         self.hosts = list()
         self.host_groups = list()
-        self.host_group_membeship = list()
+        self.host_group_membership = list()
 
 
 class HAPZabbixMainPlugin(HAPBaseMainPlugin):
@@ -124,14 +124,14 @@ class HAPZabbixSender(HAPBaseSender):
             self.previous_hosts_info.host_group_membership = hg_membership
 
     def update_host_groups(self):
-        host_groups = api.get_host_groups()
+        host_groups = self.api.get_host_groups()
         host_groups.sort()
-        if self.previous_host_groups != host_groups:
+        if self.previous_hosts_info.host_groups != host_groups:
             hosts_params = {"updateType": "ALL", "hostGroups": host_groups}
             request_id = HAPUtils.get_and_save_request_id(self.requested_ids)
-            self.send_request_to_queue("updateHostGroups", params, request_id)
+            self.send_request_to_queue("updateHostGroups", hosts_params, request_id)
             self.get_response_and_check_id(request_id)
-            self.previous_host_groups = host_groups
+            self.previous_hosts_info.host_groups = host_groups
 
     def update_triggers(self, host_id=None, fetch_id=None):
         if self.trigger_last_info is None:
