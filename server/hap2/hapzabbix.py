@@ -64,8 +64,7 @@ class HAPZabbixMainPlugin(HAPBaseMainPlugin):
 
     def hap_fetch_triggers(self, params, request_id):
         self.sender.send_response_to_queue("SUCCESS", request_id)
-        self.sender.update_triggers(params["lastChangeTime"], params["hostId"],
-                                    params["fetchId"])
+        self.sender.update_triggers(params["hostId"], params["fetchId"])
 
     def hap_fetch_events(self, params, request_id):
         self.sender.send_response_to_queue("SUCCESS", request_id)
@@ -134,7 +133,7 @@ class HAPZabbixSender(HAPBaseSender):
             self.get_response_and_check_id(request_id)
             self.previous_host_groups = host_groups
 
-    def update_triggers(self, host_id=None, fetchId=None):
+    def update_triggers(self, host_id=None, fetch_id=None):
         if self.trigger_last_info is None:
             self.trigger_last_info = self.get_last_info("trigger")
 
