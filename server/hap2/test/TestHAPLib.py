@@ -57,7 +57,7 @@ class TestHaplib(unittest.TestCase):
         test_sender = SenderForTest(self.test_queue)
         exact_result = "test_result"
         test_id = 1
-        # Wait 30 minute
+        # Wait 30 seconds
         output = test_sender.get_response_and_check_id(test_id)
 
         self.assertIsNone(output)

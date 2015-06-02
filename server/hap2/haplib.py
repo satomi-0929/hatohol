@@ -181,6 +181,7 @@ class HAPBaseReceiver:
                                 queue_name=queue_name, user_name=user_name,
                                 password=user_password)
         self.connector.set_receiver(self.message_manager)
+        self.implement_procedures = ["exchangeProfile"]
 
     def message_manager(self, ch, body):
         valid_request = HAPUtils.check_message(body)
@@ -227,7 +228,7 @@ class HAPBaseMainPlugin:
                            "fetchEvents": self.hap_fetch_events}
         #ToDo Currently, implement_method is fixed.
         # I want to get its dynamically to to use function.
-        self.implement_procedures = ["exchengeProfile"]
+        self.implement_procedures = ["exchangeProfile"]
 
     def get_sender(self):
         return self._sender

@@ -47,7 +47,7 @@ class HAPZabbixMainPlugin(HAPBaseMainPlugin):
         self.sender = HAPZabbixSender(host, port, vhost, queue_name, user_name,
                                       user_password, main_response_queue,
                                       ms_info)
-        self.implement_procedures = ["exchengeProfile",
+        self.implement_procedures = ["exchangeProfile",
                                      "fetchItems",
                                      "fetchHistory",
                                      "fetchTriggers",
