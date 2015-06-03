@@ -54,15 +54,24 @@ class StdHap2Process:
     def get_argument_parser(self):
         return self.__parser
 
+    """
+    An abstract method to create main plugin process.
+    A sub class shall implement this method, or the default implementation
+    raises AssertionError.
+
+    @return
+    A main plugin. The class shall be callable.
+    """
     def create_main_plugin(self):
         assert False, "create_main_plugin shall be overriden"
 
     """
-    An abstract method to create poller process.
+    An abstract method to create poller plugin process.
 
     @return
-    A class for poller. The class shall be callable.
+    An poller plugin. The class shall be callable.
     If this method returns None, no poller process is created.
+    The default implementation returns None.
     """
     def create_poller(self):
         return None
