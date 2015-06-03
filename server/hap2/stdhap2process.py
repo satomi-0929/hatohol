@@ -101,6 +101,8 @@ class StdHap2Process:
                 self.__run()
             except KeyboardInterrupt:
                 break
+            except SystemExit:
+                break
             except:
                 (ty, val, tb) = sys.exc_info()
                 logging.error("type: " + str(ty) + ", value: " + str(val) + "\n"
