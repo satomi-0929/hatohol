@@ -28,15 +28,24 @@ class RabbitMQConnector(Transporter):
         Transporter.__init__(self)
         self._channel = None
 
-    def connect(self, broker, port, vhost, queue_name, user_name, password):
+    def setup(self, transporter_args):
         """
-        @param broker     A broker address.
-        @param port       A broker port.
-        @param vhost      A virtual host.
-        @param queue_name A queue name.
-        @param user_name  A user name.
-        @param password   A password.
+        @param transporter_args
+        The following keys shall be included.
+        - amqp_broker     A broker IP or FQDN.
+        - amqp_port       A broker port.
+        - amqp_vhost      A virtual host.
+        - amqp_queue      A queue name.
+        - amqp_user       A user name.
+        - amqp_password   A password.
         """
+
+        broker = transporter_args["amqp_broker"]
+        port = transporter_args["amqp_port"]
+        vhost = transporter_args["amqp_vhost"]
+        queue_name = transporter_args["amqp_queue"]
+        user_name = transporter_args["amqp_user"]
+        password = transporter_args["amqp_password"]
 
         logging.debug("Called stub method: call().");
         self._queue_name = queue_name

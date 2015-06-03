@@ -20,6 +20,10 @@
 
 import logging
 
+DIR_BOTH = 0
+DIR_SEND = 1
+DIR_RECV = 2
+
 class Transporter:
     """
     An abstract class for transportation of RPC messages for HAPI-2.0.
@@ -27,6 +31,21 @@ class Transporter:
 
     def __init__(self):
         self._receiver = None
+
+    def setup(self, transporter_args):
+        """
+        Setup a transporter. Some transporter implementation connects to
+        other side in this method.
+        @param transporter_args
+        A dictionary that contains parameters for the setup.
+        The following keys shall be included.
+        - class     A transporter class.
+        - direction A communication direction that is one of
+                    DIR_SEND, DIR_RECV, DIR_BOTH.
+        Other elements, that should be included in, are depending on
+        the implementation.
+        """
+        pass
 
     def call(self, msg):
         """
@@ -66,10 +85,15 @@ class Transporter:
 
 class Factory:
     @classmethod
-    def create(cls, transporter_class, *args, **kwargs):
+    def create(cls, transporter_args):
         """
         Create a transporter object.
-        @param name A name of the transporter.
+        @param transporter_args
+        A dictionary that contains parameters.
+        This method create an instance of transporter_args['class'].
+        Then call setup() of the crated object.
         @return A created transporter object.
         """
-        return transporter_class(*args, **kwargs)
+        obj = transporter_args['class']()
+        obj.setup(transporter_args)
+        return obj

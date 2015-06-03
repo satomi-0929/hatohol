@@ -28,7 +28,7 @@ import Queue
 import logging
 import multiprocessing
 
-from transporter import Factory
+import transporter
 from rabbitmqconnector import RabbitMQConnector
 
 SERVER_PROCEDURES = {"exchangeProfile": True,
@@ -68,16 +68,17 @@ class ArmInfo:
         self.num_success = int()
         self.num_failure = int()
 
+class RabbitMQHapiConnector(RabbitMQConnector):
+    def setup(self, transporter_args):
+        suffix_map = {transporter.DIR_SEND: "-S", transporter.DIR_RECV: "-T"}
+        suffix = suffix_map.get(transporter_args["direction"], "")
+        transporter_args["amqp_queue"] += suffix
+        RabbitMQConnector.setup(self, transporter_args)
 
 class Sender:
-    def __init__(self, host, port, vhost, queue_name, user_name, user_password):
-        # Currentory, RabbitMQConnector only.
-        # I want to add way of select connection to use argument.
-        self.__connector = Factory.create(RabbitMQConnector)
-        send_queue_name = queue_name + "-S"
-        self.__connector.connect(broker=host, port=port, vhost=vhost,
-                                 queue_name=send_queue_name,
-                                 user_name=user_name, password=user_password)
+    def __init__(self, transporter_args):
+        transporter_args["direction"] = transporter.DIR_SEND
+        self.__connector = transporter.Factory.create(transporter_args)
 
     def get__connector(self):
         return self.__connector
@@ -177,15 +178,10 @@ class HapiProcessor:
 
 
 class DispatchableReceiver:
-    def __init__(self, host, port, vhost, queue_name, user_name,
-                 user_password, rpc_queue):
+    def __init__(self, transporter_args, rpc_queue):
         self.__reply_queues = []
-        self.__connector = Factory.create(RabbitMQConnector)
-        recv_queue_name = queue_name + "-T"
-        self.__connector.connect(broker=host, port=port, vhost=vhost,
-                                 queue_name=recv_queue_name,
-                                 user_name=user_name,
-                                 password=user_password)
+        transporter_args["direction"] = transporter.DIR_RECV
+        self.__connector = transporter.Factory.create(transporter_args)
         self.__rpc_queue = rpc_queue
         self.__connector.set_receiver(self.__dispatch)
         self.__id_res_q_map = {}
@@ -225,13 +221,13 @@ class DispatchableReceiver:
 
 
 class BaseMainPlugin(HapiProcessor):
+
     __COMPONENT_CODE = 0x10
 
-    def __init__(self, host, port, vhost, queue_name, user_name, user_password):
+    def __init__(self, transporter_args):
         # TODO: consider if HapiProcessor has Sender instance
         #       instread of this class
-        self.__sender = Sender(host, port, vhost, queue_name, user_name,
-                               user_password)
+        self.__sender = Sender(transporter_args)
         HapiProcessor.__init__(self, self.__sender, self.__COMPONENT_CODE)
 
         self.__rpc_queue = multiprocessing.JoinableQueue()
@@ -245,9 +241,7 @@ class BaseMainPlugin(HapiProcessor):
         self.implement_procedures = ["exchangeProfile"]
 
         # launch receiver process
-        receiver = DispatchableReceiver(host, port, vhost, queue_name,
-                                        user_name, user_password,
-                                        self.__rpc_queue)
+        receiver = DispatchableReceiver(transporter_args, self.__rpc_queue)
         receiver_process = multiprocessing.Process(target=receiver)
         receiver_process.daemon = True
         receiver_process.start()

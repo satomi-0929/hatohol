@@ -24,6 +24,7 @@ import logging
 import time
 import sys
 import traceback
+import imp
 
 class StandardHap:
 
@@ -37,17 +38,18 @@ class StandardHap:
         choices = ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")
         parser.add_argument("--log", dest="loglevel", choices=choices,
                             default="INFO")
-        parser.add_argument("--amqp-broker", nargs=1, type=str,
+        parser.add_argument("--amqp-broker", type=str,
                             default="localhost")
-        parser.add_argument("--amqp-port", nargs=1, type=int, default=5672)
-        parser.add_argument("--amqp-vhost", nargs=1, type=str,
+        parser.add_argument("--amqp-port", type=int, default=5672)
+        parser.add_argument("--amqp-vhost", type=str,
                             default="hatohol")
-        parser.add_argument("--amqp-queue", nargs=1, type=str,
-                            default="stdhap2proccess-queue")
-        parser.add_argument("--amqp-user", nargs=1, type=str,
-                            default="hatohol")
-        parser.add_argument("--amqp-password", nargs=1, type=str,
-                            default="hatohol")
+        parser.add_argument("--amqp-queue", type=str,
+                            default="standardhap-queue")
+        parser.add_argument("--amqp-user", type=str, default="hatohol")
+        parser.add_argument("--amqp-password", type=str, default="hatohol")
+        parser.add_argument("--transporter", type=str,
+                            default="RabbitMQHapiConnector")
+        parser.add_argument("--transporter-module", type=str, default="haplib")
 
         self.__parser = parser
 
@@ -122,12 +124,20 @@ class StandardHap:
     def __run(self):
         args = self.__parse_argument()
 
-        main_plugin = self.create_main_plugin(host=args.amqp_broker,
-                                              port=args.amqp_port,
-                                              vhost=args.amqp_vhost,
-                                              queue_name=args.amqp_queue,
-                                              user_name=args.amqp_user,
-                                              user_password=args.amqp_password)
+        # load module for the transporter
+        (file, pathname, descr) = imp.find_module(args.transporter_module)
+        mod = imp.load_module("", file, pathname, descr)
+        transporter_class = eval("mod.%s" % args.transporter)
+
+        # TODO: arguments should be pushed by each transporter
+        transporter_args = {"class": transporter_class,
+                            "amqp_broker": args.amqp_broker,
+                            "amqp_port": args.amqp_port,
+                            "amqp_vhost": args.amqp_vhost,
+                            "amqp_queue": args.amqp_queue,
+                            "amqp_user": args.amqp_user,
+                            "amqp_password": args.amqp_password}
+        main_plugin = self.create_main_plugin(transporter_args)
         assert main_plugin is not None
         logging.info("created main plugin.")
 

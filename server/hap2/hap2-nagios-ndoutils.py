@@ -71,8 +71,8 @@ class NagiosNDOUtilsPoller:
         pass
 
 class HapNagiosNDOUtilsMain(haplib.BaseMainPlugin):
-    def __init__(*args, **kwargs):
-        haplib.BaseMainPlugin.__init__(*args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        haplib.BaseMainPlugin.__init__(self, *args, **kwargs)
 
 class HapNagiosNDOUtils(standardhap.StandardHap):
     def create_main_plugin(self, *args, **kwargs):
