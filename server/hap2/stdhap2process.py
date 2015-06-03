@@ -62,7 +62,7 @@ class StdHap2Process:
     @return
     A main plugin. The class shall be callable.
     """
-    def create_main_plugin(self):
+    def create_main_plugin(self, *args, **kwargs):
         assert False, "create_main_plugin shall be overriden"
 
     """
@@ -101,8 +101,8 @@ class StdHap2Process:
                 self.__run()
             except KeyboardInterrupt:
                 break
-            except SystemExit:
-                break
+            except (AssertionError, SystemExit):
+                raise
             except:
                 (ty, val, tb) = sys.exc_info()
                 logging.error("type: " + str(ty) + ", value: " + str(val) + "\n"
