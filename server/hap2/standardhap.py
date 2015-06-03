@@ -25,7 +25,7 @@ import time
 import sys
 import traceback
 
-class StdHap2Process:
+class StandardHap:
 
     DEFAULT_ERROR_SLEEP_TIME = 10
 

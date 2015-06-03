@@ -23,7 +23,7 @@ import sys
 import MySQLdb
 import time
 import haplib
-import stdhap2process
+import standardhap
 
 class HandledException:
     pass
@@ -74,7 +74,7 @@ class HapNagiosNDOUtilsMain(haplib.BaseMainPlugin):
     def __init__(*args, **kwargs):
         haplib.BaseMainPlugin.__init__(*args, **kwargs)
 
-class HapNagiosNDOUtils(stdhap2process.StdHap2Process):
+class HapNagiosNDOUtils(standardhap.StandardHap):
     def create_main_plugin(self, *args, **kwargs):
         return HapNagiosNDOUtilsMain(*args, **kwargs)
 
