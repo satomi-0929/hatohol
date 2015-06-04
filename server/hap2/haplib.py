@@ -242,6 +242,8 @@ class BaseMainPlugin(HapiProcessor):
 
         # launch receiver process
         receiver = DispatchableReceiver(transporter_args, self.__rpc_queue)
+        receiver.attach_reply_queue(self.get_reply_queue())
+
         receiver_process = multiprocessing.Process(target=receiver)
         receiver_process.daemon = True
         receiver_process.start()

@@ -123,6 +123,7 @@ class StandardHap:
 
     def __run(self):
         args = self.__parse_argument()
+        logging.info("Transporter: %s" % args.transporter)
 
         # load module for the transporter
         (file, pathname, descr) = imp.find_module(args.transporter_module)
