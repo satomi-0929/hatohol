@@ -121,20 +121,20 @@ class HapiProcessor:
         request_id = HAPUtils.generate_request_id(self.__component_code)
         self.__reply_queue.put(request_id)
         self.__sender.request("getMonitoringServerInfo", params, request_id)
-        return self.get_response(request_id)
+        return self.wait_response(request_id)
 
     def get_last_info(self, element):
         params = element
         request_id = HAPUtils.get_and_save_request_id(self.requested_ids)
         self.request("getLastInfo", params, request_id)
 
-        return self.get_response(request_id)
+        return self.wait_response(request_id)
 
     def exchange_profile(self, procedures, response_id=None):
         if response_id is None:
             request_id = HAPUtils.get_and_save_request_id(self.requested_ids)
             self.request("exchangeProfile", procedures, request_id)
-            self.get_response(request_id)
+            self.wait_response(request_id)
         else:
             self.response(procedures, response_id)
 
@@ -148,9 +148,9 @@ class HapiProcessor:
 
         request_id = HAPUtils.get_and_save_request_id(self.requested_ids)
         self.request("updateArmInfo", params, request_id)
-        self.get_response(request_id)
+        self.wait_response(request_id)
 
-    def get_response(self, request_id):
+    def wait_response(self, request_id):
         try:
             self.__reply_queue.join()
             response = self.__reply_queue.get(True, 30)

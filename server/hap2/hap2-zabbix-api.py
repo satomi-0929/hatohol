@@ -51,7 +51,7 @@ class CommonWorker:
     def request(self, procedure_name, params):
         raise NotImplementedError
 
-    def get_response(self, request_id):
+    def wait_response(self, request_id):
         raise NotImplementedError
 
     def put_items(self, host_id=None, fetch_id=None):
@@ -60,7 +60,7 @@ class CommonWorker:
             params["fetchId"] = fetch_id
 
         request_id = self.request("putItems", params)
-        self.get_response(request_id)
+        self.wait_response(request_id)
 
     def put_history(self, item_id, begin_time, end_time, fetch_id):
         params = {"itemId": item_id,
@@ -68,7 +68,7 @@ class CommonWorker:
                   "fetchId": fetch_id}
 
         request_id = self.request("putHistory", params)
-        self.get_response(request_id)
+        self.wait_response(request_id)
 
     def update_hosts_and_host_group_membership(self):
         hosts, hg_membership = self.__api.get_hosts()
@@ -76,7 +76,7 @@ class CommonWorker:
         if self.__previous_hosts_info.hosts != hosts:
             hosts_params = {"updateType": "ALL", "hosts": hosts}
             request_id = self.request("updateHosts", hosts_params)
-            self.get_response(request_id)
+            self.wait_response(request_id)
             self.__previous_hosts_info.hosts = hosts
 
         hg_membership.sort()
@@ -85,7 +85,7 @@ class CommonWorker:
                                     "hostGroupMembership": hg_membership}
             request_id = self.request("updateHostGroupMembership",
                                       hg_membership_params)
-            self.get_response(request_id)
+            self.wait_response(request_id)
             self.__previous_hosts_info.host_group_membership = hg_membership
 
     def update_host_groups(self):
@@ -94,7 +94,7 @@ class CommonWorker:
         if self.__previous_hosts_info.host_groups != host_groups:
             hosts_params = {"updateType": "ALL", "hostGroups": host_groups}
             request_id = self.request("updateHostGroups", hosts_params)
-            self.get_response(request_id)
+            self.wait_response(request_id)
             self.__previous_hosts_info.host_groups = host_groups
 
     def update_triggers(self, host_id=None, fetch_id=None):
@@ -113,7 +113,7 @@ class CommonWorker:
             params["updateType"] = "ALL"
 
         request_id = self.request("updateTriggers", params)
-        self.get_response(request_id)
+        self.wait_response(request_id)
 
     def update_events(self, last_info=None, count=None, direction="ASC",
                       fetch_id=None):
@@ -148,7 +148,7 @@ class CommonWorker:
                 params["mayMoreFlag"] = True
 
             request_id = self.request("updateTriggers", params)
-            self.get_response(request_id)
+            self.wait_response(request_id)
 
         self.event_last_info = last_info
 
