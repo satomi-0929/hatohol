@@ -25,9 +25,8 @@ import multiprocessing
 import Queue
 import argparse
 import time
-
-from haplib import HAPUtils, HAPBaseSender,HAPBaseReceiver, HAPBaseMainPlugin,\
-                   ArmInfo, SERVER_PROCEDURES
+from haplib import HAPUtils, ArmInfo
+import haplib
 import zabbixapi
 import standardhap
 
@@ -166,7 +165,7 @@ class Hap2ZabbixAPIPoller(haplib.HapiProcessor, ZabbixAPIConductor):
         self.update_events()
 
     def __call__(self):
-        arm_info = ArmInfo()
+        arm_info = haplib.ArmInfo()
         while True:
             sleep_time = self.sender.ms_info.polling_interval_sec
             try:
