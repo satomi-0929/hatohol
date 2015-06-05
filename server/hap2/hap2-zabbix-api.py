@@ -42,8 +42,8 @@ class ZabbixAPIConductor:
     def __init__(self):
         self.__api = None
         self.__previous_hosts_info = PreviousHostsInfo()
-        self.trigger_last_info = None
-        self.event_last_info = None
+        self.__trigger_last_info = None
+        self.__event_last_info = None
 
     def set_monitoring_server_info(self, ms_info)
         self.__api = zabbixapi.ZabbixAPI(ms_info)
@@ -98,15 +98,15 @@ class ZabbixAPIConductor:
             self.__previous_hosts_info.host_groups = host_groups
 
     def update_triggers(self, host_id=None, fetch_id=None):
-        if self.trigger_last_info is None:
-            self.trigger_last_info = self.get_last_info("trigger")
+        if self.__trigger_last_info is None:
+            self.__trigger_last_info = self.get_last_info("trigger")
 
-        triggers = self.__api.get_triggers(self.trigger_last_info, host_id)
-        self.trigger_last_info = \
+        triggers = self.__api.get_triggers(self.__trigger_last_info, host_id)
+        self.__trigger_last_info = \
             HAPUtils.find_last_info_from_dict_array(triggers, "lastChangeTime")
 
         params = {"triggers": triggers, "updateType": "UPDATED",
-                  "lastInfo": self.trigger_last_info}
+                  "lastInfo": self.__trigger_last_info}
 
         if fetch_id is not None:
             params["fetchId"] = fetch_id
@@ -150,7 +150,7 @@ class ZabbixAPIConductor:
             request_id = self.request("updateTriggers", params)
             self.wait_response(request_id)
 
-        self.event_last_info = last_info
+        self.__event_last_info = last_info
 
 
 class HAP2ZabbixAPIPoller:
