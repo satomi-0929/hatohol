@@ -25,7 +25,7 @@ import multiprocessing
 import Queue
 import argparse
 import time
-from haplib import HAPUtils, ArmInfo
+from haplib import HAPUtils
 import haplib
 import zabbixapi
 import standardhap
