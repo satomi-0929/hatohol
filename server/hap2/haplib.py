@@ -225,8 +225,6 @@ class BaseMainPlugin(HapiProcessor):
     __COMPONENT_CODE = 0x10
 
     def __init__(self, transporter_args):
-        # TODO: consider if HapiProcessor has Sender instance
-        #       instread of this class
         self.__sender = Sender(transporter_args)
         HapiProcessor.__init__(self, self.__sender, self.__COMPONENT_CODE)
 
@@ -249,15 +247,15 @@ class BaseMainPlugin(HapiProcessor):
         receiver_process.start()
 
     def get_sender(self):
-        return self._sender
+        return self.__sender
 
     def set_sender(self, sender):
-        self._sender = sender
+        self.__sender = sender
 
     def hap_exchange_profile(self, params, request_id):
         HAPUtils.optimize_server_procedures(SERVER_PROCEDURES, params["procedures"])
         #ToDo Output to log that is connect finish message with params["name"]
-        self._sender.exchange_profile(self.implement_procedures, request_id)
+        self.__sender.exchange_profile(self.implement_procedures, request_id)
 
     def hap_fetch_items(self, params, request_id):
         pass
@@ -272,7 +270,7 @@ class BaseMainPlugin(HapiProcessor):
         pass
 
     def hap_return_error(self, error_code, response_id):
-        self._sender.send_error_to_queue(error_code, response_id)
+        self.__sender.send_error_to_queue(error_code, response_id)
 
     def request_exit(self):
         """

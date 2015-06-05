@@ -153,29 +153,24 @@ class ZabbixAPIConductor:
         self.__event_last_info = last_info
 
 
-class HAP2ZabbixAPIPoller:
-    def __init__(self, transporter_args):
-        self.sender = HAPZabbixSender(host,
-                                      port,
-                                      vhost,
-                                      queue_name,
-                                      user_name,
-                                      user_password,
-                                      poller_queue)
+class Hap2ZabbixAPIPoller(haplib.HapiProcessor, ZabbixAPIConductor):
+    def __init__(self, __sender):
+        haplib.HapiProcessor.__init__(__sender)
+        ZabbixAPIConductor.__init__()
 
-    def update_lump(self):
-        self.sender.put_items()
-        self.sender.update_hosts_and_host_group_membership()
-        self.sender.update_host_groups()
-        self.sender.update_triggers()
-        self.sender.update_events()
+    def __update(self):
+        self.put_items()
+        self.update_hosts_and_host_group_membership()
+        self.update_host_groups()
+        self.update_triggers()
+        self.update_events()
 
     def __call__(self):
         arm_info = ArmInfo()
         while True:
             sleep_time = self.sender.ms_info.polling_interval_sec
             try:
-                self.update_lump()
+                self.__update()
                 arm_info.last_status = "OK"
                 arm_info.failure_reason = ""
                 arm_info.last_success_time = HAPUtils.get_current_hatohol_time()
@@ -188,12 +183,13 @@ class HAP2ZabbixAPIPoller:
                 arm_info.failure_time = HAPUtils.get_current_hatohol_time()
                 arm_info.num_failure += 1
 
-            self.sender.update_arm_info(arm_info)
+            self.update_arm_info(arm_info)
             time.sleep(sleep_time)
 
 class Hap2ZabbixAPIMain(haplib.BaseMainPlugin, ZabbixAPIConductor):
     def __init__(self, *args, **kwargs):
-        BaseMainPlugin.__init__(self, *args, **kwargs):
+        BaseMainPlugin.__init__(self, transpoerter_args)
+        ZabbixAPIConductor.__init__()
         self.implement_procedures = ["exchangeProfile",
                                      "fetchItems",
                                      "fetchHistory",

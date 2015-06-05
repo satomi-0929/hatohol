@@ -79,7 +79,7 @@ class StandardHap:
     If this method returns None, no poller process is created.
     The default implementation returns None.
     """
-    def create_poller(self):
+    def create_poller(self, sender):
         return None
 
     def on_parsed_argument(self, args):
@@ -118,8 +118,8 @@ class StandardHap:
             logging.info("Rerun after %d sec" % self.__error_sleep_time)
             time.sleep(self.__error_sleep_time)
 
-    def __launch_poller(self, transporter_args):
-        poller = self.create_poller(transporter_args)
+    def __launch_poller(self, sender):
+        poller = self.create_poller(sender)
         if poller is None:
             return
         logging.info("created poller plugin.")
@@ -151,7 +151,7 @@ class StandardHap:
         logging.info("got monitoring server info.")
         self.on_got_monitoring_server_info(ms_info)
 
-        self.__launch_poller(transporter_args)
+        self.__launch_poller(self.__main_plugin.get_sender())
         logging.info("launched poller plugin.")
 
         self.__main_plugin()
