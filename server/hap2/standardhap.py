@@ -52,9 +52,13 @@ class StandardHap:
         parser.add_argument("--transporter-module", type=str, default="haplib")
 
         self.__parser = parser
+        self.__main_plugin = None
 
     def get_argument_parser(self):
         return self.__parser
+
+    def get_main_plugin(self):
+        return self.__main_plugin
 
     """
     An abstract method to create main plugin process.
@@ -65,7 +69,7 @@ class StandardHap:
     A main plugin. The class shall be callable.
     """
     def create_main_plugin(self, *args, **kwargs):
-        assert False, "create_main_plugin shall be overriden"
+        raise NotImplementedError
 
     """
     An abstract method to create poller plugin process.
@@ -114,8 +118,8 @@ class StandardHap:
             logging.info("Rerun after %d sec" % self.__error_sleep_time)
             time.sleep(self.__error_sleep_time)
 
-    def __launch_poller(self):
-        poller = self.create_poller()
+    def __launch_poller(self, transporter_args):
+        poller = self.create_poller(transporter_args)
         if poller is None:
             return
         logging.info("created poller plugin.")
@@ -140,15 +144,14 @@ class StandardHap:
                             "amqp_queue": args.amqp_queue,
                             "amqp_user": args.amqp_user,
                             "amqp_password": args.amqp_password}
-        main_plugin = self.create_main_plugin(transporter_args)
-        assert main_plugin is not None
+        self.__main_plugin = self.create_main_plugin(transporter_args)
         logging.info("created main plugin.")
 
-        ms_info = main_plugin.get_monitoring_server_info()
+        ms_info = self.__main_plugin.get_monitoring_server_info()
         logging.info("got monitoring server info.")
         self.on_got_monitoring_server_info(ms_info)
 
-        self.__launch_poller()
+        self.__launch_poller(transporter_args)
         logging.info("launched poller plugin.")
 
-        main_plugin()
+        self.__main_plugin()
