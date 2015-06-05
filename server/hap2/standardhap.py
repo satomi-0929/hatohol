@@ -144,7 +144,7 @@ class StandardHap:
                             "amqp_queue": args.amqp_queue,
                             "amqp_user": args.amqp_user,
                             "amqp_password": args.amqp_password}
-        self.__main_plugin = self.create_main_plugin(transporter_args)
+        self.__main_plugin = self.create_main_plugin(transporter_args=transporter_args)
         logging.info("created main plugin.")
 
         ms_info = self.__main_plugin.get_monitoring_server_info()

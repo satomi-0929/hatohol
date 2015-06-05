@@ -44,7 +44,7 @@ class ZabbixAPIConductor:
         self.__trigger_last_info = None
         self.__event_last_info = None
 
-    def set_monitoring_server_info(self, ms_info)
+    def set_monitoring_server_info(self, ms_info):
         self.__api = zabbixapi.ZabbixAPI(ms_info)
 
     def request(self, procedure_name, params):
@@ -154,8 +154,8 @@ class ZabbixAPIConductor:
 
 class Hap2ZabbixAPIPoller(haplib.HapiProcessor, ZabbixAPIConductor):
     def __init__(self, __sender):
-        haplib.HapiProcessor.__init__(__sender)
-        ZabbixAPIConductor.__init__()
+        haplib.HapiProcessor.__init__(self, __sender)
+        ZabbixAPIConductor.__init__(self)
 
     def __update(self):
         self.put_items()
@@ -187,8 +187,8 @@ class Hap2ZabbixAPIPoller(haplib.HapiProcessor, ZabbixAPIConductor):
 
 class Hap2ZabbixAPIMain(haplib.BaseMainPlugin, ZabbixAPIConductor):
     def __init__(self, *args, **kwargs):
-        BaseMainPlugin.__init__(self, transpoerter_args)
-        ZabbixAPIConductor.__init__()
+        haplib.BaseMainPlugin.__init__(self, kwargs["transporter_args"])
+        ZabbixAPIConductor.__init__(self)
         self.implement_procedures = ["exchangeProfile",
                                      "fetchItems",
                                      "fetchHistory",
