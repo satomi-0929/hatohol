@@ -29,6 +29,7 @@ import time
 from haplib import HAPUtils, HAPBaseSender,HAPBaseReceiver, HAPBaseMainPlugin,\
                    ArmInfo, SERVER_PROCEDURES
 import zabbixapi
+import standardhap
 
 class PreviousHostsInfo:
     def __init__(self):
@@ -37,108 +38,71 @@ class PreviousHostsInfo:
         self.host_group_membership = list()
 
 
-class HAPZabbixMainPlugin(HAPBaseMainPlugin):
-    def __init__(self, host, port, vhost, queue_name, user_name,
-                 user_password, main_request_queue, main_response_queue,
-                 ms_info=None):
-        HAPBaseMainPlugin.__init__(self, host, port, vhost, queue_name,
-                                   user_name, user_password, main_request_queue,
-                                   ms_info=None)
-        self.sender = HAPZabbixSender(host, port, vhost, queue_name, user_name,
-                                      user_password, main_response_queue,
-                                      ms_info)
-        self.implement_procedures = ["exchangeProfile",
-                                     "fetchItems",
-                                     "fetchHistory",
-                                     "fetchTriggers",
-                                     "fetchEvents"]
-
-    def hap_fetch_items(self, params, request_id):
-        self.sender.send_response_to_queue("SUCCESS", request_id)
-        self.sender.put_items(params["hostId"], params["fetchId"])
-
-    def hap_fetch_history(self, params, request_id):
-        self.sender.send_response_to_queue("SUCCESS", request_id)
-        self.sender.put_history(params["itemId"], params["beginTime"],
-                                params["endTime"], params["fetchId"])
-
-    def hap_fetch_triggers(self, params, request_id):
-        self.sender.send_response_to_queue("SUCCESS", request_id)
-        self.sender.update_triggers(params["hostId"], params["fetchId"])
-
-    def hap_fetch_events(self, params, request_id):
-        self.sender.send_response_to_queue("SUCCESS", request_id)
-        self.sender.update_events(params["lastInfo"], params["count"],
-                                  params["direction"], params["fetchId"])
-
-
-class HAPZabbixSender(HAPBaseSender):
-    def __init__(self, host, port, vhost, queue_name, user_name,
-                 user_password, sender_queue, ms_info=None):
-        HAPBaseSender.__init__(self, host, port, vhost, queue_name, user_name,
-                               user_password, sender_queue, ms_info)
-        self.api = zabbixapi.ZabbixAPI(self.ms_info)
-        self.previous_hosts_info = PreviousHostsInfo()
+class CommonWorker:
+    def __init__(self):
+        self.__api = None
+        self.__previous_hosts_info = PreviousHostsInfo()
         self.trigger_last_info = None
         self.event_last_info = None
 
+    def set_monitoring_server_info(self, ms_info)
+        self.__api = zabbixapi.ZabbixAPI(ms_info)
+
+    def request(self, procedure_name, params):
+        raise NotImplementedError
+
+    def get_response(self, request_id):
+        raise NotImplementedError
+
     def put_items(self, host_id=None, fetch_id=None):
-        params = {"items": self.api.get_items(host_id)}
+        params = {"items": self.__api.get_items(host_id)}
         if fetch_id is not None:
             params["fetchId"] = fetch_id
 
-        request_id = HAPUtils.get_and_save_request_id(self.requested_ids)
-        self.send_request_to_queue("putItems", params, request_id)
-
-        self.get_response_and_check_id(request_id)
+        request_id = self.request("putItems", params)
+        self.get_response(request_id)
 
     def put_history(self, item_id, begin_time, end_time, fetch_id):
         params = {"itemId": item_id,
-                  "histories": self.api.get_history(item_id, begin_time, end_time),
+                  "histories": self.__api.get_history(item_id, begin_time, end_time),
                   "fetchId": fetch_id}
 
-        request_id = HAPUtils.get_and_save_request_id(self.requested_ids)
-        self.send_request_to_queue("putHistory", params, request_id)
-
-        self.get_response_and_check_id(request_id)
+        request_id = self.request("putHistory", params)
+        self.get_response(request_id)
 
     def update_hosts_and_host_group_membership(self):
-        hosts, hg_membership = self.api.get_hosts()
-
+        hosts, hg_membership = self.__api.get_hosts()
         hosts.sort()
-        if self.previous_hosts_info.hosts != hosts:
+        if self.__previous_hosts_info.hosts != hosts:
             hosts_params = {"updateType": "ALL", "hosts": hosts}
-            request_id = HAPUtils.get_and_save_request_id(self.requested_ids)
-            self.send_request_to_queue("updateHosts", hosts_params, request_id)
-            self.get_response_and_check_id(request_id)
-            self.previous_hosts_info.hosts = hosts
+            request_id = self.request("updateHosts", hosts_params)
+            self.get_response(request_id)
+            self.__previous_hosts_info.hosts = hosts
 
         hg_membership.sort()
-        if self.previous_hosts_info.host_group_membership != hg_membership:
+        if self.__previous_hosts_info.host_group_membership != hg_membership:
             hg_membership_params = {"updateType": "ALL",
                                     "hostGroupMembership": hg_membership}
-            request_id = HAPUtils.get_and_save_request_id(self.requested_ids)
-            self.send_request_to_queue("updateHostGroupMembership",
-                                       hg_membership_params, request_id)
-            self.get_response_and_check_id(request_id)
-            self.previous_hosts_info.host_group_membership = hg_membership
+            request_id = self.request("updateHostGroupMembership",
+                                      hg_membership_params)
+            self.get_response(request_id)
+            self.__previous_hosts_info.host_group_membership = hg_membership
 
     def update_host_groups(self):
-        host_groups = self.api.get_host_groups()
+        host_groups = self.__api.get_host_groups()
         host_groups.sort()
-        if self.previous_hosts_info.host_groups != host_groups:
+        if self.__previous_hosts_info.host_groups != host_groups:
             hosts_params = {"updateType": "ALL", "hostGroups": host_groups}
-            request_id = HAPUtils.get_and_save_request_id(self.requested_ids)
-            self.send_request_to_queue("updateHostGroups", hosts_params, request_id)
-            self.get_response_and_check_id(request_id)
-            self.previous_hosts_info.host_groups = host_groups
+            request_id = self.request("updateHostGroups", hosts_params)
+            self.get_response(request_id)
+            self.__previous_hosts_info.host_groups = host_groups
 
     def update_triggers(self, host_id=None, fetch_id=None):
         if self.trigger_last_info is None:
             self.trigger_last_info = self.get_last_info("trigger")
 
-        triggers = self.api.get_triggers(self.trigger_last_info, host_id)
-        self.trigger_last_info =											\
+        triggers = self.__api.get_triggers(self.trigger_last_info, host_id)
+        self.trigger_last_info = \
             HAPUtils.find_last_info_from_dict_array(triggers, "lastChangeTime")
 
         params = {"triggers": triggers, "updateType": "UPDATED",
@@ -148,9 +112,8 @@ class HAPZabbixSender(HAPBaseSender):
             params["fetchId"] = fetch_id
             params["updateType"] = "ALL"
 
-        request_id = HAPUtils.get_and_save_request_id(self.requested_ids)
-        self.send_request_to_queue("updateTriggers", params, request_id)
-        self.get_response_and_check_id(request_id)
+        request_id = self.request("updateTriggers", params)
+        self.get_response(request_id)
 
     def update_events(self, last_info=None, count=None, direction="ASC",
                       fetch_id=None):
@@ -167,7 +130,7 @@ class HAPZabbixSender(HAPBaseSender):
             event_id_till = last_info
             event_id_from = event_id_till - count
 
-        events = self.api.get_events(event_id_from, event_id_till)
+        events = self.__api.get_events(event_id_from, event_id_till)
 
         count = len(events) / 1000 + 1
         for num in range(0, count):
@@ -184,16 +147,14 @@ class HAPZabbixSender(HAPBaseSender):
             if num < count - 1:
                 params["mayMoreFlag"] = True
 
-            request_id = HAPUtils.get_and_save_request_id(self.requested_ids)
-            self.send_request_to_queue("updateTriggers", params, request_id)
-            self.get_response_and_check_id(request_id)
+            request_id = self.request("updateTriggers", params)
+            self.get_response(request_id)
 
         self.event_last_info = last_info
 
 
-class HAPZabbixPoller:
-    def __init__(self, host, port, vhost, queue_name, user_name,
-                 user_password, poller_queue):
+class HAP2ZabbixAPIPoller:
+    def __init__(self, transporter_args):
         self.sender = HAPZabbixSender(host,
                                       port,
                                       vhost,
@@ -209,7 +170,7 @@ class HAPZabbixPoller:
         self.sender.update_triggers()
         self.sender.update_events()
 
-    def poll(self):
+    def __call__(self):
         arm_info = ArmInfo()
         while True:
             sleep_time = self.sender.ms_info.polling_interval_sec
@@ -230,69 +191,43 @@ class HAPZabbixPoller:
             self.sender.update_arm_info(arm_info)
             time.sleep(sleep_time)
 
-
-class HAPZabbixDaemon:
-    def __init__(self, host, port, vhost, queue_name, user_name,
-                 user_password):
-        self.host = host
-        self.port = port
-        self.vhost = vhost
-        self.queue_name = queue_name
-        self.user_name = user_name
-        self.user_password = user_password
-
-    def start(self):
-        poller_queue = multiprocessing.JoinableQueue()
-        poller_requested_ids = set()
-        main_request_queue = multiprocessing.JoinableQueue()
-        main_response_queue = multiprocessing.JoinableQueue()
-        main_requested_ids = set()
-
-        receiver = HAPBaseReceiver(self.host,
-                                   self.port,
-                                   self.vhost,
-                                   "r_"+self.queue_name,
-                                   self.user_name,
-                                   self.user_password,
-                                   poller_queue,
-                                   main_request_queue,
-                                   main_response_queue)
-
-        receive_process =													\
-            multiprocessing.Process(target=receiver.connector.run_receive_loop)
-        receive_process.daemon = True
-        receive_process.start()
-
-        poller = HAPZabbixPoller(self.host,
-                                 self.port,
-                                 self.vhost,
-                                 "s_"+self.queue_name,
-                                 self.user_name,
-                                 self.user_password,
-                                 poller_queue)
-        main_plugin = HAPZabbixMainPlugin(self.host,
-                                          self.port,
-                                          self.vhost,
-                                          "s_"+self.queue_name,
-                                          self.user_name,
-                                          self.user_password,
-                                          main_request_queue,
-                                          main_response_queue,
-                                          poller.sender.ms_info)
-
-        poll_process = multiprocessing.Process(target=poller.poll)
-        poll_process.daemon = True
-        poll_process.start()
-
-        main_plugin.get_request_loop()
-
-class Hap2ZabbixAPI(haplib.BaseMainPlugin):
+class Hap2ZabbixAPIMain(haplib.BaseMainPlugin, CommonWorker):
     def __init__(self, *args, **kwargs):
-        haplib.BaseMainPlugin.__init__(self, *args, **kwargs)
+        BaseMainPlugin.__init__(self, *args, **kwargs):
+        self.implement_procedures = ["exchangeProfile",
+                                     "fetchItems",
+                                     "fetchHistory",
+                                     "fetchTriggers",
+                                     "fetchEvents"]
+
+    def hap_fetch_items(self, params, request_id):
+        self.get_sender().response("SUCCESS", request_id)
+        self.put_items(params["hostId"], params["fetchId"])
+
+    def hap_fetch_history(self, params, request_id):
+        self.get_sender().response("SUCCESS", request_id)
+        self.put_history(params["itemId"], params["beginTime"],
+                         params["endTime"], params["fetchId"])
+
+    def hap_fetch_triggers(self, params, request_id):
+        self.get_sender().response("SUCCESS", request_id)
+        self.update_triggers(params["hostId"], params["fetchId"])
+
+    def hap_fetch_events(self, params, request_id):
+        self.get_sender().response("SUCCESS", request_id)
+        self.update_events(params["lastInfo"], params["count"],
+                           params["direction"], params["fetchId"])
+
 
 class Hap2ZabbixAPI(standardhap.StandardHap):
     def create_main_plugin(self, *args, **kwargs):
-        return HapNagiosNDOUtilsMain(*args, **kwargs)
+        return Hap2ZabbixAPIMain(*args, **kwargs)
+
+    def create_poller(self, *args, **kwargs):
+        return Hap2ZabbixAPIPoller(self, *args, **kwargs)
+
+    def on_got_monitoring_server_info(self, ms_info):
+        get_main_plugin().set_monitoring_server_info(ms_info)
 
 if __name__ == '__main__':
     hap = Hap2ZabbixAPI()
