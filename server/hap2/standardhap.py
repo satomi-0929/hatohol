@@ -109,6 +109,8 @@ class StandardHap:
                 (ty, val, tb) = sys.exc_info()
                 logging.error("type: " + str(ty) + ", value: " + str(val) + "\n"
                               + traceback.format_exc())
+            else:
+                break
             logging.info("Rerun after %d sec" % self.__error_sleep_time)
             time.sleep(self.__error_sleep_time)
 

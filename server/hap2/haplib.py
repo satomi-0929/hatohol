@@ -274,9 +274,17 @@ class BaseMainPlugin(HapiProcessor):
     def hap_return_error(self, error_code, response_id):
         self._sender.send_error_to_queue(error_code, response_id)
 
+    def request_exit(self):
+        """
+        Request to exit main loop that is started by __call__().
+        """
+        self.__rpc_queue.put(None)
+
     def __call__(self):
         while True:
             request = self.__rpc_queue.get()
+            if request is None:
+                return
             try:
                 self.procedures[request["method"]](request["params"],
                                                    request["id"])

@@ -67,12 +67,15 @@ class TestStandardHap(unittest.TestCase):
         def __init__(self):
             StandardHap.__init__(self)
             self.__received_ms_info = None
+            self.__main_plugin = None
 
         def create_main_plugin(self, *args, **kwargs):
-            return haplib.BaseMainPlugin(*args, **kwargs)
+            self.__main_plugin = haplib.BaseMainPlugin(*args, **kwargs)
+            return self.__main_plugin
 
         def on_got_monitoring_server_info(self, ms_info):
             self.__received_ms_info = ms_info
+            self.__main_plugin.request_exit()
 
         def get_received_ms_info(self):
             return self.__received_ms_info
