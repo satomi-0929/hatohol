@@ -38,7 +38,7 @@ class PreviousHostsInfo:
         self.host_group_membership = list()
 
 
-class CommonWorker:
+class ZabbixAPIConductor:
     def __init__(self):
         self.__api = None
         self.__previous_hosts_info = PreviousHostsInfo()
@@ -191,7 +191,7 @@ class HAP2ZabbixAPIPoller:
             self.sender.update_arm_info(arm_info)
             time.sleep(sleep_time)
 
-class Hap2ZabbixAPIMain(haplib.BaseMainPlugin, CommonWorker):
+class Hap2ZabbixAPIMain(haplib.BaseMainPlugin, ZabbixAPIConductor):
     def __init__(self, *args, **kwargs):
         BaseMainPlugin.__init__(self, *args, **kwargs):
         self.implement_procedures = ["exchangeProfile",
