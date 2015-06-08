@@ -81,3 +81,21 @@ class RabbitMQConnector(Transporter):
         self._channel.basic_publish(exchange="", routing_key=self._queue_name,
                                     body=msg)
 
+    @classmethod
+    def define_arguments(cls, parser):
+        parser.add_argument("--amqp-broker", type=str, default="localhost")
+        parser.add_argument("--amqp-port", type=int, default=5672)
+        parser.add_argument("--amqp-vhost", type=str, default="hatohol")
+        parser.add_argument("--amqp-queue", type=str,
+                            default="standardhap-queue")
+        parser.add_argument("--amqp-user", type=str, default="hatohol")
+        parser.add_argument("--amqp-password", type=str, default="hatohol")
+
+    @classmethod
+    def parse_arguments(cls, args):
+        return {"amqp_broker": args.amqp_broker,
+                "amqp_port": args.amqp_port,
+                "amqp_vhost": args.amqp_vhost,
+                "amqp_queue": args.amqp_queue,
+                "amqp_user": args.amqp_user,
+                "amqp_password": args.amqp_password}

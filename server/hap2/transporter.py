@@ -32,6 +32,24 @@ class Transporter:
     def __init__(self):
         self._receiver = None
 
+    @classmethod
+    def define_arguments(cls, parser):
+        """
+        Define arguments for argparser.
+        @param parser A parser object otabined by argparse.ArgumentParser()
+        """
+        pass
+
+    @classmethod
+    def parse_arguments(cls, args):
+        """
+        Parse arguements.
+        @param args A parsed argument object returned by parser.parse_args()
+        @param args transporter_args
+        A dictionary in which parsed results will be being added.
+        """
+        pass
+
     def setup(self, transporter_args):
         """
         Setup a transporter. Some transporter implementation connects to

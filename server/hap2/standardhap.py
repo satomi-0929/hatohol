@@ -25,6 +25,7 @@ import time
 import sys
 import traceback
 import imp
+import haplib
 
 class StandardHap:
 
@@ -38,18 +39,15 @@ class StandardHap:
         choices = ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")
         parser.add_argument("--log", dest="loglevel", choices=choices,
                             default="INFO")
-        parser.add_argument("--amqp-broker", type=str,
-                            default="localhost")
-        parser.add_argument("--amqp-port", type=int, default=5672)
-        parser.add_argument("--amqp-vhost", type=str,
-                            default="hatohol")
-        parser.add_argument("--amqp-queue", type=str,
-                            default="standardhap-queue")
-        parser.add_argument("--amqp-user", type=str, default="hatohol")
-        parser.add_argument("--amqp-password", type=str, default="hatohol")
         parser.add_argument("--transporter", type=str,
                             default="RabbitMQHapiConnector")
         parser.add_argument("--transporter-module", type=str, default="haplib")
+
+        # TODO: Don't specifiy a sub class of transporter directly.
+        #       We'd like to implement the mechanism that automatically
+        #       collects transporter's sub classes, loads them,
+        #       and calls their define_arguments().
+        haplib.RabbitMQHapiConnector.define_arguments(parser)
 
         self.__parser = parser
         self.__main_plugin = None
@@ -131,19 +129,15 @@ class StandardHap:
         args = self.__parse_argument()
         logging.info("Transporter: %s" % args.transporter)
 
+
         # load module for the transporter
         (file, pathname, descr) = imp.find_module(args.transporter_module)
         mod = imp.load_module("", file, pathname, descr)
         transporter_class = eval("mod.%s" % args.transporter)
 
-        # TODO: arguments should be pushed by each transporter
-        transporter_args = {"class": transporter_class,
-                            "amqp_broker": args.amqp_broker,
-                            "amqp_port": args.amqp_port,
-                            "amqp_vhost": args.amqp_vhost,
-                            "amqp_queue": args.amqp_queue,
-                            "amqp_user": args.amqp_user,
-                            "amqp_password": args.amqp_password}
+        transporter_args = {"class": transporter_class}
+        transporter_args.update(transporter_class.parse_arguments(args))
+
         self.__main_plugin = self.create_main_plugin(transporter_args=transporter_args)
         logging.info("created main plugin.")
 
