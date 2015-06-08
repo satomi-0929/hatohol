@@ -75,7 +75,11 @@ class RabbitMQHapiConnector(RabbitMQConnector):
         suffix_map = {transporter.DIR_SEND: send_queue_suffix,
                       transporter.DIR_RECV: recv_queue_suffix}
         suffix = suffix_map.get(transporter_args["direction"], "")
-        transporter_args["amqp_queue"] += suffix
+
+        if "amqp_hapi_queue" not in transporter_args:
+            transporter_args["amqp_hapi_queue"] = transporter_args["amqp_queue"]
+        transporter_args["amqp_queue"] = \
+          transporter_args["amqp_hapi_queue"] + suffix
         RabbitMQConnector.setup(self, transporter_args)
 
 class Sender:
@@ -240,12 +244,9 @@ class BaseMainPlugin(HapiProcessor):
         self.implement_procedures = ["exchangeProfile"]
 
         # launch receiver process
-        receiver = DispatchableReceiver(transporter_args, self.__rpc_queue)
-        receiver.attach_reply_queue(self.get_reply_queue())
-
-        receiver_process = multiprocessing.Process(target=receiver)
-        receiver_process.daemon = True
-        receiver_process.start()
+        self.__receiver = DispatchableReceiver(transporter_args,
+                                               self.__rpc_queue)
+        self.__receiver.attach_reply_queue(self.get_reply_queue())
 
     def get_sender(self):
         return self.__sender
@@ -280,6 +281,10 @@ class BaseMainPlugin(HapiProcessor):
         self.__rpc_queue.put(None)
 
     def __call__(self):
+        receiver_process = multiprocessing.Process(target=self.__receiver)
+        receiver_process.daemon = True
+        receiver_process.start()
+
         while True:
             request = self.__rpc_queue.get()
             if request is None:

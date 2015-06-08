@@ -107,11 +107,12 @@ class StandardHap:
             logging.info("Rerun after %d sec" % self.__error_sleep_time)
             time.sleep(self.__error_sleep_time)
 
-    def __launch_poller(self, sender):
+    def __launch_poller(self, sender, receiver):
         poller = self.create_poller(sender)
         if poller is None:
             return
         logging.info("created poller plugin.")
+        receiver.attach_reply_queue(poller.get_reply_queue())
         poll_process = multiprocessing.Process(target=poller)
         poll_process.daemon = True
         poll_process.start()
@@ -130,7 +131,8 @@ class StandardHap:
         logging.info("got monitoring server info.")
         self.on_got_monitoring_server_info(ms_info)
 
-        self.__launch_poller(self.__main_plugin.get_sender())
+        self.__launch_poller(self.__main_plugin.get_sender(),
+                             self.__main_plugin.get_receiver())
         logging.info("launched poller plugin.")
 
         self.__main_plugin()
