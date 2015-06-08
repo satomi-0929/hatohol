@@ -80,10 +80,10 @@ class Sender:
         transporter_args["direction"] = transporter.DIR_SEND
         self.__connector = transporter.Factory.create(transporter_args)
 
-    def get__connector(self):
+    def get_connector(self):
         return self.__connector
 
-    def set__connector(self, connector):
+    def set_connector(self, connector):
         self.__connector = connector
 
     def request(self, procedure_name, params, request_id):
