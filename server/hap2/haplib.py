@@ -320,7 +320,8 @@ class Utils:
                        "fetchId": unicode()},
       "fetchTriggers": {"hostIds":list(), "fetchId": unicode()},
       "fetchEvents": {"lastInfo":unicode(),"count":int(),
-                      "direction": unicode(),"fetchId": unicode()}
+                      "direction": unicode(),"fetchId": unicode()},
+      "getMonitoringServerInfo": {},
     }
 
     # ToDo Currently, this method does not have notification filter.
