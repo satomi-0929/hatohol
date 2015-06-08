@@ -24,7 +24,6 @@ import logging
 import time
 import sys
 import traceback
-import imp
 import haplib
 
 class StandardHap:
@@ -39,9 +38,7 @@ class StandardHap:
         choices = ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")
         parser.add_argument("--log", dest="loglevel", choices=choices,
                             default="INFO")
-        parser.add_argument("--transporter", type=str,
-                            default="RabbitMQHapiConnector")
-        parser.add_argument("--transporter-module", type=str, default="haplib")
+        haplib.Utils.define_transporter_arguments(parser)
 
         # TODO: Don't specifiy a sub class of transporter directly.
         #       We'd like to implement the mechanism that automatically
@@ -128,13 +125,7 @@ class StandardHap:
     def __run(self):
         args = self.__parse_argument()
         logging.info("Transporter: %s" % args.transporter)
-
-
-        # load module for the transporter
-        (file, pathname, descr) = imp.find_module(args.transporter_module)
-        mod = imp.load_module("", file, pathname, descr)
-        transporter_class = eval("mod.%s" % args.transporter)
-
+        transporter_class = haplib.Utils.load_transporter(args)
         transporter_args = {"class": transporter_class}
         transporter_args.update(transporter_class.parse_arguments(args))
 

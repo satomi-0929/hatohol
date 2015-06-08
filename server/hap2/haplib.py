@@ -27,7 +27,7 @@ import random
 import Queue
 import logging
 import multiprocessing
-
+import imp
 import transporter
 from rabbitmqconnector import RabbitMQConnector
 
@@ -311,6 +311,20 @@ class Utils:
 
     # ToDo Currently, this method does not have notification filter.
     # If we implement notification procedures, should insert notification filter.
+
+    @staticmethod
+    def define_transporter_arguments(parser):
+        parser.add_argument("--transporter", type=str,
+                            default="RabbitMQHapiConnector")
+        parser.add_argument("--transporter-module", type=str, default="haplib")
+
+    @staticmethod
+    def load_transporter(args):
+        (file, pathname, descr) = imp.find_module(args.transporter_module)
+        mod = imp.load_module("", file, pathname, descr)
+        transporter_class = eval("mod.%s" % args.transporter)
+        return transporter_class
+
     @staticmethod
     def check_message(message, implement_procedures):
         error_code, message_dict = Utils.convert_string_to_dict(message)
