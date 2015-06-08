@@ -189,11 +189,11 @@ class Hap2ZabbixAPIMain(haplib.BaseMainPlugin, ZabbixAPIConductor):
     def __init__(self, *args, **kwargs):
         haplib.BaseMainPlugin.__init__(self, kwargs["transporter_args"])
         ZabbixAPIConductor.__init__(self)
-        self.implement_procedures = ["exchangeProfile",
-                                     "fetchItems",
-                                     "fetchHistory",
-                                     "fetchTriggers",
-                                     "fetchEvents"]
+        self.set_implemented_procedures(["exchangeProfile",
+                                         "fetchItems",
+                                         "fetchHistory",
+                                         "fetchTriggers",
+                                         "fetchEvents"])
 
     def hap_fetch_items(self, params, request_id):
         self.get_sender().response("SUCCESS", request_id)

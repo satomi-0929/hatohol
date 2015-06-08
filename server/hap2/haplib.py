@@ -246,7 +246,7 @@ class BaseMainPlugin(HapiProcessor):
                            "fetchEvents": self.hap_fetch_events}
         #ToDo Currently, implement_method is fixed.
         # I want to get its dynamically to to use function.
-        self.implement_procedures = ["exchangeProfile"]
+        self.set_implemented_procedures(["exchangeProfile"])
 
         # launch receiver process
         self.__receiver = DispatchableReceiver(transporter_args,
@@ -259,10 +259,13 @@ class BaseMainPlugin(HapiProcessor):
     def set_sender(self, sender):
         self.__sender = sender
 
+    def set_implemented_procedures(self, procedures):
+        self.__implemented_procedures = procedures
+
     def hap_exchange_profile(self, params, request_id):
         Utils.optimize_server_procedures(SERVER_PROCEDURES, params["procedures"])
         #ToDo Output to log that is connect finish message with params["name"]
-        self.__sender.exchange_profile(self.implement_procedures, request_id)
+        self.__sender.exchange_profile(self.__implement_procedures, request_id)
 
     def hap_fetch_items(self, params, request_id):
         pass
