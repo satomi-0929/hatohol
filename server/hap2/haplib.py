@@ -224,6 +224,11 @@ class DispatchableReceiver:
         # TODO: handle exceptions
         self.__connector.run_receive_loop()
 
+    def daemonize(self):
+        receiver_process = multiprocessing.Process(target=self)
+        receiver_process.daemon = True
+        receiver_process.start()
+
 
 class BaseMainPlugin(HapiProcessor):
 
@@ -281,9 +286,7 @@ class BaseMainPlugin(HapiProcessor):
         self.__rpc_queue.put(None)
 
     def __call__(self):
-        receiver_process = multiprocessing.Process(target=self.__receiver)
-        receiver_process.daemon = True
-        receiver_process.start()
+        self.__receiver.daemonize()
 
         while True:
             request = self.__rpc_queue.get()
