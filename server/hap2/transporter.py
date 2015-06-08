@@ -45,10 +45,9 @@ class Transporter:
         """
         Parse arguements.
         @param args A parsed argument object returned by parser.parse_args()
-        @param args transporter_args
-        A dictionary in which parsed results will be being added.
+        @return A dictionary in which parsed results will be being added.
         """
-        pass
+        return {}
 
     def setup(self, transporter_args):
         """
