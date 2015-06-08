@@ -213,9 +213,7 @@ class DispatchableReceiver:
 
         # dispatch the received message from the transport layer
         response_id = msg["id"]
-        target_queue = self.__id_res_q_map.get(response_id)
-        if target_queue is None:
-            target_queue = self.__rpc_queue
+        target_queue = self.__id_res_q_map.get(response_id, self.__rpc_queue)
         target_queue.put(msg)
 
     def __call__(self):
