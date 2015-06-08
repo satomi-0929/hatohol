@@ -362,7 +362,7 @@ class Utils:
             except KeyError:
                 return (error_code, None)
 
-        error_code = Utils.check_argument_is_correct(message_dict)
+        error_code = Utils.validate_arguments(message_dict)
         if isinstance(error_code, int):
             try:
                 return (error_code, message_dict["id"])
@@ -388,7 +388,7 @@ class Utils:
             return -32601
 
     @staticmethod
-    def check_argument_is_correct(json_dict):
+    def validate_arguments(json_dict):
         args_dict = Utils.PROCEDURES_ARGS[json_dict["method"]]
         for arg_name, arg_value in json_dict["params"].iteritems():
             try:
