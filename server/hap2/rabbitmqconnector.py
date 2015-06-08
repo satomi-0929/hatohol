@@ -86,8 +86,7 @@ class RabbitMQConnector(Transporter):
         parser.add_argument("--amqp-broker", type=str, default="localhost")
         parser.add_argument("--amqp-port", type=int, default=5672)
         parser.add_argument("--amqp-vhost", type=str, default="hatohol")
-        parser.add_argument("--amqp-queue", type=str,
-                            default="standardhap-queue")
+        parser.add_argument("--amqp-queue", type=str, default="hap2-queue")
         parser.add_argument("--amqp-user", type=str, default="hatohol")
         parser.add_argument("--amqp-password", type=str, default="hatohol")
 
