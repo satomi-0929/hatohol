@@ -101,7 +101,7 @@ class Sender:
     def response(self, result, response_id):
         response = json.dumps({"jsonrpc": "2.0", "result": result,
                                "id": response_id})
-        self.__connector.reply(result)
+        self.__connector.reply(response)
 
     def send_error_to_queue(self, error_code, response_id):
         response = json.dumps({"jsonrpc": "2.0",
