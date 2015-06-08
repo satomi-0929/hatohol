@@ -30,7 +30,7 @@ class Transporter:
     """
 
     def __init__(self):
-        self._receiver = None
+        self.__receiver = None
 
     @classmethod
     def define_arguments(cls, parser):
@@ -83,7 +83,7 @@ class Transporter:
         Register a receiver method.
         @receiver A receiver method.
         """
-        self._receiver = receiver
+        self.__receiver = receiver
 
     def get_receiver(self):
         """
@@ -91,7 +91,7 @@ class Transporter:
         The registerd receiver method.
         If no receiver is registered, None is returned.
         """
-        return self._receiver
+        return self.__receiver
 
     def run_receive_loop(self):
         """
