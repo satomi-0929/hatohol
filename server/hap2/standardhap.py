@@ -24,7 +24,7 @@ import logging
 import time
 import sys
 import traceback
-import imp
+import haplib
 
 class StandardHap:
 
@@ -38,18 +38,7 @@ class StandardHap:
         choices = ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")
         parser.add_argument("--log", dest="loglevel", choices=choices,
                             default="INFO")
-        parser.add_argument("--amqp-broker", type=str,
-                            default="localhost")
-        parser.add_argument("--amqp-port", type=int, default=5672)
-        parser.add_argument("--amqp-vhost", type=str,
-                            default="hatohol")
-        parser.add_argument("--amqp-queue", type=str,
-                            default="standardhap-queue")
-        parser.add_argument("--amqp-user", type=str, default="hatohol")
-        parser.add_argument("--amqp-password", type=str, default="hatohol")
-        parser.add_argument("--transporter", type=str,
-                            default="RabbitMQHapiConnector")
-        parser.add_argument("--transporter-module", type=str, default="haplib")
+        haplib.Utils.define_transporter_arguments(parser)
 
         self.__parser = parser
         self.__main_plugin = None
@@ -118,11 +107,12 @@ class StandardHap:
             logging.info("Rerun after %d sec" % self.__error_sleep_time)
             time.sleep(self.__error_sleep_time)
 
-    def __launch_poller(self, sender):
+    def __launch_poller(self, sender, receiver):
         poller = self.create_poller(sender)
         if poller is None:
             return
         logging.info("created poller plugin.")
+        receiver.attach_reply_queue(poller.get_reply_queue())
         poll_process = multiprocessing.Process(target=poller)
         poll_process.daemon = True
         poll_process.start()
@@ -130,20 +120,10 @@ class StandardHap:
     def __run(self):
         args = self.__parse_argument()
         logging.info("Transporter: %s" % args.transporter)
+        transporter_class = haplib.Utils.load_transporter(args)
+        transporter_args = {"class": transporter_class}
+        transporter_args.update(transporter_class.parse_arguments(args))
 
-        # load module for the transporter
-        (file, pathname, descr) = imp.find_module(args.transporter_module)
-        mod = imp.load_module("", file, pathname, descr)
-        transporter_class = eval("mod.%s" % args.transporter)
-
-        # TODO: arguments should be pushed by each transporter
-        transporter_args = {"class": transporter_class,
-                            "amqp_broker": args.amqp_broker,
-                            "amqp_port": args.amqp_port,
-                            "amqp_vhost": args.amqp_vhost,
-                            "amqp_queue": args.amqp_queue,
-                            "amqp_user": args.amqp_user,
-                            "amqp_password": args.amqp_password}
         self.__main_plugin = self.create_main_plugin(transporter_args=transporter_args)
         logging.info("created main plugin.")
 
@@ -151,7 +131,8 @@ class StandardHap:
         logging.info("got monitoring server info.")
         self.on_got_monitoring_server_info(ms_info)
 
-        self.__launch_poller(self.__main_plugin.get_sender())
+        self.__launch_poller(self.__main_plugin.get_sender(),
+                             self.__main_plugin.get_receiver())
         logging.info("launched poller plugin.")
 
         self.__main_plugin()

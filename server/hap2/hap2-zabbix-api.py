@@ -25,7 +25,7 @@ import multiprocessing
 import Queue
 import argparse
 import time
-from haplib import HAPUtils
+from haplib import Utils
 import haplib
 import zabbixapi
 import standardhap
@@ -102,7 +102,7 @@ class ZabbixAPIConductor:
 
         triggers = self.__api.get_triggers(self.__trigger_last_info, host_id)
         self.__trigger_last_info = \
-            HAPUtils.find_last_info_from_dict_array(triggers, "lastChangeTime")
+            Utils.find_last_info_from_dict_array(triggers, "lastChangeTime")
 
         params = {"triggers": triggers, "updateType": "UPDATED",
                   "lastInfo": self.__trigger_last_info}
@@ -135,7 +135,7 @@ class ZabbixAPIConductor:
         for num in range(0, count):
             start = num * 1000
             send_events = events[start: start + 1000]
-            last_info = HAPUtils.find_last_info_from_dict_array(send_events,
+            last_info = Utils.find_last_info_from_dict_array(send_events,
                                                               "eventId")
             params = {"events": send_events, "lastInfo": last_info,
                       "updateType": "UPDATE"}
@@ -172,14 +172,14 @@ class Hap2ZabbixAPIPoller(haplib.HapiProcessor, ZabbixAPIConductor):
                 self.__update()
                 arm_info.last_status = "OK"
                 arm_info.failure_reason = ""
-                arm_info.last_success_time = HAPUtils.get_current_hatohol_time()
+                arm_info.last_success_time = Utils.get_current_hatohol_time()
                 arm_info.num_success += 1
             except:
                 sleep_time = self.sender.ms_info.retry_interval_sec
                 arm_info.last_status = "NG"
                 #ToDo Think about how to input failure_reason
                 # arm_info.failure_reason = ""
-                arm_info.failure_time = HAPUtils.get_current_hatohol_time()
+                arm_info.failure_time = Utils.get_current_hatohol_time()
                 arm_info.num_failure += 1
 
             self.update_arm_info(arm_info)

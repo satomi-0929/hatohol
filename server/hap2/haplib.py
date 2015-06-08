@@ -27,7 +27,7 @@ import random
 import Queue
 import logging
 import multiprocessing
-
+import imp
 import transporter
 from rabbitmqconnector import RabbitMQConnector
 
@@ -70,9 +70,16 @@ class ArmInfo:
 
 class RabbitMQHapiConnector(RabbitMQConnector):
     def setup(self, transporter_args):
-        suffix_map = {transporter.DIR_SEND: "-S", transporter.DIR_RECV: "-T"}
+        send_queue_suffix = transporter_args.get("amqp_send_queue_suffix", "-S")
+        recv_queue_suffix = transporter_args.get("amqp_recv_queue_suffix", "-T")
+        suffix_map = {transporter.DIR_SEND: send_queue_suffix,
+                      transporter.DIR_RECV: recv_queue_suffix}
         suffix = suffix_map.get(transporter_args["direction"], "")
-        transporter_args["amqp_queue"] += suffix
+
+        if "amqp_hapi_queue" not in transporter_args:
+            transporter_args["amqp_hapi_queue"] = transporter_args["amqp_queue"]
+        transporter_args["amqp_queue"] = \
+          transporter_args["amqp_hapi_queue"] + suffix
         RabbitMQConnector.setup(self, transporter_args)
 
 class Sender:
@@ -118,21 +125,21 @@ class HapiProcessor:
 
     def get_monitoring_server_info(self):
         params = ""
-        request_id = HAPUtils.generate_request_id(self.__component_code)
+        request_id = Utils.generate_request_id(self.__component_code)
         self.__reply_queue.put(request_id)
         self.__sender.request("getMonitoringServerInfo", params, request_id)
         return self.wait_response(request_id)
 
     def get_last_info(self, element):
         params = element
-        request_id = HAPUtils.get_and_save_request_id(self.requested_ids)
+        request_id = Utils.get_and_save_request_id(self.requested_ids)
         self.request("getLastInfo", params, request_id)
 
         return self.wait_response(request_id)
 
     def exchange_profile(self, procedures, response_id=None):
         if response_id is None:
-            request_id = HAPUtils.get_and_save_request_id(self.requested_ids)
+            request_id = Utils.get_and_save_request_id(self.requested_ids)
             self.request("exchangeProfile", procedures, request_id)
             self.wait_response(request_id)
         else:
@@ -146,7 +153,7 @@ class HapiProcessor:
                   "numSuccess": arm_info.num_success,
                   "numFailure": arm_info.num_failure}
 
-        request_id = HAPUtils.get_and_save_request_id(self.requested_ids)
+        request_id = Utils.get_and_save_request_id(self.requested_ids)
         self.request("updateArmInfo", params, request_id)
         self.wait_response(request_id)
 
@@ -191,7 +198,7 @@ class DispatchableReceiver:
 
     def __dispatch(self, ch, body):
         # TODO: Make it easier to see the result (OK or ERROR)
-        msg = HAPUtils.check_message(body, {})
+        msg = Utils.check_message(body, {})
         if isinstance(msg, tuple):
             self.__rpc_queue.put(msg)
             return
@@ -210,14 +217,17 @@ class DispatchableReceiver:
 
         # dispatch the received message from the transport layer
         response_id = msg["id"]
-        target_queue = self.__id_res_q_map.get(response_id)
-        if target_queue is None:
-            target_queue = self.__rpc_queue
+        target_queue = self.__id_res_q_map.get(response_id, self.__rpc_queue)
         target_queue.put(msg)
 
     def __call__(self):
         # TODO: handle exceptions
         self.__connector.run_receive_loop()
+
+    def daemonize(self):
+        receiver_process = multiprocessing.Process(target=self)
+        receiver_process.daemon = True
+        receiver_process.start()
 
 
 class BaseMainPlugin(HapiProcessor):
@@ -239,12 +249,9 @@ class BaseMainPlugin(HapiProcessor):
         self.implement_procedures = ["exchangeProfile"]
 
         # launch receiver process
-        receiver = DispatchableReceiver(transporter_args, self.__rpc_queue)
-        receiver.attach_reply_queue(self.get_reply_queue())
-
-        receiver_process = multiprocessing.Process(target=receiver)
-        receiver_process.daemon = True
-        receiver_process.start()
+        self.__receiver = DispatchableReceiver(transporter_args,
+                                               self.__rpc_queue)
+        self.__receiver.attach_reply_queue(self.get_reply_queue())
 
     def get_sender(self):
         return self.__sender
@@ -253,7 +260,7 @@ class BaseMainPlugin(HapiProcessor):
         self.__sender = sender
 
     def hap_exchange_profile(self, params, request_id):
-        HAPUtils.optimize_server_procedures(SERVER_PROCEDURES, params["procedures"])
+        Utils.optimize_server_procedures(SERVER_PROCEDURES, params["procedures"])
         #ToDo Output to log that is connect finish message with params["name"]
         self.__sender.exchange_profile(self.implement_procedures, request_id)
 
@@ -279,6 +286,8 @@ class BaseMainPlugin(HapiProcessor):
         self.__rpc_queue.put(None)
 
     def __call__(self):
+        self.__receiver.daemonize()
+
         while True:
             request = self.__rpc_queue.get()
             if request is None:
@@ -295,7 +304,7 @@ class BaseMainPlugin(HapiProcessor):
                     self.hap_return_error(request[0], request[1])
 
 
-class HAPUtils:
+class Utils:
 
     PROCEDURES_ARGS = {"exchangeProfile": {"procedures":list(), "name": unicode()},
                        "fetchItems": {"hostIds":list(), "fetchId": unicode()},
@@ -308,16 +317,36 @@ class HAPUtils:
 
     # ToDo Currently, this method does not have notification filter.
     # If we implement notification procedures, should insert notification filter.
+
+    @staticmethod
+    def define_transporter_arguments(parser):
+        parser.add_argument("--transporter", type=str,
+                            default="RabbitMQHapiConnector")
+        parser.add_argument("--transporter-module", type=str, default="haplib")
+
+        # TODO: Don't specifiy a sub class of transporter directly.
+        #       We'd like to implement the mechanism that automatically
+        #       collects transporter's sub classes, loads them,
+        #       and calls their define_arguments().
+        RabbitMQHapiConnector.define_arguments(parser)
+
+    @staticmethod
+    def load_transporter(args):
+        (file, pathname, descr) = imp.find_module(args.transporter_module)
+        mod = imp.load_module("", file, pathname, descr)
+        transporter_class = eval("mod.%s" % args.transporter)
+        return transporter_class
+
     @staticmethod
     def check_message(message, implement_procedures):
-        error_code, message_dict = HAPUtils.convert_string_to_dict(message)
+        error_code, message_dict = Utils.convert_string_to_dict(message)
         if isinstance(error_code, int):
             return (error_code, None)
 
         if message_dict.get("result") and message_dict.get("id"):
             return message_dict
 
-        error_code = HAPUtils.check_procedure_is_implemented(               \
+        error_code = Utils.check_procedure_is_implemented(               \
                                   message_dict["method"], implement_procedures)
         if isinstance(error_code, int):
             try:
@@ -325,7 +354,7 @@ class HAPUtils:
             except KeyError:
                 return (error_code, None)
 
-        error_code = HAPUtils.check_argument_is_correct(message_dict)
+        error_code = Utils.check_argument_is_correct(message_dict)
         if isinstance(error_code, int):
             try:
                 return (error_code, message_dict["id"])
@@ -352,7 +381,7 @@ class HAPUtils:
 
     @staticmethod
     def check_argument_is_correct(json_dict):
-        args_dict = HAPUtils.PROCEDURES_ARGS[json_dict["method"]]
+        args_dict = Utils.PROCEDURES_ARGS[json_dict["method"]]
         for arg_name, arg_value in json_dict["params"].iteritems():
             try:
                 if type(args_dict[arg_name]) != type(arg_value):
@@ -399,4 +428,4 @@ class HAPUtils:
     @staticmethod
     def get_current_hatohol_time():
         unix_time = float(time.mktime(datetime.now().utctimetuple()))
-        return HAPUtils.translate_unix_time_to_hatohol_time(unix_time)
+        return Utils.translate_unix_time_to_hatohol_time(unix_time)
