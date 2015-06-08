@@ -295,6 +295,7 @@ class BaseMainPlugin(HapiProcessor):
 
         while True:
             request = self.__rpc_queue.get()
+            self.__rpc_queue.task_done()
             if request is None:
                 return
             try:
@@ -305,7 +306,7 @@ class BaseMainPlugin(HapiProcessor):
                 # from Hatohol server. 
                 self.procedures[request["method"]](request["params"])
             except ValueError as exception:
-                if exception == "tuple indices must be integers, not str":
+                if str(exception) == "tuple indices must be integers, not str":
                     self.hap_return_error(request[0], request[1])
 
 
