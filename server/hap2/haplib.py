@@ -185,13 +185,14 @@ class HapiProcessor:
 
 
 class DispatchableReceiver:
-    def __init__(self, transporter_args, rpc_queue):
+    def __init__(self, transporter_args, rpc_queue, procedures):
         self.__reply_queues = []
         transporter_args["direction"] = transporter.DIR_RECV
         self.__connector = transporter.Factory.create(transporter_args)
         self.__rpc_queue = rpc_queue
         self.__connector.set_receiver(self.__dispatch)
         self.__id_res_q_map = {}
+        self.__implemented_procedures = procedures
 
     def attach_reply_queue(self, queue):
         self.__reply_queues.append(queue)
@@ -253,7 +254,8 @@ class BaseMainPlugin(HapiProcessor):
 
         # launch receiver process
         self.__receiver = DispatchableReceiver(transporter_args,
-                                               self.__rpc_queue)
+                                               self.__rpc_queue,
+                                               self.__implemented_procedures)
         self.__receiver.attach_reply_queue(self.get_reply_queue())
         self.__receiver.set_implemented_procedures(["exchangeProfile"])
 
