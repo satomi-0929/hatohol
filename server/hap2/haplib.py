@@ -390,9 +390,9 @@ class Utils:
     @staticmethod
     def validate_arguments(json_dict):
         args_dict = Utils.PROCEDURES_ARGS[json_dict["method"]]
-        for arg_name, arg_value in json_dict["params"].iteritems():
+        for arg_name, arg_value in args_dict.iteritems():
             try:
-                if type(args_dict[arg_name]) != type(arg_value):
+                if type(json_dict[arg_name]) != type(arg_value):
                     return -32602
             except KeyError:
                 return -32602
