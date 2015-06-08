@@ -40,12 +40,6 @@ class StandardHap:
                             default="INFO")
         haplib.Utils.define_transporter_arguments(parser)
 
-        # TODO: Don't specifiy a sub class of transporter directly.
-        #       We'd like to implement the mechanism that automatically
-        #       collects transporter's sub classes, loads them,
-        #       and calls their define_arguments().
-        haplib.RabbitMQHapiConnector.define_arguments(parser)
-
         self.__parser = parser
         self.__main_plugin = None
 
