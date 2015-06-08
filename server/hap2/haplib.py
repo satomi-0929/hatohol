@@ -230,9 +230,6 @@ class DispatchableReceiver:
         receiver_process.daemon = True
         receiver_process.start()
 
-    def set_implemented_procedures(self, procedures):
-        self.__implemented_procedures = procedures
-
 
 class BaseMainPlugin(HapiProcessor):
 
@@ -257,7 +254,6 @@ class BaseMainPlugin(HapiProcessor):
                                                self.__rpc_queue,
                                                self.__implemented_procedures)
         self.__receiver.attach_reply_queue(self.get_reply_queue())
-        self.__receiver.set_implemented_procedures(["exchangeProfile"])
 
     def get_sender(self):
         return self.__sender
