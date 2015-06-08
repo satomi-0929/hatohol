@@ -70,7 +70,10 @@ class ArmInfo:
 
 class RabbitMQHapiConnector(RabbitMQConnector):
     def setup(self, transporter_args):
-        suffix_map = {transporter.DIR_SEND: "-S", transporter.DIR_RECV: "-T"}
+        up_queue_suffix = transporter_args.get("amqp_up_queue_suffix", "-S")
+        down_queue_suffix = transporter_args.get("amqp_down_queue_suffix", "-T")
+        suffix_map = {transporter.DIR_SEND: up_queue_suffix,
+                      transporter.DIR_RECV: down_queue_suffix}
         suffix = suffix_map.get(transporter_args["direction"], "")
         transporter_args["amqp_queue"] += suffix
         RabbitMQConnector.setup(self, transporter_args)
