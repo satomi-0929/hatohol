@@ -175,6 +175,7 @@ class HapiProcessor:
     def wait_response(self, request_id):
         TIMEOUT_SEC = 30
         try:
+            self.__reply_queue.put(request_id)
             self.__reply_queue.join()
             pm = self.__reply_queue.get(True, TIMEOUT_SEC)
             self.__reply_queue.task_done()
