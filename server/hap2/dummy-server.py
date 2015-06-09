@@ -41,6 +41,7 @@ class DummyServer:
             request = self.__rpc_queue.get()
             method = request["method"]
             params = request["params"]
+            print "method: %s" % method
             call_id = request["id"]
             self.__handler_map[method](call_id, params)
 
