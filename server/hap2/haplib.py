@@ -30,6 +30,7 @@ import multiprocessing
 import imp
 import transporter
 from rabbitmqconnector import RabbitMQConnector
+import pickle
 
 SERVER_PROCEDURES = {"exchangeProfile": True,
                      "getMonitoringServerInfo": True,
@@ -57,6 +58,16 @@ class MonitoringServerInfo:
         self.polling_interval_sec = ms_info_dict["pollingIntervalSec"]
         self.retry_interval_sec = ms_info_dict["retryIntervalSec"]
         self.extended_info = ms_info_dict["extendedInfo"]
+
+class ParsedMessage:
+    def __init__(self):
+        self.error_code = None
+        self.message_id = None
+        self.message_dict = None
+
+    def get_error_message(self):
+        return "error code: %s, message ID: %s" % \
+               (self.error_code, self.message_id)
 
 
 class ArmInfo:
@@ -162,17 +173,20 @@ class HapiProcessor:
         self.wait_response(request_id)
 
     def wait_response(self, request_id):
+        TIMEOUT_SEC = 30
         try:
             self.__reply_queue.join()
-            response = self.__reply_queue.get(True, 30)
+            pm = self.__reply_queue.get(True, TIMEOUT_SEC)
             self.__reply_queue.task_done()
 
-            responsed_id = response["id"]
-            if responsed_id != request_id:
+            if pm.error_code is not None:
+                raise Exception(pm.get_error_message())
+
+            if pm.message_id != request_id:
                 msg = "Got unexpected repsponse. req: " + str(request_id)
                 logging.error(msg)
                 raise Exception(msg)
-            return response["result"]
+            return pm.message_dict["result"]
 
         except ValueError as exception:
             if str(exception) == "task_done() called too many times" and \
@@ -184,7 +198,6 @@ class HapiProcessor:
         except Queue.Empty:
             logging.error("Request failed.")
             raise
-
 
 class DispatchableReceiver:
     def __init__(self, transporter_args, rpc_queue, procedures):
@@ -199,11 +212,11 @@ class DispatchableReceiver:
     def attach_reply_queue(self, queue):
         self.__reply_queues.append(queue)
 
-    def __dispatch(self, ch, body):
-        # TODO: Make it easier to see the result (OK or ERROR)
-        msg = Utils.check_message(body, self.__implemented_procedures)
-        if isinstance(msg, tuple):
-            self.__rpc_queue.put(msg)
+    def __dispatch(self, ch, message):
+        parsed = Utils.parse_received_message(message,
+                                              self.__implemented_procedures)
+        if parsed.error_code is not None:
+            self.__rpc_queue.put(parsed)
             return
 
         # collect newly arrived wait IDs
@@ -219,9 +232,9 @@ class DispatchableReceiver:
             self.__id_res_q_map[wait_id] = queue
 
         # dispatch the received message from the transport layer
-        response_id = msg["id"]
+        response_id = parsed.message_id
         target_queue = self.__id_res_q_map.get(response_id, self.__rpc_queue)
-        target_queue.put(msg)
+        target_queue.put(parsed)
         self.__id_res_q_map.pop(response_id, None)
 
     def __call__(self):
@@ -361,33 +374,51 @@ class Utils:
         return transporter_class
 
     @staticmethod
-    def check_message(message, implemented_procedures):
-        error_code, message_dict = Utils.convert_string_to_dict(message)
-        if isinstance(error_code, int):
-            return (error_code, None)
+    def parse_received_message(message, implemented_procedures):
+        """
+        Parse a received message.
+        @return A ParsedMessage object. Each attribute will be set as below.
+        - error_code If the parse is succeeded, this attribute is set to None.
+                     Othwerwise the error code is set.
+        - message_dict A dictionary that corresponds to the received message.
+                       If the parse fails, this attribute may be None.
+        - message_id A message ID if available. Or None.
+        """
 
-        if message_dict.get("result") and message_dict.get("id"):
-            return message_dict
+        pm = ParsedMessage()
+        pm.error_code, pm.message_dict = \
+          Utils.__convert_string_to_dict(message)
+        try:
+            pm.message_id = pm.message_dict["id"]
+        except KeyError:
+            pm.message_id = None
 
-        error_code = Utils.check_procedure_is_implemented(               \
-                                  message_dict["method"], implemented_procedures)
-        if isinstance(error_code, int):
-            try:
-                return (error_code, message_dict["id"])
-            except KeyError:
-                return (error_code, None)
+        # Failed to convert the message to a dictionary
+        if pm.error_code is not None:
+            return pm
 
-        error_code = Utils.validate_arguments(message_dict)
-        if isinstance(error_code, int):
-            try:
-                return (error_code, message_dict["id"])
-            except KeyError:
-                return (error_code, None)
+        # 'id' is not included in the message.
+        if pm.message_id is None:
+            pm.error_code = -32602
+            return pm
 
-        return message_dict
+        # If the message is a reply, sage to a dictionary
+        if pm.message_dict.get("result") and pm.message_id is not None:
+            return pm
+
+        pm.error_code = Utils.check_procedure_is_implemented( \
+                           pm.message_dict["method"], implemented_procedures)
+        if pm.error_code is not None:
+            return pm
+
+        pm.error_code = Utils.validate_arguments(pm.message_dict)
+        if pm.error_code is not None:
+            return pm
+
+        return pm
 
     @staticmethod
-    def convert_string_to_dict(json_string):
+    def __convert_string_to_dict(json_string):
         try:
             json_dict = json.loads(json_string)
         except ValueError:

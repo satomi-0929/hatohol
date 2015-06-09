@@ -22,6 +22,7 @@ import haplib
 import multiprocessing
 import transporter
 import argparse
+import logging
 
 class DummyServer:
 
@@ -38,10 +39,15 @@ class DummyServer:
     def __call__(self):
         self.__receiver.daemonize()
         while True:
-            request = self.__rpc_queue.get()
+            pm = self.__rpc_queue.get()
+            if pm.error_code is not None:
+                logging.error("Got error: code %s, message ID: %s" % \
+                              (pm.error_code, pm.message_id))
+                continue
+            request = pm.message_dict
             method = request["method"]
             params = request["params"]
-            print "method: %s" % method
+            logging.info("method: %s" % method)
             call_id = request["id"]
             self.__handler_map[method](call_id, params)
 
@@ -61,6 +67,8 @@ class DummyServer:
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO)
+    logging.info("Dummy Server for HAPI 2.0")
     parser = argparse.ArgumentParser()
     haplib.Utils.define_transporter_arguments(parser)
 
