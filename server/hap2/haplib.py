@@ -143,7 +143,7 @@ class HapiProcessor:
             self.request("exchangeProfile", procedures, request_id)
             self.wait_response(request_id)
         else:
-            self.response(procedures, response_id)
+            self.__sender.response(procedures, response_id)
 
     def update_arm_info(self, arm_info):
         params = {"lastStatus": arm_info.last_status,
@@ -267,7 +267,7 @@ class BaseMainPlugin(HapiProcessor):
     def hap_exchange_profile(self, params, request_id):
         Utils.optimize_server_procedures(SERVER_PROCEDURES, params["procedures"])
         #ToDo Output to log that is connect finish message with params["name"]
-        self.__sender.exchange_profile(self.__implemented_procedures, request_id)
+        self.exchange_profile(self.__implemented_procedures, request_id)
 
     def hap_fetch_items(self, params, request_id):
         pass
