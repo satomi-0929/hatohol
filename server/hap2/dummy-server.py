@@ -32,12 +32,32 @@ class DummyServer:
         self.__receiver = haplib.DispatchableReceiver(transporter_args,
                                                       self.__rpc_queue,
                                                       procedures)
+        self.__handler_map = {"getMonitoringServerInfo":
+                              self.__rpc_get_monitoring_server_info}
 
     def __call__(self):
         self.__receiver.daemonize()
         while True:
             request = self.__rpc_queue.get()
-            print request
+            method = request["method"]
+            params = request["params"]
+            call_id = request["id"]
+            self.__handler_map[method](call_id, params)
+
+    def __rpc_get_monitoring_server_info(self, call_id, params):
+        result = {
+            "extendedInfo": "exampleExtraInfo",
+            "serverId": 1,
+            "url": "http://example.com:80",
+            "type": 0,
+            "nickName": "exampleName",
+            "userName": "Admin",
+            "password": "examplePass",
+            "pollingIntervalSec": 30,
+            "retryIntervalSec": 10
+        }
+        self.__sender.response(result, call_id)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
