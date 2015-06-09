@@ -107,6 +107,7 @@ class StandardHap:
                               + traceback.format_exc())
             else:
                 break
+            #TODO: make sure poller and receiver has been killed.
             logging.info("Rerun after %d sec" % self.__error_sleep_time)
             time.sleep(self.__error_sleep_time)
 
