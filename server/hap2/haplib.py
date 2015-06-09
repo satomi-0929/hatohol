@@ -181,10 +181,10 @@ class HapiProcessor:
                 return response["result"]
             else:
                 logging.error("Got invalid response.")
-                raise Exception
+                raise
         except Queue.Empty:
             logging.error("Request failed.")
-            raise Exception
+            raise
 
 
 class DispatchableReceiver:
