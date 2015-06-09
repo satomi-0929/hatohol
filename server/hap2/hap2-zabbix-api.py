@@ -43,9 +43,22 @@ class ZabbixAPIConductor:
         self.__previous_hosts_info = PreviousHostsInfo()
         self.__trigger_last_info = None
         self.__event_last_info = None
+        self.__ms_info = None
 
-    def set_monitoring_server_info(self, ms_info):
-        self.__api = zabbixapi.ZabbixAPI(ms_info)
+    def reset(self):
+        self.__api = None
+
+    def set_ms_info(self, ms_info):
+        self.__ms_info = ms_info
+
+    def get_ms_info(self):
+        return self.__ms_info
+
+    def make_sure_token(self):
+        if self.__api is not None:
+            return
+        assert self.__ms_info is not None
+        self.__api = zabbixapi.ZabbixAPI(self.__ms_info)
 
     def request(self, procedure_name, params):
         raise NotImplementedError
@@ -161,6 +174,7 @@ class Hap2ZabbixAPIPoller(haplib.HapiProcessor, ZabbixAPIConductor):
         ZabbixAPIConductor.__init__(self)
 
     def __update(self):
+        self.make_sure_token()
         self.put_items()
         self.update_hosts_and_host_group_membership()
         self.update_host_groups()
@@ -170,7 +184,7 @@ class Hap2ZabbixAPIPoller(haplib.HapiProcessor, ZabbixAPIConductor):
     def __call__(self):
         arm_info = haplib.ArmInfo()
         while True:
-            sleep_time = self.__sender.ms_info.polling_interval_sec
+            sleep_time = self.get_ms_info().polling_interval_sec
             try:
                 self.__update()
                 arm_info.last_status = "OK"
@@ -178,7 +192,8 @@ class Hap2ZabbixAPIPoller(haplib.HapiProcessor, ZabbixAPIConductor):
                 arm_info.last_success_time = Utils.get_current_hatohol_time()
                 arm_info.num_success += 1
             except:
-                sleep_time = self.__sender.ms_info.retry_interval_sec
+                self.reset()
+                sleep_time = self.get_ms_info().retry_interval_sec
                 arm_info.last_status = "NG"
                 #ToDo Think about how to input failure_reason
                 # arm_info.failure_reason = ""
@@ -225,7 +240,8 @@ class Hap2ZabbixAPI(standardhap.StandardHap):
         return Hap2ZabbixAPIPoller(self, *args, **kwargs)
 
     def on_got_monitoring_server_info(self, ms_info):
-        get_main_plugin().set_monitoring_server_info(ms_info)
+        self.get_main_plugin().set_ms_info(ms_info)
+        self.get_poller().set_ms_info(ms_info)
 
 if __name__ == '__main__':
     hap = Hap2ZabbixAPI()

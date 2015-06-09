@@ -124,11 +124,16 @@ class HapiProcessor:
         return self.__reply_queue
 
     def get_monitoring_server_info(self):
+        """
+        Get a MonitoringServerInfo from Hatohol server.
+        This method blocks until the response is obtained.
+        @return A MonitoringServerInfo object.
+        """
         params = ""
         request_id = Utils.generate_request_id(self.__component_code)
         self.__reply_queue.put(request_id)
         self.__sender.request("getMonitoringServerInfo", params, request_id)
-        return self.wait_response(request_id)
+        return MonitoringServerInfo(self.wait_response(request_id))
 
     def get_last_info(self, element):
         params = element

@@ -49,6 +49,9 @@ class StandardHap:
     def get_main_plugin(self):
         return self.__main_plugin
 
+    def get_poller(self):
+        return self.__poller
+
     """
     An abstract method to create main plugin process.
     A sub class shall implement this method, or the default implementation
@@ -134,8 +137,8 @@ class StandardHap:
         self.__main_plugin = self.create_main_plugin(transporter_args=transporter_args)
         logging.info("created main plugin.")
 
-        poller = self.__create_poller(self.__main_plugin.get_sender(),
-                                      self.__main_plugin.get_receiver())
+        self.__poller = self.__create_poller(self.__main_plugin.get_sender(),
+                                             self.__main_plugin.get_receiver())
 
         self.__main_plugin.start_receiver()
         logging.info("started receiver process.")
@@ -144,7 +147,7 @@ class StandardHap:
         logging.info("got monitoring server info.")
         self.on_got_monitoring_server_info(ms_info)
 
-        self.__start_poller(poller)
+        self.__start_poller(self.__poller)
         logging.info("started poller plugin.")
 
         self.__main_plugin()
