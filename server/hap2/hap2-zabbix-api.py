@@ -153,8 +153,11 @@ class ZabbixAPIConductor:
 
 
 class Hap2ZabbixAPIPoller(haplib.HapiProcessor, ZabbixAPIConductor):
-    def __init__(self, __sender):
-        haplib.HapiProcessor.__init__(self, __sender)
+
+    def __init__(self, *args, **kwargs):
+        self.__sender = kwargs["sender"]
+        haplib.HapiProcessor.__init__(self, self.__sender,
+                                      kwargs["component_code"])
         ZabbixAPIConductor.__init__(self)
 
     def __update(self):
@@ -167,7 +170,7 @@ class Hap2ZabbixAPIPoller(haplib.HapiProcessor, ZabbixAPIConductor):
     def __call__(self):
         arm_info = haplib.ArmInfo()
         while True:
-            sleep_time = self.sender.ms_info.polling_interval_sec
+            sleep_time = self.__sender.ms_info.polling_interval_sec
             try:
                 self.__update()
                 arm_info.last_status = "OK"
@@ -175,7 +178,7 @@ class Hap2ZabbixAPIPoller(haplib.HapiProcessor, ZabbixAPIConductor):
                 arm_info.last_success_time = Utils.get_current_hatohol_time()
                 arm_info.num_success += 1
             except:
-                sleep_time = self.sender.ms_info.retry_interval_sec
+                sleep_time = self.__sender.ms_info.retry_interval_sec
                 arm_info.last_status = "NG"
                 #ToDo Think about how to input failure_reason
                 # arm_info.failure_reason = ""

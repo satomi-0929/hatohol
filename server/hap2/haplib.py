@@ -260,6 +260,9 @@ class BaseMainPlugin(HapiProcessor):
     def set_sender(self, sender):
         self.__sender = sender
 
+    def get_receiver(self):
+        return self.__receiver
+
     def set_implemented_procedures(self, procedures):
         self.__implemented_procedures = procedures
 
@@ -289,9 +292,14 @@ class BaseMainPlugin(HapiProcessor):
         """
         self.__rpc_queue.put(None)
 
-    def __call__(self):
+    def start_receiver(self):
+        """
+        Launch the process for receiving data from the transporter.
+        This method shall be called once before calling __call__().
+        """
         self.__receiver.daemonize()
 
+    def __call__(self):
         while True:
             request = self.__rpc_queue.get()
             self.__rpc_queue.task_done()
