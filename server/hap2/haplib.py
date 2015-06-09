@@ -138,14 +138,14 @@ class HapiProcessor:
     def get_last_info(self, element):
         params = element
         request_id = Utils.generate_request_id(self.__component_code)
-        self.request("getLastInfo", params, request_id)
+        self.__sender.request("getLastInfo", params, request_id)
 
         return self.wait_response(request_id)
 
     def exchange_profile(self, procedures, response_id=None):
         if response_id is None:
             request_id = Utils.generate_request_id(self.__component_code)
-            self.request("exchangeProfile", procedures, request_id)
+            self.__sender.request("exchangeProfile", procedures, request_id)
             self.wait_response(request_id)
         else:
             self.__sender.response(procedures, response_id)
@@ -159,7 +159,7 @@ class HapiProcessor:
                   "numFailure": arm_info.num_failure}
 
         request_id = Utils.generate_request_id(self.__component_code)
-        self.request("updateArmInfo", params, request_id)
+        self.__sender.request("updateArmInfo", params, request_id)
         self.wait_response(request_id)
 
     def wait_response(self, request_id):
