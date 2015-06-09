@@ -132,14 +132,14 @@ class HapiProcessor:
 
     def get_last_info(self, element):
         params = element
-        request_id = Utils.get_and_save_request_id(self.requested_ids)
+        request_id = Utils.generate_request_id(self.__component_code)
         self.request("getLastInfo", params, request_id)
 
         return self.wait_response(request_id)
 
     def exchange_profile(self, procedures, response_id=None):
         if response_id is None:
-            request_id = Utils.get_and_save_request_id(self.requested_ids)
+            request_id = Utils.generate_request_id(self.__component_code)
             self.request("exchangeProfile", procedures, request_id)
             self.wait_response(request_id)
         else:
@@ -153,7 +153,7 @@ class HapiProcessor:
                   "numSuccess": arm_info.num_success,
                   "numFailure": arm_info.num_failure}
 
-        request_id = Utils.get_and_save_request_id(self.requested_ids)
+        request_id = Utils.generate_request_id(self.__component_code)
         self.request("updateArmInfo", params, request_id)
         self.wait_response(request_id)
 
@@ -171,17 +171,15 @@ class HapiProcessor:
             return response["result"]
 
         except ValueError as exception:
-            if str(exception) == "task_done() called too many times" and      \
-                                            request_id == response_dict["id"]:
-                self.requested_ids.remove(request_id)
-
+            if str(exception) == "task_done() called too many times" and \
+                                              request_id == response["id"]:
                 return response["result"]
             else:
-                return
+                logging.error("Got invalid response.")
+                raise Exception
         except Queue.Empty:
-            self.requested_ids.remove(request_id)
-            logging.error("Request failed")
-            return
+            logging.error("Request failed.")
+            raise Exception
 
 
 class DispatchableReceiver:
@@ -220,6 +218,7 @@ class DispatchableReceiver:
         response_id = msg["id"]
         target_queue = self.__id_res_q_map.get(response_id, self.__rpc_queue)
         target_queue.put(msg)
+        self.__id_res_q_map.pop(response_id, None)
 
     def __call__(self):
         # TODO: handle exceptions
