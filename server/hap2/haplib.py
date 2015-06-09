@@ -297,6 +297,9 @@ class BaseMainPlugin(HapiProcessor):
         """
         self.__rpc_queue.put(None)
 
+    def is_exit_request(self, request):
+        return request is None
+
     def start_receiver(self):
         """
         Launch the process for receiving data from the transporter.
@@ -308,7 +311,7 @@ class BaseMainPlugin(HapiProcessor):
         while True:
             request = self.__rpc_queue.get()
             self.__rpc_queue.task_done()
-            if request is None:
+            if self.is_exit_request(request):
                 return
             try:
                 self.procedures[request["method"]](request["params"],
