@@ -41,8 +41,7 @@ class DummyServer:
         while True:
             pm = self.__rpc_queue.get()
             if pm.error_code is not None:
-                logging.error("Got error: code %s, message ID: %s" % \
-                              (pm.error_code, pm.message_id))
+                logging.error(pm.get_error_message())
                 continue
             request = pm.message_dict
             method = request["method"]
