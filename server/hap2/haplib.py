@@ -131,7 +131,6 @@ class HapiProcessor:
         """
         params = ""
         request_id = Utils.generate_request_id(self.__component_code)
-        self.__reply_queue.put(request_id)
         self.__sender.request("getMonitoringServerInfo", params, request_id)
         return MonitoringServerInfo(self.wait_response(request_id))
 
@@ -408,7 +407,7 @@ class Utils:
         args_dict = Utils.PROCEDURES_ARGS[json_dict["method"]]
         for arg_name, arg_value in args_dict.iteritems():
             try:
-                if type(json_dict[arg_name]) != type(arg_value):
+                if type(json_dict["params"][arg_name]) != type(arg_value):
                     return -32602
             except KeyError:
                 return -32602
