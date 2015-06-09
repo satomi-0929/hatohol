@@ -64,10 +64,11 @@ class ParsedMessage:
         self.error_code = None
         self.message_id = None
         self.message_dict = None
+        self.error_message = ""
 
     def get_error_message(self):
-        return "error code: %s, message ID: %s" % \
-               (self.error_code, self.message_id)
+        return "error code: %s, message ID: %s, error message: %s" % \
+               (self.error_code, self.message_id, self.error_message)
 
 
 class ArmInfo:
@@ -384,6 +385,7 @@ class Utils:
         - message_dict A dictionary that corresponds to the received message.
                        If the parse fails, this attribute may be None.
         - message_id A message ID if available. Or None.
+        - error_message An error message.
         """
 
         pm = ParsedMessage()
@@ -407,9 +409,11 @@ class Utils:
         if pm.message_dict.get("result") and pm.message_id is not None:
             return pm
 
+        method = pm.message_dict["method"]
         pm.error_code = Utils.check_procedure_is_implemented( \
-                           pm.message_dict["method"], implemented_procedures)
+                           method, implemented_procedures)
         if pm.error_code is not None:
+            pm.error_message = "Unsupported method: '%s'" % method
             return pm
 
         pm.error_code = Utils.validate_arguments(pm.message_dict)
