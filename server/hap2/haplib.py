@@ -264,7 +264,6 @@ class Dispatcher:
             return
         self.__id_res_q_map[cotents] = target_queue
         target_queue.put(True)
-        return
 
     def __dispatch(self):
         try:
