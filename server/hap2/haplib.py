@@ -305,9 +305,16 @@ class BaseMainPlugin(HapiProcessor):
 
     def __init__(self, transporter_args):
         self.__sender = Sender(transporter_args)
-        HapiProcessor.__init__(self, self.__sender, self.__COMPONENT_CODE)
-
         self.__rpc_queue = multiprocessing.Queue()
+
+        # launch dispatcher process
+        self.__dispatcher = Dispatcher(self.__rpc_queue)
+        self.__dispatcher.attach_destination(self.get_reply_queue())
+        dispatch_queue = self.__dispatcher.get_dispatch_queue()
+
+        HapiProcessor.__init__(self, self.__sender, dispatch_queue, "Main",
+                               self.__COMPONENT_CODE)
+
         self.procedures = {"exchangeProfile": self.hap_exchange_profile,
                            "fetchItems": self.hap_fetch_items,
                            "fetchHistory": self.hap_fetch_history,
@@ -318,10 +325,9 @@ class BaseMainPlugin(HapiProcessor):
         self.set_implemented_procedures(["exchangeProfile"])
 
         # launch receiver process
-        self.__receiver = DispatchableReceiver(transporter_args,
-                                               self.__rpc_queue,
-                                               self.__implemented_procedures)
-        self.__receiver.attach_reply_queue(self.get_reply_queue())
+        self.__receiver = Receiver(transporter_args,
+                                   dispatch_queue,
+                                   self.__implemented_procedures)
 
     def get_sender(self):
         return self.__sender
@@ -370,6 +376,9 @@ class BaseMainPlugin(HapiProcessor):
         This method shall be called once before calling __call__().
         """
         self.__receiver.daemonize()
+
+    def start_dispatcher(self):
+        self.__dispatcher.daemonize()
 
     def __call__(self):
         while True:
