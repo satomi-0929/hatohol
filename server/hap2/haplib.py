@@ -129,7 +129,7 @@ Some APIs blocks until the response is arrived.
 class HapiProcessor:
     def __init__(self, sender, component_code):
         self.__sender = sender
-        self.__reply_queue = multiprocessing.JoinableQueue()
+        self.__reply_queue = multiprocessing.Queue()
         self.__component_code = component_code
 
     def get_reply_queue(self):
@@ -177,9 +177,7 @@ class HapiProcessor:
         TIMEOUT_SEC = 30
         try:
             self.__reply_queue.put(request_id)
-            self.__reply_queue.join()
             pm = self.__reply_queue.get(True, TIMEOUT_SEC)
-            self.__reply_queue.task_done()
 
             if pm.error_code is not None:
                 raise Exception(pm.get_error_message())
@@ -239,7 +237,7 @@ class Dispatcher:
         return self.__dispatch_queue
 
     def __accept_request(self, message):
-        wait_id = message[1]
+       wait_id = message[1]
        if wait_id in self.__id_res_q_map:
            logging.error("Ignored duplicated ID: " + str(wait_id))
            return
@@ -250,9 +248,8 @@ class Dispatcher:
            msg = message[0] + " is not registered."
            logging_error(msg)
            return
-       self.__id_res_q_map[cotents] = target_queue
-       target_queue.put(#acknowledge)
-       target_queue.task_done()
+       self.__id_res_q_map[contents] = target_queue
+       target_queue.put(True)
        return
 
     def __dispatch(self):
@@ -296,7 +293,7 @@ class BaseMainPlugin(HapiProcessor):
         self.__sender = Sender(transporter_args)
         HapiProcessor.__init__(self, self.__sender, self.__COMPONENT_CODE)
 
-        self.__rpc_queue = multiprocessing.JoinableQueue()
+        self.__rpc_queue = multiprocessing.Queue()
         self.procedures = {"exchangeProfile": self.hap_exchange_profile,
                            "fetchItems": self.hap_fetch_items,
                            "fetchHistory": self.hap_fetch_history,
