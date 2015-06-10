@@ -251,20 +251,19 @@ class Dispatcher:
         return self.__dispatch_queue
 
     def __accept_request(self, message):
-       wait_id = message[1]
-       if wait_id in self.__id_res_q_map:
-           logging.error("Ignored duplicated ID: " + str(wait_id))
-           return
+        wait_id = message[1]
+        if wait_id in self.__id_res_q_map:
+            logging.error("Ignored duplicated ID: " + str(wait_id))
+            return
 
-       try:
-           target_queue = self.__destination_queue_map[message[0]]
-       except KeyError:
-           msg = message[0] + " is not registered."
-           logging_error(msg)
-           return
-       self.__id_res_q_map[contents] = target_queue
-       target_queue.put(True)
-       return
+        try:
+            target_queue = self.__destination_queue_map[message[0]]
+        except KeyError:
+            msg = message[0] + " is not registered."
+            logging_error(msg)
+            return
+        self.__id_res_q_map[cotents] = target_queue
+        target_queue.put(True)
 
     def __dispatch(self):
         try:
