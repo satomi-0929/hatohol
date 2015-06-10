@@ -25,52 +25,44 @@ import time
 import haplib
 import standardhap
 
-class HandledException:
-    pass
-
-class Hap2NagiosNDOUtilsPoller(haplib.HapiProcessor):
+class Hap2NagiosNDOUtilsPoller(haplib.BasePoller):
 
     def __init__(self, *args, **kwargs):
-        haplib.HapiProcessor.__init__(self, kwargs["sender"],
-                                      kwargs["component_code"])
-        self.__pollingInterval = 30
-        self.__retryInterval = 10
+        haplib.BasePoller.__init__(self, *args, **kwargs) 
+
         self.__db_server = "localhost"
         self.__db_user = "root"
         self.__db_passwd = ""
 
-    def __call__(self):
-        while (True):
-            self.__poll()
-
-    def __poll(self):
-        logging.debug("Start polling.")
-        sleepTime = self._retryInterval
+    def poll_setup(self):
+        if self.__deb is not None:
+            return
         try:
-            self.__connect_ndoutils_db()
-            self.__get_hosts()
-            sleepTime = self.__pollingInterval
-        except HandledException:
-            pass
-        except:
-            (exctype, value, traceback) = sys.exc_info()
-            logging.error("Unexpected error: %s, %s, %s" % (exctype, value, traceback))
-
-        # NOTE: The following sleep() will be replaced with a blocking read
-        #       from the queue.
-        time.sleep(sleepTime)
-
-    def __connect_ndoutils_db(self):
-        try:
-            db = MySQLdb.connect(host=self._db_server,
-                                 user=self._db_user, passwd=self._db_passwd)
+            self.__db = MySQLdb.connect(host=self.__db_server,
+                                        user=self.__db_user,
+                                        passwd=self.__db_passwd)
             cursor = db.cursor()
         except MySQLdb.Error as (errno, msg):
             logging.error('MySQL Error [%d]: %s' % (errno, msg))
-            raise HandledException
+            raise haplib.HandledException
 
-    def __get_hosts(self):
+    def poll_hosts(self):
         pass
+
+    def poll_hostgroups(self):
+        pass
+
+    def poll_hostgroup_members(self):
+        pass
+
+    def poll_triggers(self):
+        pass
+
+    def poll_events(self):
+        pass
+
+    def on_abort_poll(self):
+        self.__db = None
 
 class Hap2NagiosNDOUtilsMain(haplib.BaseMainPlugin):
     def __init__(self, *args, **kwargs):

@@ -47,6 +47,10 @@ SERVER_PROCEDURES = {"exchangeProfile": True,
 ERROR_DICT = {-32700: "Parse error", -32600: "invalid Request",
               -32601: "Method not found", -32602: "invalid params"}
 
+class HandledException:
+    pass
+
+
 class MonitoringServerInfo:
     def __init__(self, ms_info_dict):
         self.server_id = ms_info_dict["serverId"]
@@ -398,6 +402,71 @@ class BaseMainPlugin(HapiProcessor):
             except ValueError as exception:
                 if str(exception) == "tuple indices must be integers, not str":
                     self.hap_return_error(request[0], request[1])
+
+
+class BasePoller(HapiProcessor):
+
+    __COMPONENT_CODE = 0x20
+
+    def __init__(self, *args, **kwargs):
+        HapiProcessor.__init__(self, kwargs["sender"], __COMPONENT_CODE)
+
+        self.__pollingInterval = 30
+        self.__retryInterval = 10
+
+    def poll(self):
+       ctx = self.poll_setup()
+       self.poll_hosts()
+       self.poll_hostgroups()
+       self.poll_hostgroup_members()
+       self.poll_triggers()
+       self.poll_events()
+
+    def poll_setup(self):
+        return None
+
+    def poll_hosts(self):
+        pass
+
+    def poll_hostgroups(self):
+        pass
+
+    def poll_hostgroup_members(self):
+        pass
+
+    def poll_triggers(self):
+        pass
+
+    def poll_events(self):
+        pass
+
+    def on_abort_poll(self):
+        pass
+
+    def __call__(self):
+        while (True):
+            self.__poll_in_try_block()
+
+    def __poll_in_try_block(self):
+        logging.debug("Start polling.")
+        succeeded = False
+        try:
+            self.poll()
+            succeeded = True
+        except HandledException:
+            pass
+        except:
+            (exctype, value, traceback) = sys.exc_info()
+            logging.error("Unexpected error: %s, %s, %s" % (exctype, value, traceback))
+        if succeeded:
+            sleep_time = self.__pollingInterval
+        else:
+            sleep_time = self.__retryInterval
+            self.on_abort_poll()
+
+        # NOTE: The following sleep() will be replaced with a blocking read
+        #       from the queue in order to receive some control commands.
+        time.sleep(sleep_time)
 
 
 class Utils:
