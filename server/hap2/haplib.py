@@ -143,21 +143,24 @@ class HapiProcessor:
         """
         params = ""
         request_id = Utils.generate_request_id(self.__component_code)
+        self._wait_acknowledge(request_id)
         self.__sender.request("getMonitoringServerInfo", params, request_id)
-        return MonitoringServerInfo(self.wait_response(request_id))
+        return MonitoringServerInfo(self._wait_response())
 
     def get_last_info(self, element):
         params = element
         request_id = Utils.generate_request_id(self.__component_code)
+        self._wait_acknowledge(request_id)
         self.__sender.request("getLastInfo", params, request_id)
 
-        return self.wait_response(request_id)
+        return self._wait_response()
 
     def exchange_profile(self, procedures, response_id=None):
         if response_id is None:
             request_id = Utils.generate_request_id(self.__component_code)
+            self._wait_acknowledge(request_id)
             self.__sender.request("exchangeProfile", procedures, request_id)
-            self.wait_response(request_id)
+            self._wait_response()
         else:
             self.__sender.response(procedures, response_id)
 
@@ -170,8 +173,9 @@ class HapiProcessor:
                   "numFailure": arm_info.num_failure}
 
         request_id = Utils.generate_request_id(self.__component_code)
+        self._wait_acknowledge(request_id)
         self.__sender.request("updateArmInfo", params, request_id)
-        self.wait_response(request_id)
+        self._wait_response()
 
     def _wait_acknowledge(self, request_id):
         TIMEOUT_SEC = 30
