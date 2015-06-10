@@ -28,9 +28,11 @@ import standardhap
 class HandledException:
     pass
 
-class NagiosNDOUtilsPoller:
+class Hap2NagiosNDOUtilsPoller(haplib.HapiProcessor):
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
+        haplib.HapiProcessor.__init__(self, kwargs["sender"],
+                                      kwargs["component_code"])
         self.__pollingInterval = 30
         self.__retryInterval = 10
         self.__db_server = "localhost"
@@ -70,14 +72,22 @@ class NagiosNDOUtilsPoller:
     def __get_hosts(self):
         pass
 
-class HapNagiosNDOUtilsMain(haplib.BaseMainPlugin):
+class Hap2NagiosNDOUtilsMain(haplib.BaseMainPlugin):
     def __init__(self, *args, **kwargs):
-        haplib.BaseMainPlugin.__init__(self, *args, **kwargs)
+        haplib.BaseMainPlugin.__init__(self, kwargs["transporter_args"])
+        self.set_implemented_procedures(["exchangeProfile"])
 
-class HapNagiosNDOUtils(standardhap.StandardHap):
+class Hap2NagiosNDOUtils(standardhap.StandardHap):
     def create_main_plugin(self, *args, **kwargs):
-        return HapNagiosNDOUtilsMain(*args, **kwargs)
+        return Hap2NagiosNDOUtilsMain(*args, **kwargs)
+
+    def create_poller(self, *args, **kwargs):
+        return Hap2NagiosNDOUtilsPoller(self, *args, **kwargs)
+
+    def on_got_monitoring_server_info(self, ms_info):
+        self.get_main_plugin().set_ms_info(ms_info)
+        self.get_poller().set_ms_info(ms_info)
 
 if __name__ == '__main__':
-    hap = HapNagiosNDOUtils()
+    hap = Hap2NagiosNDOUtils()
     hap()
