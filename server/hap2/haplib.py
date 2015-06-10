@@ -127,9 +127,11 @@ Issue HAPI requests and responses.
 Some APIs blocks until the response is arrived.
 """
 class HapiProcessor:
-    def __init__(self, sender, component_code):
+    def __init__(self, sender, dispatch_queue, process_id, component_code):
         self.__sender = sender
         self.__reply_queue = multiprocessing.Queue()
+        self.__dispatch_queue = dispatch_queue
+        self.__process_id = process_id
         self.__component_code = component_code
 
     def get_reply_queue(self):
@@ -203,18 +205,16 @@ class HapiProcessor:
             return pm.message_dict["result"]
 
         except ValueError as exception:
-            if str(exception) == "task_done() called too many times" and \
-                                              request_id == response["id"]:
-                return response["result"]
-            else:
-                logging.error("Got invalid response.")
-                raise
+            logging.error("Got invalid response.")
+            raise
         except Queue.Empty:
             logging.error("Request failed.")
             raise
+
+
 class Receiver:
 
-    def __init__(self, transporter_args, dispatch_queue):
+    def __init__(self, transporter_args, dispatch_queue, procedures):
         transporter_args["direction"] = transporter.DIR_RECV
         self.__connector = transporter.Factory.create(transporter_args)
         self.__dispatch_queue = dispatch_queue
