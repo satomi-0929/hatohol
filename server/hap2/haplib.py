@@ -173,10 +173,20 @@ class HapiProcessor:
         self.__sender.request("updateArmInfo", params, request_id)
         self.wait_response(request_id)
 
-    def wait_response(self, request_id):
+    def _wait_acknowledge(self, request_id):
+        TIMEOUT_SEC = 30
+        self.__dispatch_queue.put((self.__process_id, requeset_id))
+        self.__dispatch_queue.join()
+        try:
+            if self.__reply_queue.get(True, TIMEOUT_SEC):
+                pass
+        except Queue.Empty:
+            logging.error("Request(ID: %d) is not accepted." % request_id)
+            raise
+
+    def _wait_response(self):
         TIMEOUT_SEC = 30
         try:
-            self.__reply_queue.put(request_id)
             pm = self.__reply_queue.get(True, TIMEOUT_SEC)
 
             if pm.error_code is not None:
