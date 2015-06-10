@@ -200,44 +200,19 @@ class HapiProcessor:
         except Queue.Empty:
             logging.error("Request failed.")
             raise
+class Receiver:
 
-class DispatchableReceiver:
-    def __init__(self, transporter_args, rpc_queue, procedures):
-        self.__reply_queues = []
+    def __init__(self, transporter_args, dispatch_queue):
         transporter_args["direction"] = transporter.DIR_RECV
         self.__connector = transporter.Factory.create(transporter_args)
-        self.__rpc_queue = rpc_queue
-        self.__connector.set_receiver(self.__dispatch)
-        self.__id_res_q_map = {}
+        self.__dispatch_queue = dispatch_queue
+        self.__connector.set_receiver(self.__messenger)
         self.__implemented_procedures = procedures
 
-    def attach_reply_queue(self, queue):
-        self.__reply_queues.append(queue)
-
-    def __dispatch(self, ch, message):
+    def __messenger(self, ch, message):
         parsed = Utils.parse_received_message(message,
                                               self.__implemented_procedures)
-        if parsed.error_code is not None:
-            self.__rpc_queue.put(parsed)
-            return
-
-        # collect newly arrived wait IDs
-        for queue in self.__reply_queues:
-            if queue.empty():
-                continue
-            wait_id = queue.get(False)
-            queue.task_done()
-
-            if wait_id in self.__id_res_q_map:
-                logging.error("Ignored duplicated ID: " + str(wait_id))
-                continue
-            self.__id_res_q_map[wait_id] = queue
-
-        # dispatch the received message from the transport layer
-        response_id = parsed.message_id
-        target_queue = self.__id_res_q_map.get(response_id, self.__rpc_queue)
-        target_queue.put(parsed)
-        self.__id_res_q_map.pop(response_id, None)
+        self.__dispatch_queue.put(("Receiver", parsed))
 
     def __call__(self):
         # TODO: handle exceptions
@@ -247,6 +222,70 @@ class DispatchableReceiver:
         receiver_process = multiprocessing.Process(target=self)
         receiver_process.daemon = True
         receiver_process.start()
+
+
+class Dispatcher:
+
+    def __init__(self, rpc_queue):
+        self.__id_res_q_map = {}
+        self.__destination_q_map = {}
+        self.__dispatch_queue = multiprocessing.JoinableQueue()
+        self.__rpc_queue = rpc_queue
+
+    def attach_destination(self, queue, identifier):
+        self.__destination_queue_map[identifier] = queue
+
+    def get_dispatch_queue(self):
+        return self.__dispatch_queue
+
+    def __accept_request(self, message):
+        wait_id = message[1]
+       if wait_id in self.__id_res_q_map:
+           logging.error("Ignored duplicated ID: " + str(wait_id))
+           return
+
+       try:
+           target_queue = self.__destination_queue_map[message[0]]
+       except KeyError:
+           msg = message[0] + " is not registered."
+           logging_error(msg)
+           return
+       self.__id_res_q_map[cotents] = target_queue
+       target_queue.put(#acknowledge)
+       target_queue.task_done()
+       return
+
+    def __dispatch(self):
+        try:
+            message = self.__dispatch_queue.get(False)
+            self.__dispatch_queue.task_done()
+        except Queue.Empty:
+            return
+
+        contents = message[1]
+        if isinstance(contents, int):
+            self.__accept_request(message)
+            return
+
+        if contents.error_code is not None:
+            self.__rpc_queue.put(contents)
+            return
+
+        # dispatch the received message from the Receiver class
+        response_id = contents.message_id
+        target_queue = self.__id_res_q_map.get(response_id, self.__rpc_queue)
+        target_queue.put(contents)
+        self.__id_res_q_map[response_id].put(contents)
+        self.__id_res_q_map.pop(response_id, None)
+
+    def __call__(self):
+        while True:
+            self.__dispatch()
+
+    def daemonize(self):
+        dispatch_process = multiprocessing.Process(target=self)
+        dispatch_process.daemon = True
+        dispatch_process.start()
 
 
 class BaseMainPlugin(HapiProcessor):
