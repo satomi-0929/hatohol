@@ -170,7 +170,6 @@ class Hap2ZabbixAPIPoller(haplib.HapiProcessor, ZabbixAPIConductor):
     def __init__(self, *args, **kwargs):
         self.__sender = kwargs["sender"]
         haplib.HapiProcessor.__init__(self, self.__sender,
-                                      kwargs["dispatch_queue"],
                                       kwargs["process_id"],
                                       kwargs["component_code"])
         ZabbixAPIConductor.__init__(self)

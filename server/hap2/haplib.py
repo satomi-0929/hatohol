@@ -127,12 +127,15 @@ Issue HAPI requests and responses.
 Some APIs blocks until the response is arrived.
 """
 class HapiProcessor:
-    def __init__(self, sender, dispatch_queue, process_id, component_code):
+    def __init__(self, sender, process_id, component_code):
         self.__sender = sender
         self.__reply_queue = multiprocessing.Queue()
-        self.__dispatch_queue = dispatch_queue
+        self.__dispatch_queue = None
         self.__process_id = process_id
         self.__component_code = component_code
+
+    def set_dispatch_queue(self, dispatch_queue):
+        self.__dispatch_queue = dispatch_queue
 
     def get_reply_queue(self):
         return self.__reply_queue
@@ -181,7 +184,7 @@ class HapiProcessor:
 
     def _wait_acknowledge(self, request_id):
         TIMEOUT_SEC = 30
-        self.__dispatch_queue.put((self.__process_id, requeset_id))
+        self.__dispatch_queue.put((self.__process_id, request_id))
         self.__dispatch_queue.join()
         try:
             if self.__reply_queue.get(True, TIMEOUT_SEC):
@@ -245,7 +248,7 @@ class Dispatcher:
         self.__rpc_queue = rpc_queue
 
     def attach_destination(self, queue, identifier):
-        self.__destination_queue_map[identifier] = queue
+        self.__destination_q_map[identifier] = queue
 
     def get_dispatch_queue(self):
         return self.__dispatch_queue
@@ -257,12 +260,12 @@ class Dispatcher:
             return
 
         try:
-            target_queue = self.__destination_queue_map[message[0]]
+            target_queue = self.__destination_q_map[message[0]]
         except KeyError:
             msg = message[0] + " is not registered."
             logging_error(msg)
             return
-        self.__id_res_q_map[cotents] = target_queue
+        self.__id_res_q_map[wait_id] = target_queue
         target_queue.put(True)
 
     def __dispatch(self):
@@ -305,14 +308,14 @@ class BaseMainPlugin(HapiProcessor):
     def __init__(self, transporter_args):
         self.__sender = Sender(transporter_args)
         self.__rpc_queue = multiprocessing.Queue()
+        HapiProcessor.__init__(self, self.__sender, "Main",
+                               self.__COMPONENT_CODE)
 
         # launch dispatcher process
         self.__dispatcher = Dispatcher(self.__rpc_queue)
-        self.__dispatcher.attach_destination(self.get_reply_queue())
+        self.__dispatcher.attach_destination(self.get_reply_queue(), "Main")
         dispatch_queue = self.__dispatcher.get_dispatch_queue()
-
-        HapiProcessor.__init__(self, self.__sender, dispatch_queue, "Main",
-                               self.__COMPONENT_CODE)
+        self.set_dispatch_queue(dispatch_queue)
 
         self.procedures = {"exchangeProfile": self.hap_exchange_profile,
                            "fetchItems": self.hap_fetch_items,

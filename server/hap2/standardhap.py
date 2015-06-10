@@ -114,7 +114,6 @@ class StandardHap:
     def __create_poller(self, sender, dispatcher):
         POLLER_COMPONENT_CODE = 0x20
         poller = self.create_poller(sender=sender,
-                                    dispatcher=dispatcher,
                                     process_id="Poller",
                                     component_code=POLLER_COMPONENT_CODE)
         if poller is None:
