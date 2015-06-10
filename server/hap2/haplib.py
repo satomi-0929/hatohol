@@ -391,10 +391,7 @@ class Utils:
         pm = ParsedMessage()
         pm.error_code, pm.message_dict = \
           Utils.__convert_string_to_dict(message)
-        try:
-            pm.message_id = pm.message_dict["id"]
-        except KeyError:
-            pm.message_id = None
+        pm.message_id = pm.message_dict.get("id")
 
         # Failed to convert the message to a dictionary
         if pm.error_code is not None:
