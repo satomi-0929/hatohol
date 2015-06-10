@@ -334,8 +334,8 @@ class BaseMainPlugin(HapiProcessor):
     def set_sender(self, sender):
         self.__sender = sender
 
-    def get_receiver(self):
-        return self.__receiver
+    def get_dispatcher(self):
+        return self.__dispatcher
 
     def set_implemented_procedures(self, procedures):
         self.__implemented_procedures = procedures
