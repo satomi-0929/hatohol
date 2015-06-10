@@ -111,14 +111,16 @@ class StandardHap:
             logging.info("Rerun after %d sec" % self.__error_sleep_time)
             time.sleep(self.__error_sleep_time)
 
-    def __create_poller(self, sender, receiver):
+    def __create_poller(self, sender, dispatcher):
         POLLER_COMPONENT_CODE = 0x20
         poller = self.create_poller(sender=sender,
+                                    dispatcher=dispatcher,
+                                    process_id="Poller",
                                     component_code=POLLER_COMPONENT_CODE)
         if poller is None:
             return
         logging.info("created poller plugin.")
-        receiver.attach_reply_queue(poller.get_reply_queue())
+        dispatcher.attach_destination(poller.get_reply_queue(), "Poller")
         return poller
 
     def __start_poller(self, poller):
@@ -139,8 +141,10 @@ class StandardHap:
         logging.info("created main plugin.")
 
         self.__poller = self.__create_poller(self.__main_plugin.get_sender(),
-                                             self.__main_plugin.get_receiver())
+                                             self.__main_plugin.get_dispatcher())
 
+        self.__main_plugin.start_dispatcher()
+        logging.info("started dispatcher process.")
         self.__main_plugin.start_receiver()
         logging.info("started receiver process.")
 
