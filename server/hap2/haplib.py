@@ -154,7 +154,7 @@ class HapiProcessor:
         request_id = Utils.generate_request_id(self.__component_code)
         self._wait_acknowledge(request_id)
         self.__sender.request("getMonitoringServerInfo", params, request_id)
-        return MonitoringServerInfo(self._wait_response())
+        return MonitoringServerInfo(self._wait_response(request_id))
 
     def get_last_info(self, element):
         params = element
@@ -162,14 +162,14 @@ class HapiProcessor:
         self._wait_acknowledge(request_id)
         self.__sender.request("getLastInfo", params, request_id)
 
-        return self._wait_response()
+        return self._wait_response(request_id)
 
     def exchange_profile(self, procedures, response_id=None):
         if response_id is None:
             request_id = Utils.generate_request_id(self.__component_code)
             self._wait_acknowledge(request_id)
             self.__sender.request("exchangeProfile", procedures, request_id)
-            self._wait_response()
+            self._wait_response(request_id)
         else:
             self.__sender.response(procedures, response_id)
 
@@ -184,7 +184,7 @@ class HapiProcessor:
         request_id = Utils.generate_request_id(self.__component_code)
         self._wait_acknowledge(request_id)
         self.__sender.request("updateArmInfo", params, request_id)
-        self._wait_response()
+        self._wait_response(request_id)
 
     def _wait_acknowledge(self, request_id):
         TIMEOUT_SEC = 30
@@ -197,7 +197,7 @@ class HapiProcessor:
             logging.error("Request(ID: %d) is not accepted." % request_id)
             raise
 
-    def _wait_response(self):
+    def _wait_response(self, request_id):
         TIMEOUT_SEC = 30
         try:
             pm = self.__reply_queue.get(True, TIMEOUT_SEC)
