@@ -205,6 +205,7 @@ class HapiProcessor:
     def put_hosts(self, hosts):
         hosts.sort()
         if self.__previous_hosts == hosts:
+            logging.debug("hosts are not changed.")
             return
         hosts_params = {"updateType": "ALL", "hosts": hosts}
         request_id = Utils.generate_request_id(self.__component_code)
