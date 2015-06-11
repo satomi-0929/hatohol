@@ -32,6 +32,7 @@ import transporter
 from rabbitmqconnector import RabbitMQConnector
 import pickle
 import sys
+import traceback
 
 SERVER_PROCEDURES = {"exchangeProfile": True,
                      "getMonitoringServerInfo": True,
@@ -472,8 +473,8 @@ class BasePoller(HapiProcessor):
         except HandledException:
             pass
         except:
-            (exctype, value, traceback) = sys.exc_info()
-            logging.error("Unexpected error: %s, %s, %s" % (exctype, value, traceback))
+            (exctype, value, tb) = sys.exc_info()
+            logging.error("Unexpected error: %s, %s, %s" % (exctype, value, traceback.format_exc()))
         if succeeded:
             sleep_time = self.__pollingInterval
         else:
