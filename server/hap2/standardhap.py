@@ -112,14 +112,13 @@ class StandardHap:
             time.sleep(self.__error_sleep_time)
 
     def __create_poller(self, sender, dispatcher):
-        POLLER_COMPONENT_CODE = 0x20
         poller = self.create_poller(sender=sender,
-                                    process_id="Poller",
-                                    component_code=POLLER_COMPONENT_CODE)
+                                    process_id="Poller")
         if poller is None:
             return
         logging.info("created poller plugin.")
         dispatcher.attach_destination(poller.get_reply_queue(), "Poller")
+        poller.set_dispatch_queue(dispatcher.get_dispatch_queue())
         return poller
 
     def __start_poller(self, poller):
