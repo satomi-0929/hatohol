@@ -67,7 +67,21 @@ class Hap2NagiosNDOUtilsPoller(haplib.BasePoller):
         self.put_hosts(hosts)
 
     def poll_hostgroups(self):
-        pass
+        t0 = "nagios_hostgroups"
+        t1 = "nagios_objects"
+        sql = "SELECT " \
+              + "%s.hostgroup_id, " % t0 \
+              + "%s.alias, " % t0 \
+              + "%s.name1 " % t1 \
+              + "FROM %s INNER JOIN %s " % (t0, t1) \
+              + "ON %s.hostgroup_id=%s.object_id" % (t0, t1)
+        self.__cursor.execute(sql)
+        result = self.__cursor.fetchall()
+        groups = []
+        for row in result:
+            group_id, name, name1 = row
+            groups.append({"groupId":name1, "groupName":name})
+        self.put_host_groups(groups)
 
     def poll_hostgroup_members(self):
         pass
@@ -79,8 +93,12 @@ class Hap2NagiosNDOUtilsPoller(haplib.BasePoller):
         pass
 
     def on_aborted_poll(self):
-        self.__db = None
-        self.__cursor = None
+        if self.__cursor is not None:
+            self.__cursor.close()
+            self.__cursor = None
+        if self.__db is not None:
+            self.__db.close()
+            self.__db = None
         self.reset()
 
 class Hap2NagiosNDOUtilsMain(haplib.BaseMainPlugin):

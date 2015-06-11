@@ -140,10 +140,11 @@ class HapiProcessor:
         self.__process_id = process_id
         self.__component_code = component_code
         self.__ms_info = None
-        reset()
+        self.reset()
 
     def reset(self):
         self.__previous_hosts = None
+        self.__previous_host_groups = None
 
     def set_ms_info(self, ms_info):
         self.__ms_info = ms_info
@@ -216,6 +217,18 @@ class HapiProcessor:
         self.__sender.request("putHosts", hosts_params, request_id)
         self._wait_response(request_id)
         self.__previous_hosts = hosts
+
+    def put_host_groups(self, host_groups):
+        host_groups.sort()
+        if self.__previous_host_groups == host_groups:
+            logging.debug("host groups are not changed.")
+            return
+        params = {"updateType": "ALL", "hostGroups": host_groups}
+        request_id = Utils.generate_request_id(self.__component_code)
+        self._wait_acknowledge(request_id)
+        self.__sender.request("updateHostGroups", params, request_id)
+        self._wait_response(request_id)
+        self.__previous_hosts_info.host_groups = host_groups
 
     def _wait_acknowledge(self, request_id):
         TIMEOUT_SEC = 30
