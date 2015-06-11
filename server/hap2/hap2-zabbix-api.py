@@ -165,14 +165,12 @@ class ZabbixAPIConductor:
         self.__event_last_info = last_info
 
 
-class Hap2ZabbixAPIPoller(haplib.HapiProcessor, ZabbixAPIConductor):
+class Hap2ZabbixAPIPoller(haplib.BasePoller, ZabbixAPIConductor):
 
     def __init__(self, *args, **kwargs):
-        self.__sender = kwargs["sender"]
-        haplib.HapiProcessor.__init__(self, self.__sender,
-                                      kwargs["process_id"],
-                                      kwargs["component_code"])
+        haplib.BasePoller.__init__(self, *args, **kwargs)
         ZabbixAPIConductor.__init__(self)
+        self.__sender = kwargs["sender"]
 
     def __update(self):
         self.make_sure_token()
