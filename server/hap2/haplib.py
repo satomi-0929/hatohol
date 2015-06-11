@@ -140,6 +140,9 @@ class HapiProcessor:
         self.__process_id = process_id
         self.__component_code = component_code
         self.__ms_info = None
+        reset()
+
+    def reset(self):
         self.__previous_hosts = None
 
     def set_ms_info(self, ms_info):

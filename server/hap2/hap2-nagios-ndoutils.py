@@ -81,6 +81,7 @@ class Hap2NagiosNDOUtilsPoller(haplib.BasePoller):
     def on_aborted_poll(self):
         self.__db = None
         self.__cursor = None
+        self.reset()
 
 class Hap2NagiosNDOUtilsMain(haplib.BaseMainPlugin):
     def __init__(self, *args, **kwargs):
