@@ -30,6 +30,7 @@ import haplib
 import zabbixapi
 import standardhap
 
+
 class PreviousHostsInfo:
     def __init__(self):
         self.hosts = list()
@@ -44,6 +45,8 @@ class ZabbixAPIConductor:
         self.__trigger_last_info = None
         self.__event_last_info = None
         self.__ms_info = None
+        self.__component_code = self.get_component_code()
+        self.__sender = self.get_sender()
 
     def reset(self):
         self.__api = None
@@ -63,7 +66,16 @@ class ZabbixAPIConductor:
     def request(self, procedure_name, params):
         raise NotImplementedError
 
-    def wait_response(self, request_id):
+    def _wait_acknowledge(self, request_id):
+        raise NotImplementedError
+
+    def _wait_response(self, request_id):
+        raise NotImplementedError
+
+    def get_component_code(self):
+        raise NotImplementedError
+
+    def get_sender(self, request_id):
         raise NotImplementedError
 
     def put_items(self, host_id=None, fetch_id=None):
@@ -149,7 +161,7 @@ class ZabbixAPIConductor:
             start = num * 1000
             send_events = events[start: start + 1000]
             last_info = Utils.find_last_info_from_dict_array(send_events,
-                                                              "eventId")
+                                                             "eventId")
             params = {"events": send_events, "lastInfo": last_info,
                       "updateType": "UPDATE"}
 

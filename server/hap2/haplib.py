@@ -144,6 +144,12 @@ class HapiProcessor:
     def get_reply_queue(self):
         return self.__reply_queue
 
+    def get_component_code(self):
+        return self.__component_code
+
+    def get_sender(self):
+        return self.__sender
+
     def get_monitoring_server_info(self):
         """
         Get a MonitoringServerInfo from Hatohol server.
