@@ -30,11 +30,15 @@ class DummyServer:
         procedures = ["getMonitoringServerInfo"]
         self.__sender = haplib.Sender(transporter_args)
         self.__rpc_queue = multiprocessing.JoinableQueue()
-        self.__receiver = haplib.DispatchableReceiver(transporter_args,
-                                                      self.__rpc_queue,
-                                                      procedures)
+        self.__dispatcher = haplib.Dispatcher(self.__rpc_queue)
+
         self.__handler_map = {"getMonitoringServerInfo":
                               self.__rpc_get_monitoring_server_info}
+
+        # launch receiver process
+        dispatch_queue = self.__dispatcher.get_dispatch_queue()
+        self.__receiver = haplib.Receiver(transporter_args, dispatch_queue,
+                                          self.__handler_map.keys())
 
     def __call__(self):
         self.__receiver.daemonize()
