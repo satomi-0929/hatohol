@@ -31,6 +31,7 @@ class DummyServer:
         self.__sender = haplib.Sender(transporter_args)
         self.__rpc_queue = multiprocessing.JoinableQueue()
         self.__dispatcher = haplib.Dispatcher(self.__rpc_queue)
+        self.__dispatcher.daemonize();
 
         self.__handler_map = {"getMonitoringServerInfo":
                               self.__rpc_get_monitoring_server_info}
@@ -39,9 +40,9 @@ class DummyServer:
         dispatch_queue = self.__dispatcher.get_dispatch_queue()
         self.__receiver = haplib.Receiver(transporter_args, dispatch_queue,
                                           self.__handler_map.keys())
+        self.__receiver.daemonize()
 
     def __call__(self):
-        self.__receiver.daemonize()
         while True:
             pm = self.__rpc_queue.get()
             if pm.error_code is not None:
