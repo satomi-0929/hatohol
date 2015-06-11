@@ -26,8 +26,8 @@ from haplib import Utils
 
 TRIGGER_SEVERITY = {-1: "ALL", 0: "UNKNOWN", 1: "INFO", 2: "WARNING",
                     3: "ERROR", 4: "CRITICAL", 5: "EMERGENCY"}
-TRIGGER_STATUS = {0: "GOOD", 1: "NG", 2: "UNKNOWN"}
-EVENT_TYPE = {0: "GOOD", 1: "BAD", 2: "UNKNOWN", 3: "NOTIFICATION"}
+TRIGGER_STATUS = {"0": "GOOD", "1": "NG", "2": "UNKNOWN"}
+EVENT_TYPE = {"0": "GOOD", "1": "BAD", "2": "UNKNOWN", "3": "NOTIFICATION"}
 
 class ZabbixAPI:
     def __init__(self, monitoring_server_info):
