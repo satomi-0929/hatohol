@@ -30,34 +30,41 @@ class Hap2NagiosNDOUtilsPoller(haplib.BasePoller):
     def __init__(self, *args, **kwargs):
         haplib.BasePoller.__init__(self, *args, **kwargs) 
 
+        self.__db = None
         self.__db_server = "localhost"
+        self.__db_name = "ndoutils"
         self.__db_user = "root"
         self.__db_passwd = ""
 
     def poll_setup(self):
-        if self.__deb is not None:
+        if self.__db is not None:
             return
         try:
             self.__db = MySQLdb.connect(host=self.__db_server,
+                                        db=self.__db_name,
                                         user=self.__db_user,
                                         passwd=self.__db_passwd)
-            self.__cursor = db.cursor()
+            self.__cursor = self.__db.cursor()
         except MySQLdb.Error as (errno, msg):
             logging.error('MySQL Error [%d]: %s' % (errno, msg))
             raise haplib.HandledException
 
     def poll_hosts(self):
+        t0 = "nagios_hosts"
+        t1 = "nagios_objects"
         sql = "SELECT " \
-              "t0.host_object_id, " \
-              "t0.display_name, " \
-              "t1.name1" \
-              "FROM nagios_hostgroups t0 INNER JOIN nagios_objects t1 " \
-              "ON t0.host_object_id=t1.object_id"
+              + "%s.host_object_id, " % t0 \
+              + "%s.display_name, " % t0 \
+              + "%s.name1 " % t1 \
+              + "FROM %s INNER JOIN %s " % (t0, t1) \
+              + "ON %s.host_object_id=%s.object_id" % (t0, t1)
         self.__cursor.execute(sql)
-        result = cursor.fetchall()
+        result = self.__cursor.fetchall()
+        hosts = []
         for row in result:
-            print "code -- " + row[0].encode('utf-8')
-            print "name -- " + row[1].encode('utf-8')
+            host_id, name, name1 = row
+            hosts.append({"hostId":name1, "hostName":name})
+        self.put_hosts(hosts)
 
     def poll_hostgroups(self):
         pass
