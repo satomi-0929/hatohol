@@ -409,7 +409,7 @@ class BasePoller(HapiProcessor):
     __COMPONENT_CODE = 0x20
 
     def __init__(self, *args, **kwargs):
-        HapiProcessor.__init__(self, kwargs["sender"], __COMPONENT_CODE)
+        HapiProcessor.__init__(self, kwargs["sender"], self.__COMPONENT_CODE)
 
         self.__pollingInterval = 30
         self.__retryInterval = 10
