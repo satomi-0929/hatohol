@@ -206,8 +206,10 @@ class HapiProcessor:
         self.__dispatch_queue.put((self.__process_id, request_id))
         self.__dispatch_queue.join()
         try:
-            if self.__reply_queue.get(True, TIMEOUT_SEC):
+            if self.__reply_queue.get(True, TIMEOUT_SEC) == True:
                 pass
+            else:
+                raise
         except Queue.Empty:
             logging.error("Request(ID: %d) is not accepted." % request_id)
             raise
@@ -405,7 +407,6 @@ class BaseMainPlugin(HapiProcessor):
     def __call__(self):
         while True:
             request = self.__rpc_queue.get()
-            self.__rpc_queue.task_done()
             if self.is_exit_request(request):
                 return
             try:
