@@ -511,6 +511,7 @@ class Utils:
       "fetchEvents": {"lastInfo":unicode(),"count":int(),
                       "direction": unicode(),"fetchId": unicode()},
       "getMonitoringServerInfo": {},
+      "putHosts": {"hosts":list()}
     }
 
     # ToDo Currently, this method does not have notification filter.
