@@ -31,6 +31,7 @@ import imp
 import transporter
 from rabbitmqconnector import RabbitMQConnector
 import pickle
+import sys
 
 SERVER_PROCEDURES = {"exchangeProfile": True,
                      "getMonitoringServerInfo": True,
@@ -137,6 +138,13 @@ class HapiProcessor:
         self.__dispatch_queue = None
         self.__process_id = process_id
         self.__component_code = component_code
+        self.__ms_info = None
+
+    def set_ms_info(self, ms_info):
+        self.__ms_info = ms_info
+
+    def get_ms_info(self):
+        return self.__ms_info
 
     def set_dispatch_queue(self, dispatch_queue):
         self.__dispatch_queue = dispatch_queue

@@ -44,24 +44,18 @@ class ZabbixAPIConductor:
         self.__previous_hosts_info = PreviousHostsInfo()
         self.__trigger_last_info = None
         self.__event_last_info = None
-        self.__ms_info = None
         self.__component_code = self.get_component_code()
         self.__sender = self.get_sender()
 
     def reset(self):
         self.__api = None
 
-    def set_ms_info(self, ms_info):
-        self.__ms_info = ms_info
-
-    def get_ms_info(self):
-        return self.__ms_info
-
     def make_sure_token(self):
         if self.__api is not None:
             return
-        assert self.__ms_info is not None
-        self.__api = zabbixapi.ZabbixAPI(self.__ms_info)
+        ms_info = self.get_ms_info()
+        assert ms_info is not None
+        self.__api = zabbixapi.ZabbixAPI(ms_info)
 
     def request(self, procedure_name, params):
         raise NotImplementedError
