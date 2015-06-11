@@ -307,8 +307,8 @@ class Dispatcher:
         response_id = contents.message_id
         target_queue = self.__id_res_q_map.get(response_id, self.__rpc_queue)
         target_queue.put(contents)
-        self.__id_res_q_map[response_id].put(contents)
-        self.__id_res_q_map.pop(response_id, None)
+        if target_queue != self.__rpc_queue:
+            del self.__id_res_q_map[response_id]
 
     def __call__(self):
         while True:
