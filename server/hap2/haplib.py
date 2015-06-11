@@ -551,7 +551,7 @@ class Utils:
             return pm
 
         # If the message is a reply, sage to a dictionary
-        if pm.message_dict.get("result") and pm.message_id is not None:
+        if pm.message_dict.has_key("result") and pm.message_id is not None:
             return pm
 
         method = pm.message_dict["method"]
