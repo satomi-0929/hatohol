@@ -441,7 +441,7 @@ class BasePoller(HapiProcessor):
     def poll_events(self):
         pass
 
-    def on_abort_poll(self):
+    def on_aborted_poll(self):
         pass
 
     def __call__(self):
@@ -463,7 +463,7 @@ class BasePoller(HapiProcessor):
             sleep_time = self.__pollingInterval
         else:
             sleep_time = self.__retryInterval
-            self.on_abort_poll()
+            self.on_aborted_poll()
 
         # NOTE: The following sleep() will be replaced with a blocking read
         #       from the queue in order to receive some control commands.

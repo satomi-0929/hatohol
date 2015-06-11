@@ -61,7 +61,7 @@ class Hap2NagiosNDOUtilsPoller(haplib.BasePoller):
     def poll_events(self):
         pass
 
-    def on_abort_poll(self):
+    def on_aborted_poll(self):
         self.__db = None
 
 class Hap2NagiosNDOUtilsMain(haplib.BaseMainPlugin):
