@@ -41,13 +41,23 @@ class Hap2NagiosNDOUtilsPoller(haplib.BasePoller):
             self.__db = MySQLdb.connect(host=self.__db_server,
                                         user=self.__db_user,
                                         passwd=self.__db_passwd)
-            cursor = db.cursor()
+            self.__cursor = db.cursor()
         except MySQLdb.Error as (errno, msg):
             logging.error('MySQL Error [%d]: %s' % (errno, msg))
             raise haplib.HandledException
 
     def poll_hosts(self):
-        pass
+        sql = "SELECT " \
+              "t0.host_object_id, " \
+              "t0.display_name, " \
+              "t1.name1" \
+              "FROM nagios_hostgroups t0 INNER JOIN nagios_objects t1 " \
+              "ON t0.host_object_id=t1.object_id"
+        self.__cursor.execute(sql)
+        result = cursor.fetchall()
+        for row in result:
+            print "code -- " + row[0].encode('utf-8')
+            print "name -- " + row[1].encode('utf-8')
 
     def poll_hostgroups(self):
         pass
@@ -63,6 +73,7 @@ class Hap2NagiosNDOUtilsPoller(haplib.BasePoller):
 
     def on_aborted_poll(self):
         self.__db = None
+        self.__cursor = None
 
 class Hap2NagiosNDOUtilsMain(haplib.BaseMainPlugin):
     def __init__(self, *args, **kwargs):
