@@ -257,7 +257,7 @@ class Dispatcher:
     def get_dispatch_queue(self):
         return self.__dispatch_queue
 
-    def __accept_request(self, message):
+    def __acknowledge(self, message):
         wait_id = message[1]
         if wait_id in self.__id_res_q_map:
             logging.error("Ignored duplicated ID: " + str(wait_id))
@@ -272,23 +272,27 @@ class Dispatcher:
         self.__id_res_q_map[wait_id] = target_queue
         target_queue.put(True)
 
+    def __is_expected_id_notification(self, contents):
+        return isinstance(contents, int)
+
     def __dispatch(self):
         try:
             message = self.__dispatch_queue.get(False)
+            source_process_id, contents = message
             self.__dispatch_queue.task_done()
         except Queue.Empty:
             return
 
-        contents = message[1]
-        if isinstance(contents, int):
-            self.__accept_request(message)
+        if self.__is_expected_id_notification(contents):
+            self.__acknowledge(message)
             return
 
+        # Here 'message' must be a payload from the Receiver
         if contents.error_code is not None:
             self.__rpc_queue.put(contents)
             return
 
-        # dispatch the received message from the Receiver class
+        # dispatch the received message to the caller.
         response_id = contents.message_id
         target_queue = self.__id_res_q_map.get(response_id, self.__rpc_queue)
         target_queue.put(contents)
