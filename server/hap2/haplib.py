@@ -282,12 +282,9 @@ class Dispatcher:
         return isinstance(contents, int)
 
     def __dispatch(self):
-        try:
-            message = self.__dispatch_queue.get(False)
-            source_process_id, contents = message
-            self.__dispatch_queue.task_done()
-        except Queue.Empty:
-            return
+        message = self.__dispatch_queue.get()
+        source_process_id, contents = message
+        self.__dispatch_queue.task_done()
 
         if self.__is_expected_id_notification(contents):
             self.__acknowledge(message)
