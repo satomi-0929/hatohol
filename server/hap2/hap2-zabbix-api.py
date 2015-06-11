@@ -94,6 +94,7 @@ class ZabbixAPIConductor:
 
     def update_hosts_and_host_group_membership(self):
         hosts, hg_membership = self.__api.get_hosts()
+        # TODO: replace with HapiProcessor.put_hosts()
         hosts.sort()
         if self.__previous_hosts_info.hosts != hosts:
             hosts_params = {"updateType": "ALL", "hosts": hosts}

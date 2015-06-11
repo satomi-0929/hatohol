@@ -152,7 +152,7 @@ class ZabbixAPI:
 
         host_groups = list()
         for host_group in res_dict["result"]:
-            host_groups.append({"hostId": host_group["groupid"],
+            host_groups.append({"groupId": host_group["groupid"],
                                 "groupName": host_group["name"]})
 
         return host_groups

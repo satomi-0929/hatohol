@@ -27,14 +27,14 @@ import logging
 class DummyServer:
 
     def __init__(self, transporter_args):
-        procedures = ["getMonitoringServerInfo"]
         self.__sender = haplib.Sender(transporter_args)
         self.__rpc_queue = multiprocessing.JoinableQueue()
         self.__dispatcher = haplib.Dispatcher(self.__rpc_queue)
         self.__dispatcher.daemonize();
 
         self.__handler_map = {"getMonitoringServerInfo":
-                              self.__rpc_get_monitoring_server_info}
+                              self.__rpc_get_monitoring_server_info,
+                              "putHosts": self.__rpc_put_hosts}
 
         # launch receiver process
         dispatch_queue = self.__dispatcher.get_dispatch_queue()
@@ -67,6 +67,12 @@ class DummyServer:
             "pollingIntervalSec": 30,
             "retryIntervalSec": 10
         }
+        self.__sender.response(result, call_id)
+
+    def __rpc_put_hosts(self, call_id, params):
+        logging.info(params)
+        # TODO: Parse content
+        result = "SUCCESS"
         self.__sender.response(result, call_id)
 
 
