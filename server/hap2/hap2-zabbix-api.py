@@ -83,42 +83,51 @@ class ZabbixAPIConductor:
         if fetch_id is not None:
             params["fetchId"] = fetch_id
 
-        request_id = self.request("putItems", params)
-        self.wait_response(request_id)
+        request_id = Utils.generate_request_id(self.__component_code)
+        self._wait_acknowledge(request_id)
+        self.__sender.request("putItems", params, request_id)
+        self._wait_response(request_id)
 
     def put_history(self, item_id, begin_time, end_time, fetch_id):
         params = {"itemId": item_id,
                   "histories": self.__api.get_history(item_id, begin_time, end_time),
                   "fetchId": fetch_id}
 
-        request_id = self.request("putHistory", params)
-        self.wait_response(request_id)
+        request_id = Utils.generate_request_id(self.__component_code)
+        self._wait_acknowledge(request_id)
+        self.__sender.request("putHistory", params, request_id)
+        self._wait_response(request_id)
 
     def update_hosts_and_host_group_membership(self):
         hosts, hg_membership = self.__api.get_hosts()
         hosts.sort()
         if self.__previous_hosts_info.hosts != hosts:
             hosts_params = {"updateType": "ALL", "hosts": hosts}
-            request_id = self.request("updateHosts", hosts_params)
-            self.wait_response(request_id)
+            request_id = Utils.generate_request_id(self.__component_code)
+            self._wait_acknowledge(request_id)
+            self.__sender.request("updateHosts", hosts_params, request_id)
+            self._wait_response(request_id)
             self.__previous_hosts_info.hosts = hosts
 
         hg_membership.sort()
         if self.__previous_hosts_info.host_group_membership != hg_membership:
             hg_membership_params = {"updateType": "ALL",
                                     "hostGroupMembership": hg_membership}
-            request_id = self.request("updateHostGroupMembership",
-                                      hg_membership_params)
-            self.wait_response(request_id)
+            request_id = Utils.generate_request_id(self.__component_code)
+            self._wait_acknowledge(request_id)
+            self.__sender.request("updateHostGroupMembership", hg_membership_params, request_id)
+            self._wait_response(request_id)
             self.__previous_hosts_info.host_group_membership = hg_membership
 
     def update_host_groups(self):
         host_groups = self.__api.get_host_groups()
         host_groups.sort()
         if self.__previous_hosts_info.host_groups != host_groups:
-            hosts_params = {"updateType": "ALL", "hostGroups": host_groups}
-            request_id = self.request("updateHostGroups", hosts_params)
-            self.wait_response(request_id)
+            params = {"updateType": "ALL", "hostGroups": host_groups}
+            request_id = Utils.generate_request_id(self.__component_code)
+            self._wait_acknowledge(request_id)
+            self.__sender.request("updateHostGroups", params, request_id)
+            self._wait_response(request_id)
             self.__previous_hosts_info.host_groups = host_groups
 
     def update_triggers(self, host_id=None, fetch_id=None):
@@ -136,8 +145,10 @@ class ZabbixAPIConductor:
             params["fetchId"] = fetch_id
             params["updateType"] = "ALL"
 
-        request_id = self.request("updateTriggers", params)
-        self.wait_response(request_id)
+        request_id = Utils.generate_request_id(self.__component_code)
+        self._wait_acknowledge(request_id)
+        self.__sender.request("updateTriggers", params, request_id)
+        self._wait_response(request_id)
 
     def update_events(self, last_info=None, count=None, direction="ASC",
                       fetch_id=None):
@@ -171,8 +182,10 @@ class ZabbixAPIConductor:
             if num < count - 1:
                 params["mayMoreFlag"] = True
 
-            request_id = self.request("updateTriggers", params)
-            self.wait_response(request_id)
+            request_id = Utils.generate_request_id(self.__component_code)
+            self._wait_acknowledge(request_id)
+            self.__sender.request("updateEvents", params, request_id)
+            self._wait_response(request_id)
 
         self.__event_last_info = last_info
 
