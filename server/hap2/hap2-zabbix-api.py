@@ -201,7 +201,6 @@ class Hap2ZabbixAPIPoller(haplib.BasePoller, ZabbixAPIConductor):
 
     def __update(self):
         self.make_sure_token()
-        self.put_items()
         self.update_hosts_and_host_group_membership()
         self.update_host_groups()
         self.update_triggers()
