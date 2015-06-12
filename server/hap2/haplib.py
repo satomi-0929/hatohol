@@ -463,7 +463,7 @@ class BaseMainPlugin(HapiProcessor):
                                                    request["id"])
             except KeyError:
                 #The following sentense is used in case of receive notification
-                # from Hatohol server. 
+                # from Hatohol server.
                 self.procedures[request["method"]](request["params"])
 
 

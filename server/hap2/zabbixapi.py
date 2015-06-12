@@ -86,7 +86,7 @@ class ZabbixAPI:
 
     def get_history(self, item_id, begin_time, end_time):
         params = {"output": "extend", "itemids": item_id,
-                  "history": get_item_value_type(item_id), "sortfield": "clock",
+                  "history": self.get_item_value_type(item_id), "sortfield": "clock",
                   "sortorder": "ASC", "time_from": begin_time,
                   "time_till": end_time}
         res_dict = self.get_response_dict("history.get", params, self.auth_token)
