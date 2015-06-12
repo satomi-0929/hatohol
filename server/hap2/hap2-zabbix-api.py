@@ -94,36 +94,12 @@ class ZabbixAPIConductor:
 
     def update_hosts_and_host_group_membership(self):
         hosts, hg_membership = self.__api.get_hosts()
-        # TODO: replace with HapiProcessor.put_hosts()
-        hosts.sort()
-        if self.__previous_hosts_info.hosts != hosts:
-            hosts_params = {"updateType": "ALL", "hosts": hosts}
-            request_id = Utils.generate_request_id(self.__component_code)
-            self._wait_acknowledge(request_id)
-            self.__sender.request("updateHosts", hosts_params, request_id)
-            self._wait_response(request_id)
-            self.__previous_hosts_info.hosts = hosts
-
-        hg_membership.sort()
-        if self.__previous_hosts_info.host_group_membership != hg_membership:
-            hg_membership_params = {"updateType": "ALL",
-                                    "hostGroupMembership": hg_membership}
-            request_id = Utils.generate_request_id(self.__component_code)
-            self._wait_acknowledge(request_id)
-            self.__sender.request("updateHostGroupMembership", hg_membership_params, request_id)
-            self._wait_response(request_id)
-            self.__previous_hosts_info.host_group_membership = hg_membership
+        self.put_hosts(hosts)
+        self.put_host_group_membership(hg_membership)
 
     def update_host_groups(self):
         host_groups = self.__api.get_host_groups()
-        host_groups.sort()
-        if self.__previous_hosts_info.host_groups != host_groups:
-            params = {"updateType": "ALL", "hostGroups": host_groups}
-            request_id = Utils.generate_request_id(self.__component_code)
-            self._wait_acknowledge(request_id)
-            self.__sender.request("updateHostGroups", params, request_id)
-            self._wait_response(request_id)
-            self.__previous_hosts_info.host_groups = host_groups
+        self.put_hosts_groups(host_groups)
 
     def update_triggers(self, host_id=None, fetch_id=None):
         if self.__trigger_last_info is None:

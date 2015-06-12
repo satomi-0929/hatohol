@@ -32,9 +32,11 @@ class DummyServer:
         self.__dispatcher = haplib.Dispatcher(self.__rpc_queue)
         self.__dispatcher.daemonize();
 
-        self.__handler_map = {"getMonitoringServerInfo":
-                              self.__rpc_get_monitoring_server_info,
-                              "putHosts": self.__rpc_put_hosts}
+        self.__handler_map = {
+          "getMonitoringServerInfo": self.__rpc_get_monitoring_server_info,
+          "putHosts": self.__rpc_put_hosts,
+          "putHostGroups": self.__rpc_put_host_groups,
+          "putHostGroupMembership": self.__rpc_put_host_group_membership}
 
         # launch receiver process
         dispatch_queue = self.__dispatcher.get_dispatch_queue()
@@ -70,6 +72,18 @@ class DummyServer:
         self.__sender.response(result, call_id)
 
     def __rpc_put_hosts(self, call_id, params):
+        logging.info(params)
+        # TODO: Parse content
+        result = "SUCCESS"
+        self.__sender.response(result, call_id)
+
+    def __rpc_put_host_groups(self, call_id, params):
+        logging.info(params)
+        # TODO: Parse content
+        result = "SUCCESS"
+        self.__sender.response(result, call_id)
+
+    def __rpc_put_host_group_membership(self, call_id, params):
         logging.info(params)
         # TODO: Parse content
         result = "SUCCESS"

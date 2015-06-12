@@ -39,9 +39,9 @@ SERVER_PROCEDURES = {"exchangeProfile": True,
                      "getLastInfo": True,
                      "putItems": True,
                      "putHistory": True,
-                     "updateHosts": True,
-                     "updateHostGroups": True,
-                     "updateHostGroupMembership": True,
+                     "putHosts": True,
+                     "putHostGroups": True,
+                     "putHostGroupMembership": True,
                      "updateTriggers": True,
                      "updateEvents": True,
                      "updateHostParent": True,
@@ -145,6 +145,7 @@ class HapiProcessor:
     def reset(self):
         self.__previous_hosts = None
         self.__previous_host_groups = None
+        self.__previous_host_group_membership = None
 
     def set_ms_info(self, ms_info):
         self.__ms_info = ms_info
@@ -221,14 +222,30 @@ class HapiProcessor:
     def put_host_groups(self, host_groups):
         host_groups.sort()
         if self.__previous_host_groups == host_groups:
-            logging.debug("host groups are not changed.")
+            logging.debug("Host groups are not changed.")
             return
         params = {"updateType": "ALL", "hostGroups": host_groups}
         request_id = Utils.generate_request_id(self.__component_code)
         self._wait_acknowledge(request_id)
-        self.__sender.request("updateHostGroups", params, request_id)
+        self.__sender.request("putHostGroups", params, request_id)
         self._wait_response(request_id)
-        self.__previous_hosts_info.host_groups = host_groups
+        self.__previous_host_groups = host_groups
+
+
+    def put_host_group_membership(self, hg_membership):
+        hg_membership.sort()
+        if self.__previous_host_group_membership == hg_membership:
+            logging.debug("Host group membership is not changed.")
+            return
+
+        hg_membership_params = {"updateType": "ALL",
+                                "hostGroupMembership": hg_membership}
+        request_id = Utils.generate_request_id(self.__component_code)
+        self._wait_acknowledge(request_id)
+        self.__sender.request("putHostGroupMembership",
+                              hg_membership_params, request_id)
+        self._wait_response(request_id)
+        self.__previous_host_group_membership = hg_membership
 
     def _wait_acknowledge(self, request_id):
         TIMEOUT_SEC = 30
@@ -464,8 +481,8 @@ class BasePoller(HapiProcessor):
     def poll(self):
        ctx = self.poll_setup()
        self.poll_hosts()
-       self.poll_hostgroups()
-       self.poll_hostgroup_members()
+       self.poll_host_groups()
+       self.poll_host_group_membership()
        self.poll_triggers()
        self.poll_events()
 
@@ -475,10 +492,10 @@ class BasePoller(HapiProcessor):
     def poll_hosts(self):
         pass
 
-    def poll_hostgroups(self):
+    def poll_host_groups(self):
         pass
 
-    def poll_hostgroup_members(self):
+    def poll_host_group_membership(self):
         pass
 
     def poll_triggers(self):
@@ -528,7 +545,9 @@ class Utils:
       "fetchEvents": {"lastInfo":unicode(),"count":int(),
                       "direction": unicode(),"fetchId": unicode()},
       "getMonitoringServerInfo": {},
-      "putHosts": {"hosts":list()}
+      "putHosts": {"hosts":list()},
+      "putHostGroups": {"hostGroups":list()},
+      "putHostGroupMembership": {"hostGroupMembership":list()}
     }
 
     # ToDo Currently, this method does not have notification filter.
