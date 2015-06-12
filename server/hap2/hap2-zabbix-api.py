@@ -108,14 +108,7 @@ class ZabbixAPIConductor:
 
     def update_host_groups(self):
         host_groups = self.__api.get_host_groups()
-        host_groups.sort()
-        if self.__previous_hosts_info.host_groups != host_groups:
-            params = {"updateType": "ALL", "hostGroups": host_groups}
-            request_id = Utils.generate_request_id(self.__component_code)
-            self._wait_acknowledge(request_id)
-            self.__sender.request("updateHostGroups", params, request_id)
-            self._wait_response(request_id)
-            self.__previous_hosts_info.host_groups = host_groups
+        self.put_hosts_groups(host_groups)
 
     def update_triggers(self, host_id=None, fetch_id=None):
         if self.__trigger_last_info is None:
