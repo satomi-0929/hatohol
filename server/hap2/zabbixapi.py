@@ -58,7 +58,7 @@ class ZabbixAPI:
     def get_items(self, host_ids=None):
         params = {"output": "extend", "selectApplications": ["name"],
                   "monitored": True}
-        if host_id is not None:
+        if host_ids is not None:
             params["hostids"] = host_ids
 
         res_dict = self.get_response_dict("item.get", params, self.auth_token)
@@ -165,13 +165,13 @@ class ZabbixAPI:
             last_change_since = \
                         Utils.translate_hatohol_time_to_unix_time(requestSince)
             params["lastChangeSince"] = last_change_since
-        if host_id is not None:
+        if host_ids is not None:
             params["hostids"] = host_ids
 
         res_dict = self.get_response_dict("trigger.get", params,
                                           self.auth_token)
         expanded_descriptions = \
-            self.get_trigger_expanded_description(last_change_since, host_id)
+            self.get_trigger_expanded_description(last_change_since, host_ids)
 
         self.result = check_response(res_dict)
         if not self.result:
@@ -194,13 +194,13 @@ class ZabbixAPI:
         return triggers
 
     def get_trigger_expanded_description(self, last_change_since=None,
-                                         host_id=None):
+                                         host_ids=None):
         params = {"output": ["description"], "expandDescription": 1,
                   "active": True}
         if last_change_since:
             params["lastChangeSince"] = int(last_change_since)
-        if host_id is not None:
-            params["hostids"] = host_id
+        if host_ids is not None:
+            params["hostids"] = host_ids
 
         res_dict = self.get_response_dict("trigger.get", params, self.auth_token)
 
