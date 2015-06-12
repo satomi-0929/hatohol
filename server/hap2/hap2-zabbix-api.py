@@ -134,7 +134,9 @@ class ZabbixAPIConductor:
             return
 
         self.__trigger_last_info = \
-            Utils.find_last_info_from_dict_array(triggers, "lastChangeTime")
+            Utils.get_biggest_num_of_dict_array(triggers,
+                                                "lastChangeTime")
+
 
         params = {"triggers": triggers, "updateType": "UPDATED",
                   "lastInfo": self.__trigger_last_info}
@@ -171,8 +173,8 @@ class ZabbixAPIConductor:
         for num in range(0, count):
             start = num * 1000
             send_events = events[start: start + 1000]
-            last_info = Utils.find_last_info_from_dict_array(send_events,
-                                                             "eventId")
+            last_info = \
+                    Utils.get_biggest_num_of_dict_array(send_events, "eventId")
             params = {"events": send_events, "lastInfo": last_info,
                       "updateType": "UPDATE"}
 

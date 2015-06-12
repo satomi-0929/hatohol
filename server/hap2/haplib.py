@@ -650,12 +650,23 @@ class Utils:
         for procedure in procedures:
             valid_procedures_dict[procedure] = True
 
+    #This method is created on the basis of getting same number of digits under the decimal.
     @staticmethod
-    def find_last_info_from_dict_array(target_array, last_info_name):
+    def get_biggest_num_of_dict_array(array, key):
         last_info = None
-        for target_dict in target_array:
-            if last_info < target_dict[last_info_name]:
-                last_info = target_dict[last_info_name]
+
+        for target_dict in array:
+            digit = int()
+            if digit < len(target_dict[key]):
+                digit = len(target_dict[key])
+
+        for target_dict in array:
+            target_value = target_dict[key]
+            if isinstance(target_value, str) or isinstance(target_value, unicode):
+                target_value = target_value.zfill(digit)
+
+            if last_info < target_value:
+                last_info = target_value
 
         return last_info
 
