@@ -213,6 +213,7 @@ class Hap2ZabbixAPIMain(haplib.BaseMainPlugin, ZabbixAPIConductor):
                                          "fetchHistory",
                                          "fetchTriggers",
                                          "fetchEvents"])
+        self.set_implemented_procedures_in_receiver()
 
     def hap_fetch_items(self, params, request_id):
         self.make_sure_token()

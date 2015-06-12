@@ -297,6 +297,9 @@ class Receiver:
         # TODO: handle exceptions
         self.__connector.run_receive_loop()
 
+    def set_implemented_procedures(self, procedures):
+        self.__implemented_procedures = procedures
+
     def daemonize(self):
         receiver_process = multiprocessing.Process(target=self)
         receiver_process.daemon = True
@@ -407,6 +410,9 @@ class BaseMainPlugin(HapiProcessor):
 
     def set_implemented_procedures(self, procedures):
         self.__implemented_procedures = procedures
+
+    def set_implemented_procedures_in_receiver(self):
+        self.__receiver.set_implemented_procedures(self.__implemented_procedures)
 
     def hap_exchange_profile(self, params, request_id):
         Utils.optimize_server_procedures(SERVER_PROCEDURES, params["procedures"])
