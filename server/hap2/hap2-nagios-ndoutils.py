@@ -66,7 +66,7 @@ class Hap2NagiosNDOUtilsPoller(haplib.BasePoller):
             hosts.append({"hostId":name1, "hostName":name})
         self.put_hosts(hosts)
 
-    def poll_hostgroups(self):
+    def poll_host_groups(self):
         t0 = "nagios_hostgroups"
         t1 = "nagios_objects"
         sql = "SELECT " \
@@ -83,8 +83,25 @@ class Hap2NagiosNDOUtilsPoller(haplib.BasePoller):
             groups.append({"groupId":name1, "groupName":name})
         self.put_host_groups(groups)
 
-    def poll_hostgroup_members(self):
-        pass
+    def poll_host_group_membership(self):
+        sql = "SELECT " \
+              + "host_object_id, " \
+              + "hostgroup_id " \
+              + "FROM nagios_hostgroup_members"
+        self.__cursor.execute(sql)
+        result = self.__cursor.fetchall()
+        members = {}
+        for row in result:
+            host_id, group_id = row
+            members_for_host = members.get(host_id)
+            if members_for_host is None:
+                members[host_id] = []
+            members[host_id].append(group_id)
+
+        membership = []
+        for host_id, group_list in members.items():
+            membership.append({"hostId":host_id, "groupIds":group_list})
+        self.put_host_group_membership(membership)
 
     def poll_triggers(self):
         pass
