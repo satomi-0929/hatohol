@@ -94,15 +94,7 @@ class ZabbixAPIConductor:
 
     def update_hosts_and_host_group_membership(self):
         hosts, hg_membership = self.__api.get_hosts()
-        # TODO: replace with HapiProcessor.put_hosts()
-        hosts.sort()
-        if self.__previous_hosts_info.hosts != hosts:
-            hosts_params = {"updateType": "ALL", "hosts": hosts}
-            request_id = Utils.generate_request_id(self.__component_code)
-            self._wait_acknowledge(request_id)
-            self.__sender.request("updateHosts", hosts_params, request_id)
-            self._wait_response(request_id)
-            self.__previous_hosts_info.hosts = hosts
+        self.put_hosts(hosts)
 
         hg_membership.sort()
         if self.__previous_hosts_info.host_group_membership != hg_membership:
