@@ -449,9 +449,15 @@ class BaseMainPlugin(HapiProcessor):
 
     def __call__(self):
         while True:
-            request = self.__rpc_queue.get()
+            msg = self.__rpc_queue.get()
+            request = msg.message_dict
+
             if self.is_exit_request(request):
                 return
+            if msg.error_code is not None:
+                self.hap_return_error(msg.error_code, msg.message_id)
+                logging.error(msg.get_error_message())
+
             try:
                 self.procedures[request["method"]](request["params"],
                                                    request["id"])
@@ -459,9 +465,6 @@ class BaseMainPlugin(HapiProcessor):
                 #The following sentense is used in case of receive notification
                 # from Hatohol server. 
                 self.procedures[request["method"]](request["params"])
-            except ValueError as exception:
-                if str(exception) == "tuple indices must be integers, not str":
-                    self.hap_return_error(request[0], request[1])
 
 
 class BasePoller(HapiProcessor):
