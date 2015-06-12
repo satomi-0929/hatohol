@@ -55,11 +55,11 @@ class ZabbixAPI:
 
         return res_dict["result"][0:3]
 
-    def get_items(self, host_id=None):
+    def get_items(self, host_ids=None):
         params = {"output": "extend", "selectApplications": ["name"],
                   "monitored": True}
         if host_id is not None:
-            params["hostids"] = host_id
+            params["hostids"] = host_ids
 
         res_dict = self.get_response_dict("item.get", params, self.auth_token)
 
@@ -158,7 +158,7 @@ class ZabbixAPI:
 
         return host_groups
 
-    def get_triggers(self, requestSince=None, host_id=None):
+    def get_triggers(self, requestSince=None, host_ids=None):
         params = {"output": "extend", "selectHosts": ["name"], "active": True}
         last_change_since = int()
         if requestSince:
@@ -166,7 +166,7 @@ class ZabbixAPI:
                         Utils.translate_hatohol_time_to_unix_time(requestSince)
             params["lastChangeSince"] = last_change_since
         if host_id is not None:
-            params["hostids"] = host_id
+            params["hostids"] = host_ids
 
         res_dict = self.get_response_dict("trigger.get", params,
                                           self.auth_token)

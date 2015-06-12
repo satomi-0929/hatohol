@@ -72,8 +72,8 @@ class ZabbixAPIConductor:
     def get_sender(self, request_id):
         raise NotImplementedError
 
-    def put_items(self, host_id=None, fetch_id=None):
-        params = {"items": self.__api.get_items(host_id)}
+    def put_items(self, host_ids=None, fetch_id=None):
+        params = {"items": self.__api.get_items(host_ids)}
         if fetch_id is not None:
             params["fetchId"] = fetch_id
 
@@ -101,11 +101,11 @@ class ZabbixAPIConductor:
         host_groups = self.__api.get_host_groups()
         self.put_host_groups(host_groups)
 
-    def update_triggers(self, host_id=None, fetch_id=None):
+    def update_triggers(self, host_ids=None, fetch_id=None):
         if self.__trigger_last_info is None:
             self.__trigger_last_info = self.get_last_info("trigger")
 
-        triggers = self.__api.get_triggers(self.__trigger_last_info, host_id)
+        triggers = self.__api.get_triggers(self.__trigger_last_info, host_ids)
         if not len(triggers):
             return
 
@@ -216,7 +216,7 @@ class Hap2ZabbixAPIMain(haplib.BaseMainPlugin, ZabbixAPIConductor):
 
     def hap_fetch_items(self, params, request_id):
         self.get_sender().response("SUCCESS", request_id)
-        self.put_items(params["hostId"], params["fetchId"])
+        self.put_items(params.get("hostIds"), params["fetchId"])
 
     def hap_fetch_history(self, params, request_id):
         self.get_sender().response("SUCCESS", request_id)
@@ -225,7 +225,7 @@ class Hap2ZabbixAPIMain(haplib.BaseMainPlugin, ZabbixAPIConductor):
 
     def hap_fetch_triggers(self, params, request_id):
         self.get_sender().response("SUCCESS", request_id)
-        self.update_triggers(params["hostId"], params["fetchId"])
+        self.update_triggers(params.get("hostIds"), params["fetchId"])
 
     def hap_fetch_events(self, params, request_id):
         self.get_sender().response("SUCCESS", request_id)
