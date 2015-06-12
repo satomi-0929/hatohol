@@ -99,7 +99,7 @@ class ZabbixAPIConductor:
 
     def update_host_groups(self):
         host_groups = self.__api.get_host_groups()
-        self.put_hosts_groups(host_groups)
+        self.put_host_groups(host_groups)
 
     def update_triggers(self, host_id=None, fetch_id=None):
         if self.__trigger_last_info is None:
