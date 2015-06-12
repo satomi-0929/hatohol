@@ -40,7 +40,7 @@ SERVER_PROCEDURES = {"exchangeProfile": True,
                      "putItems": True,
                      "putHistory": True,
                      "putHosts": True,
-                     "updateHostGroups": True,
+                     "putHostGroups": True,
                      "updateHostGroupMembership": True,
                      "updateTriggers": True,
                      "updateEvents": True,
@@ -221,14 +221,14 @@ class HapiProcessor:
     def put_host_groups(self, host_groups):
         host_groups.sort()
         if self.__previous_host_groups == host_groups:
-            logging.debug("host groups are not changed.")
+            logging.debug("Host groups are not changed.")
             return
         params = {"updateType": "ALL", "hostGroups": host_groups}
         request_id = Utils.generate_request_id(self.__component_code)
         self._wait_acknowledge(request_id)
-        self.__sender.request("updateHostGroups", params, request_id)
+        self.__sender.request("putHostGroups", params, request_id)
         self._wait_response(request_id)
-        self.__previous_hosts_info.host_groups = host_groups
+        self.__previous_host_groups = host_groups
 
     def _wait_acknowledge(self, request_id):
         TIMEOUT_SEC = 30
@@ -528,7 +528,8 @@ class Utils:
       "fetchEvents": {"lastInfo":unicode(),"count":int(),
                       "direction": unicode(),"fetchId": unicode()},
       "getMonitoringServerInfo": {},
-      "putHosts": {"hosts":list()}
+      "putHosts": {"hosts":list()},
+      "putHostGroups": {"hostGroups":list()}
     }
 
     # ToDo Currently, this method does not have notification filter.
