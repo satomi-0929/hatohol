@@ -265,9 +265,6 @@ class HapiProcessor:
         try:
             pm = self.__reply_queue.get(True, TIMEOUT_SEC)
 
-            if pm.error_code is not None:
-                raise Exception(pm.get_error_message())
-
             if pm.message_id != request_id:
                 msg = "Got unexpected repsponse. req: " + str(request_id)
                 logging.error(msg)
