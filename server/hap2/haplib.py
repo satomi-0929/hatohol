@@ -543,18 +543,21 @@ class BasePoller(HapiProcessor):
 class Utils:
 
     PROCEDURES_ARGS = {
-      "exchangeProfile": {"procedures":list(), "name": unicode()},
-      "fetchItems": {"hostIds":list(), "fetchId": unicode()},
-      "fetchHistory": {"hostId":unicode(),"itemId": unicode(),
-                       "beginTime": unicode(), "endTime": unicode(),
-                       "fetchId": unicode()},
-      "fetchTriggers": {"hostIds":list(), "fetchId": unicode()},
-      "fetchEvents": {"lastInfo":unicode(),"count":int(),
-                      "direction": unicode(),"fetchId": unicode()},
-      "getMonitoringServerInfo": {},
-      "putHosts": {"hosts":list()},
-      "putHostGroups": {"hostGroups":list()},
-      "putHostGroupMembership": {"hostGroupMembership":list()}
+      "exchangeProfile": {"procedures": {"type": list(), "mandatory": True},
+                          "name": {"type": unicode(), "mandatory": True}},
+      "fetchItems": {"hostIds": {"type": list(), "mandatory": False},
+                     "fetchId": {"type": unicode(), "mandatory": True}},
+      "fetchHistory": {"hostId":{"type": unicode(), "mandatory": True},
+                       "itemId": {"type": unicode, "mandatory": True},
+                       "beginTime": {"type": unicode(), "mandatory": True},
+                       "endTime": {"type": unicode(), "mandatory": True},
+                       "fetchId": {"type": unicode(), "mandatory": True}},
+      "fetchTriggers": {"hostIds": {"type": list(), "mandatory": False},
+                        "fetchId": {"type": unicode(), "mandatory": True}},
+      "fetchEvents": {"lastInfo":{"type": unicode(), "mandatory": True},
+                      "count":{"type": int(), "mandatory": True},
+                      "direction": {"type": unicode(), "mandatory": True},
+                      "fetchId": {"type": unicode(), "mandatory": True}}
     }
 
     # ToDo Currently, this method does not have notification filter.
@@ -644,12 +647,11 @@ class Utils:
         args_dict = Utils.PROCEDURES_ARGS[json_dict["method"]]
         for arg_name, arg_value in args_dict.iteritems():
             try:
-                if type(json_dict["params"][arg_name]) != type(arg_value):
+                if type(json_dict["params"][arg_name]) != type(arg_value["type"]):
                     return -32602
             except KeyError:
-                return -32602
-
-        return
+                if arg_value["mandatory"]:
+                    return -32602
 
     @staticmethod
     def generate_request_id(component_code):
