@@ -87,7 +87,8 @@ class ZabbixAPI:
     def get_history(self, item_id, begin_time, end_time):
         params = {"output": "extend", "itemids": item_id,
                   "history": get_item_value_type(item_id), "sortfield": "clock",
-                  "sortorder": "ASC", "time_from": begin_time, "time_till": end_time}
+                  "sortorder": "ASC", "time_from": begin_time,
+                  "time_till": end_time}
         res_dict = self.get_response_dict("history.get", params, self.auth_token)
 
         self.result = check_response(res_dict)
@@ -159,15 +160,18 @@ class ZabbixAPI:
 
     def get_triggers(self, requestSince=None, host_id=None):
         params = {"output": "extend", "selectHosts": ["name"], "active": True}
-        if len(requestSince):
-            params["lastChangeSince"] = int(requestSince)
+        last_change_since = int()
+        if requestSince:
+            last_change_since = \
+                        Utils.translate_hatohol_time_to_unix_time(requestSince)
+            params["lastChangeSince"] = last_change_since
         if host_id is not None:
             params["hostids"] = host_id
 
         res_dict = self.get_response_dict("trigger.get", params,
                                           self.auth_token)
-        expanded_descriptions = self.get_trigger_expanded_description(requestSince,
-                                                                  host_id)
+        expanded_descriptions = \
+            self.get_trigger_expanded_description(last_change_since, host_id)
 
         self.result = check_response(res_dict)
         if not self.result:
@@ -189,11 +193,12 @@ class ZabbixAPI:
 
         return triggers
 
-    def get_trigger_expanded_description(self, requestSince=None, host_id=None):
+    def get_trigger_expanded_description(self, last_change_since=None,
+                                         host_id=None):
         params = {"output": ["description"], "expandDescription": 1,
                   "active": True}
-        if len(requestSince):
-            params["lastChangeSince"] = int(requestSince)
+        if last_change_since:
+            params["lastChangeSince"] = int(last_change_since)
         if host_id is not None:
             params["hostids"] = host_id
 
@@ -206,8 +211,10 @@ class ZabbixAPI:
         return res_dict
 
     def get_select_trigger(self, trigger_id):
-        params = {"output": ["triggerid", "priority", "description"], "triggerids": [trigger_id], "expandDescription": 1}
-        res_dict = self.get_response_dict("trigger.get", params, self.auth_token)
+        params = {"output": ["triggerid", "priority", "description"],
+                  "triggerids": [trigger_id], "expandDescription": 1}
+        res_dict = self.get_response_dict("trigger.get", params,
+                                          self.auth_token)
 
         self.result = check_response(res_dict)
         if not self.result:
@@ -215,7 +222,8 @@ class ZabbixAPI:
         return res_dict["result"][0]
 
     def get_events(self, event_id_from, event_id_till=None):
-        params = {"output": "extend", "eventid_from": event_id_from, "selectHosts": ["name"]}
+        params = {"output": "extend", "eventid_from": event_id_from,
+                  "selectHosts": ["name"]}
         if event_id_till is not None:
             params["eventid_till"] = event_id_till
 
