@@ -130,6 +130,9 @@ class ZabbixAPIConductor:
             self.__trigger_last_info = self.get_last_info("trigger")
 
         triggers = self.__api.get_triggers(self.__trigger_last_info, host_id)
+        if not len(triggers):
+            return
+
         self.__trigger_last_info = \
             Utils.find_last_info_from_dict_array(triggers, "lastChangeTime")
 
@@ -161,6 +164,8 @@ class ZabbixAPIConductor:
             event_id_from = event_id_till - count
 
         events = self.__api.get_events(event_id_from, event_id_till)
+        if not len(events):
+            return
 
         count = len(events) / 1000 + 1
         for num in range(0, count):
