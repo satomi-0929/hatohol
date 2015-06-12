@@ -85,6 +85,8 @@ class ZabbixAPI:
         return items
 
     def get_history(self, item_id, begin_time, end_time):
+        begin_time = Utils.translate_hatohol_time_to_unix_time(begin_time)
+        end_time = Utils.translate_hatohol_time_to_unix_time(end_time)
         params = {"output": "extend", "itemids": item_id,
                   "history": self.get_item_value_type(item_id), "sortfield": "clock",
                   "sortorder": "ASC", "time_from": begin_time,
@@ -115,7 +117,7 @@ class ZabbixAPI:
         if not self.result:
             return
 
-        return res_dict[0]["value_type"]
+        return res_dict["result"][0]["value_type"]
 
     # The following method gets not only hosts info but also host group membership.
     def get_hosts(self):
