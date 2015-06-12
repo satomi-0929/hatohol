@@ -215,19 +215,23 @@ class Hap2ZabbixAPIMain(haplib.BaseMainPlugin, ZabbixAPIConductor):
                                          "fetchEvents"])
 
     def hap_fetch_items(self, params, request_id):
+        self.make_sure_token()
         self.get_sender().response("SUCCESS", request_id)
         self.put_items(params.get("hostIds"), params["fetchId"])
 
     def hap_fetch_history(self, params, request_id):
+        self.make_sure_token()
         self.get_sender().response("SUCCESS", request_id)
         self.put_history(params["itemId"], params["beginTime"],
                          params["endTime"], params["fetchId"])
 
     def hap_fetch_triggers(self, params, request_id):
+        self.make_sure_token()
         self.get_sender().response("SUCCESS", request_id)
         self.update_triggers(params.get("hostIds"), params["fetchId"])
 
     def hap_fetch_events(self, params, request_id):
+        self.make_sure_token()
         self.get_sender().response("SUCCESS", request_id)
         self.update_events(params["lastInfo"], params["count"],
                            params["direction"], params["fetchId"])
