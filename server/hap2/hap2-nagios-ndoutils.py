@@ -104,7 +104,25 @@ class Hap2NagiosNDOUtilsPoller(haplib.BasePoller):
         self.put_host_group_membership(membership)
 
     def poll_triggers(self):
-        pass
+        t0 = "nagios_services"
+        t1 = "nagios_servicestatus"
+        t2 = "nagios_hosts"
+        sql = "SELECT " \
+              + "%s.service_object_id, " % t0 \
+              + "%s.current_state, " % t1 \
+              + "%s.status_update_time, " % t1 \
+              + "%s.output, " % t1 \
+              + "%s.host_object_id, " % t2 \
+              + "%s.display_name " % t2 \
+              + "FROM %s INNER JOIN %s " % (t0, t1) \
+              + "ON %s.service_object_id=%s.service_object_id " % (t0, t1) \
+              + "FROM %s INNER JOIN %s " % (t0, t2) \
+              + "ON %s.host_object_id=%s.host_object_id" % (t0, t2)
+        self.__cursor.execute(sql)
+        result = self.__cursor.fetchall()
+        members = {}
+        for row in result:
+            print row
 
     def poll_events(self):
         pass
