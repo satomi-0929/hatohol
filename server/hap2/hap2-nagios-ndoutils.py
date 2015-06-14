@@ -116,7 +116,7 @@ class Hap2NagiosNDOUtilsPoller(haplib.BasePoller):
               + "%s.display_name " % t2 \
               + "FROM %s INNER JOIN %s " % (t0, t1) \
               + "ON %s.service_object_id=%s.service_object_id " % (t0, t1) \
-              + "FROM %s INNER JOIN %s " % (t0, t2) \
+              + "INNER JOIN %s " % t2 \
               + "ON %s.host_object_id=%s.host_object_id" % (t0, t2)
         self.__cursor.execute(sql)
         result = self.__cursor.fetchall()
