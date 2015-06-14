@@ -557,7 +557,11 @@ class Utils:
       "fetchEvents": {"lastInfo":{"type": unicode(), "mandatory": True},
                       "count":{"type": int(), "mandatory": True},
                       "direction": {"type": unicode(), "mandatory": True},
-                      "fetchId": {"type": unicode(), "mandatory": True}}
+                      "fetchId": {"type": unicode(), "mandatory": True}},
+      "getMonitoringServerInfo": {},
+      "putHosts": {"hosts": {"type": list(), "mandatory": True}},
+      "putHostGroups": {"hostGroups": {"type": list(), "mandatory": True}},
+      "putHostGroupMembership": {"hostGroupMembership": {"type": list(), "mandatory": True}}
     }
 
     # ToDo Currently, this method does not have notification filter.
