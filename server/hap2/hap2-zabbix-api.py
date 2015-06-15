@@ -134,31 +134,10 @@ class ZabbixAPIConductor:
             event_id_from = event_id_till - count
 
         events = self.__api.get_events(event_id_from, event_id_till)
-        if not len(events):
+        if len(events) == 0:
             return
 
-        count = len(events) / 1000 + 1
-        for num in range(0, count):
-            start = num * 1000
-            send_events = events[start: start + 1000]
-            last_info = \
-                    Utils.get_biggest_num_of_dict_array(send_events, "eventId")
-            params = {"events": send_events, "lastInfo": last_info,
-                      "updateType": "UPDATE"}
-
-            if fetch_id is not None:
-                params["fetchId"] = fetch_id
-
-            if num < count - 1:
-                params["mayMoreFlag"] = True
-
-            request_id = Utils.generate_request_id(self.__component_code)
-            self._wait_acknowledge(request_id)
-            self.__sender.request("updateEvents", params, request_id)
-            self._wait_response(request_id)
-
-        self.__event_last_info = last_info
-
+        self.__event_last_info = self.put_events(events, fetch_id)
 
 class Hap2ZabbixAPIPoller(haplib.BasePoller, ZabbixAPIConductor):
 
