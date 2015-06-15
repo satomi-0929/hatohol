@@ -118,11 +118,36 @@ class Hap2NagiosNDOUtilsPoller(haplib.BasePoller):
               + "ON %s.service_object_id=%s.service_object_id " % (t0, t1) \
               + "INNER JOIN %s " % t2 \
               + "ON %s.host_object_id=%s.host_object_id" % (t0, t2)
+        # NOTE: The update time update in the output is updated every status
+        #       check in Nagios even if the value is not changed.
+        # TODO: So we should has the previous result and compare it here
+        #       in order to improve performance.
         self.__cursor.execute(sql)
         result = self.__cursor.fetchall()
-        members = {}
+        triggers = []
         for row in result:
+            (trigger_id, status, update_time, msg, host_id, host_name) = row
             print row
+            print update_time
+            hapi_status = {0:"OK", 1:"NG"}.get(status)
+            if hapi_status is None:
+                log.warning("Unknown status: " + str(status))
+                hapi_status = "UNKNOWN"
+
+            triggers.append({
+                "triggerId": trigger_id,
+                "status": hapi_status,
+                # We always set ERROR. This behaivor is different from
+                # that in ArmNaigosNDOUtils. It is the same as Zabbix.
+                "severity": "ERROR",
+                # TODO: take into acount the timezone
+                "lastChangeTime": update_time.strftime("%Y%m%d%H%M%S"),
+                "hostId": host_id,
+                "hostName": host_name,
+                "brief": msg,
+                "extendedInfo": ""
+            })
+
 
     def poll_events(self):
         pass
