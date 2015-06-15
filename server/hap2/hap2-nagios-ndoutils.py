@@ -35,6 +35,8 @@ class Hap2NagiosNDOUtilsPoller(haplib.BasePoller):
     SEVERITY_MAP = \
       {STATE_OK: "INFO", STATE_WARNING: "WARNING", STATE_CRITICAL: "CRITICAL"}
 
+    EVENT_TYPE_MAP = {STATE_OK: "GOOD", STATE_WARNING: "BAD", STATE_CRITICAL: "BAD"}
+
     def __init__(self, *args, **kwargs):
         haplib.BasePoller.__init__(self, *args, **kwargs) 
 
@@ -136,25 +138,18 @@ class Hap2NagiosNDOUtilsPoller(haplib.BasePoller):
         triggers = []
 
         for row in result:
-            (trigger_id, status, update_time, msg, host_id, host_name) = row
+            (trigger_id, state, update_time, msg, host_id, host_name) = row
 
-            hapi_status = self.STATUS_MAP.get(status)
-            if hapi_status is None:
-                log.warning("Unknown status: " + str(status))
-                hapi_status = "UNKNOWN"
-
-            hapi_severity = self.SEVERITY_MAP.get(status)
-            if hapi_severity is None:
-                log.warning("Unknown status: " + str(status))
-                hapi_status = "UNKNOWN"
+            hapi_status, hapi_severity = \
+              self.__parse_status_and_severity(state)
 
             triggers.append({
-                "triggerId": trigger_id,
+                "triggerId": str(trigger_id),
                 "status": hapi_status,
                 "severity": hapi_severity,
                 # TODO: take into acount the timezone
                 "lastChangeTime": update_time.strftime("%Y%m%d%H%M%S"),
-                "hostId": host_id,
+                "hostId": str(host_id),
                 "hostName": host_name,
                 "brief": msg,
                 "extendedInfo": ""
@@ -182,10 +177,46 @@ class Hap2NagiosNDOUtilsPoller(haplib.BasePoller):
               + "ON %s.host_object_id=%s.host_object_id" % (t1, t2)
         self.__cursor.execute(sql)
         result = self.__cursor.fetchall()
+
+        events = []
         for row in result:
             (event_id, state, event_time, msg, \
              trigger_id, host_id, host_name) = row
-            print row
+
+            hapi_event_type = self.EVENT_TYPE_MAP.get(state)
+            if hapi_event_type is None:
+                log.warning("Unknown status: " + str(status))
+                hapi_event_type = "UNKNOWN"
+
+            hapi_status, hapi_severity = \
+              self.__parse_status_and_severity(state)
+
+            events.append({
+                "eventId": str(event_id),
+                "time": event_time.strftime("%Y%m%d%H%M%S"),
+                "type": hapi_event_type,
+                "triggerId": trigger_id,
+                "status": hapi_status,
+                "severity": hapi_severity,
+                "hostId": str(host_id),
+                "hostName": host_name,
+                "brief": msg,
+                "extendedInfo": ""
+            })
+
+
+    def __parse_status_and_severity(self, status):
+        hapi_status = self.STATUS_MAP.get(status)
+        if hapi_status is None:
+            log.warning("Unknown status: " + str(status))
+            hapi_status = "UNKNOWN"
+
+        hapi_severity = self.SEVERITY_MAP.get(status)
+        if hapi_severity is None:
+            log.warning("Unknown status: " + str(status))
+            hapi_severity = "UNKNOWN"
+
+        return (hapi_status, hapi_severity)
 
     def on_aborted_poll(self):
         if self.__cursor is not None:
