@@ -127,8 +127,6 @@ class Hap2NagiosNDOUtilsPoller(haplib.BasePoller):
         triggers = []
         for row in result:
             (trigger_id, status, update_time, msg, host_id, host_name) = row
-            print row
-            print update_time
             hapi_status = {0:"OK", 1:"NG"}.get(status)
             if hapi_status is None:
                 log.warning("Unknown status: " + str(status))
@@ -147,6 +145,9 @@ class Hap2NagiosNDOUtilsPoller(haplib.BasePoller):
                 "brief": msg,
                 "extendedInfo": ""
             })
+        # TODO: update_type should UPDATED.
+        update_type = "ALL"
+        self.put_triggers(triggers, update_type=update_type)
 
 
     def poll_events(self):

@@ -247,6 +247,20 @@ class HapiProcessor:
         self._wait_response(request_id)
         self.__previous_host_group_membership = hg_membership
 
+    def put_triggers(self, triggers, update_type,
+                     last_info=None, fetch_id=None):
+
+        params = {"triggers": triggers, "updateType": update_type}
+        if last_info is not None:
+            params["lastInfo"] = last_info
+        if fetch_id is not None:
+            params["fetchId"] = last_info
+
+        request_id = Utils.generate_request_id(self.__component_code)
+        self._wait_acknowledge(request_id)
+        self.__sender.request("putTriggers", params, request_id)
+        self._wait_response(request_id)
+
     def _wait_acknowledge(self, request_id):
         TIMEOUT_SEC = 30
         self.__dispatch_queue.put((self.__process_id, request_id))
@@ -561,7 +575,9 @@ class Utils:
       "getMonitoringServerInfo": {},
       "putHosts": {"hosts": {"type": list(), "mandatory": True}},
       "putHostGroups": {"hostGroups": {"type": list(), "mandatory": True}},
-      "putHostGroupMembership": {"hostGroupMembership": {"type": list(), "mandatory": True}}
+      "putHostGroupMembership": {"hostGroupMembership": {"type": list(), "mandatory": True}},
+      "putTriggers": {"triggers": {"type": list(), "mandatory": True},
+                      "updateType": {"type": unicode(), "mandatory": True}},
     }
 
     # ToDo Currently, this method does not have notification filter.
@@ -611,6 +627,7 @@ class Utils:
         # 'id' is not included in the message.
         if pm.message_id is None:
             pm.error_code = -32602
+            pm.error_message = "Not found: id"
             return pm
 
         # If the message is a reply, sage to a dictionary
@@ -624,7 +641,8 @@ class Utils:
             pm.error_message = "Unsupported method: '%s'" % method
             return pm
 
-        pm.error_code = Utils.validate_arguments(pm.message_dict)
+        pm.error_code, pm.error_message = \
+          Utils.validate_arguments(pm.message_dict)
         if pm.error_code is not None:
             return pm
 
@@ -651,11 +669,17 @@ class Utils:
         args_dict = Utils.PROCEDURES_ARGS[json_dict["method"]]
         for arg_name, arg_value in args_dict.iteritems():
             try:
-                if type(json_dict["params"][arg_name]) != type(arg_value["type"]):
-                    return -32602
+                type_expect = type(json_dict["params"][arg_name])
+                type_actual = type(arg_value["type"])
+                if type_expect != type_actual:
+                    msg = "Argument '%s': unexpected type: exp: %s, act: %s" \
+                          % (arg_name, type_expect, type_actual)
+                    return (-32602, msg)
             except KeyError:
                 if arg_value["mandatory"]:
-                    return -32602
+                    msg = "Missing a andatory paramter: %s" % arg_name
+                    return (-32602, msg)
+        return (None, None)
 
     @staticmethod
     def generate_request_id(component_code):

@@ -36,7 +36,8 @@ class DummyServer:
           "getMonitoringServerInfo": self.__rpc_get_monitoring_server_info,
           "putHosts": self.__rpc_put_hosts,
           "putHostGroups": self.__rpc_put_host_groups,
-          "putHostGroupMembership": self.__rpc_put_host_group_membership}
+          "putHostGroupMembership": self.__rpc_put_host_group_membership,
+          "putTriggers": self.__rpc_put_triggers}
 
         # launch receiver process
         dispatch_queue = self.__dispatcher.get_dispatch_queue()
@@ -84,6 +85,12 @@ class DummyServer:
         self.__sender.response(result, call_id)
 
     def __rpc_put_host_group_membership(self, call_id, params):
+        logging.info(params)
+        # TODO: Parse content
+        result = "SUCCESS"
+        self.__sender.response(result, call_id)
+
+    def __rpc_put_triggers(self, call_id, params):
         logging.info(params)
         # TODO: Parse content
         result = "SUCCESS"
