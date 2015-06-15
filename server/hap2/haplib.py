@@ -261,6 +261,31 @@ class HapiProcessor:
         self.__sender.request("putTriggers", params, request_id)
         self._wait_response(request_id)
 
+    def put_events(self, events, fetch_id=None):
+
+        CHUNK_SIZE = 1000
+        count = len(events) / CHUNK_SIZE + 1
+        for num in range(0, count):
+            start = num * CHUNK_SIZE
+            event_chunk = events[start:start + CHUNK_SIZE]
+
+            # TODO: Use more efficient way to calculate last_info .
+            last_info = \
+                Utils.get_biggest_num_of_dict_array(event_chunk, "eventId")
+            params = {"events": event_chunk, "lastInfo": last_info,
+                      "updateType": "UPDATE"}
+
+            if fetch_id is not None:
+                params["fetchId"] = fetch_id
+
+            if num < count - 1:
+                params["mayMoreFlag"] = True
+
+            request_id = Utils.generate_request_id(self.__component_code)
+            self._wait_acknowledge(request_id)
+            self.__sender.request("putEvents", params, request_id)
+            self._wait_response(request_id)
+
     def _wait_acknowledge(self, request_id):
         TIMEOUT_SEC = 30
         self.__dispatch_queue.put((self.__process_id, request_id))
@@ -578,6 +603,7 @@ class Utils:
       "putHostGroupMembership": {"hostGroupMembership": {"type": list(), "mandatory": True}},
       "putTriggers": {"triggers": {"type": list(), "mandatory": True},
                       "updateType": {"type": unicode(), "mandatory": True}},
+      "putEvents":  {"events": {"type": list(), "mandatory": True}}
     }
 
     # ToDo Currently, this method does not have notification filter.

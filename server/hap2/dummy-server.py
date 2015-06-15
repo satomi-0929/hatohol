@@ -37,7 +37,8 @@ class DummyServer:
           "putHosts": self.__rpc_put_hosts,
           "putHostGroups": self.__rpc_put_host_groups,
           "putHostGroupMembership": self.__rpc_put_host_group_membership,
-          "putTriggers": self.__rpc_put_triggers}
+          "putTriggers": self.__rpc_put_triggers,
+          "putEvents": self.__rpc_put_events}
 
         # launch receiver process
         dispatch_queue = self.__dispatcher.get_dispatch_queue()
@@ -91,6 +92,12 @@ class DummyServer:
         self.__sender.response(result, call_id)
 
     def __rpc_put_triggers(self, call_id, params):
+        logging.info(params)
+        # TODO: Parse content
+        result = "SUCCESS"
+        self.__sender.response(result, call_id)
+
+    def __rpc_put_events(self, call_id, params):
         logging.info(params)
         # TODO: Parse content
         result = "SUCCESS"

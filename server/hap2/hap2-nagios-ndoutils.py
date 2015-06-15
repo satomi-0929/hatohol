@@ -175,6 +175,7 @@ class Hap2NagiosNDOUtilsPoller(haplib.BasePoller):
               + "ON %s.statehistory_id=%s.service_object_id " % (t0, t1) \
               + "INNER JOIN %s " % t2 \
               + "ON %s.host_object_id=%s.host_object_id" % (t1, t2)
+        # TODO: get last_info and add the necessary condition to query.
         self.__cursor.execute(sql)
         result = self.__cursor.fetchall()
 
@@ -203,7 +204,7 @@ class Hap2NagiosNDOUtilsPoller(haplib.BasePoller):
                 "brief": msg,
                 "extendedInfo": ""
             })
-
+        self.put_events(events)
 
     def __parse_status_and_severity(self, status):
         hapi_status = self.STATUS_MAP.get(status)
