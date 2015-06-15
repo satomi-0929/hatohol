@@ -165,7 +165,27 @@ class Hap2NagiosNDOUtilsPoller(haplib.BasePoller):
 
 
     def poll_events(self):
-        pass
+        t0 = "nagios_statehistory"
+        t1 = "nagios_services"
+        t2 = "nagios_hosts"
+        sql = "SELECT " \
+              + "%s.statehistory_id, " % t0 \
+              + "%s.state, " % t0 \
+              + "%s.state_time, " % t0 \
+              + "%s.output, " % t0 \
+              + "%s.service_object_id, " % t1 \
+              + "%s.host_object_id, " % t2 \
+              + "%s.display_name " % t2 \
+              + "FROM %s INNER JOIN %s " % (t0, t1) \
+              + "ON %s.statehistory_id=%s.service_object_id " % (t0, t1) \
+              + "INNER JOIN %s " % t2 \
+              + "ON %s.host_object_id=%s.host_object_id" % (t1, t2)
+        self.__cursor.execute(sql)
+        result = self.__cursor.fetchall()
+        for row in result:
+            (event_id, state, event_time, msg, \
+             trigger_id, host_id, host_name) = row
+            print row
 
     def on_aborted_poll(self):
         if self.__cursor is not None:
