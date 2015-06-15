@@ -43,7 +43,6 @@ class ZabbixAPIConductor:
         self.__api = None
         self.__previous_hosts_info = PreviousHostsInfo()
         self.__trigger_last_info = None
-        self.__event_last_info = None
         self.__component_code = self.get_component_code()
         self.__sender = self.get_sender()
 
@@ -121,7 +120,7 @@ class ZabbixAPIConductor:
     def update_events(self, last_info=None, count=None, direction="ASC",
                       fetch_id=None):
         if last_info is None:
-            last_info = self.get_last_info("event")
+            last_info = self.get_cached_event_last_info()
 
         if direction == "ASC":
             event_id_from = last_info
@@ -137,7 +136,7 @@ class ZabbixAPIConductor:
         if len(events) == 0:
             return
 
-        self.__event_last_info = self.put_events(events, fetch_id)
+        self.put_events(events, fetch_id)
 
 class Hap2ZabbixAPIPoller(haplib.BasePoller, ZabbixAPIConductor):
 

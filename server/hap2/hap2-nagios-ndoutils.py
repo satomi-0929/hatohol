@@ -160,6 +160,8 @@ class Hap2NagiosNDOUtilsPoller(haplib.BasePoller):
 
 
     def poll_events(self):
+        last_info = self.get_cached_event_last_info()
+
         t0 = "nagios_statehistory"
         t1 = "nagios_services"
         t2 = "nagios_hosts"
@@ -174,8 +176,8 @@ class Hap2NagiosNDOUtilsPoller(haplib.BasePoller):
               + "FROM %s INNER JOIN %s " % (t0, t1) \
               + "ON %s.statehistory_id=%s.service_object_id " % (t0, t1) \
               + "INNER JOIN %s " % t2 \
-              + "ON %s.host_object_id=%s.host_object_id" % (t1, t2)
-        # TODO: get last_info and add the necessary condition to query.
+              + "ON %s.host_object_id=%s.host_object_id " % (t1, t2) \
+              + "WHERE %s.statehistory_id>%s" % t0, (last_info)
         self.__cursor.execute(sql)
         result = self.__cursor.fetchall()
 

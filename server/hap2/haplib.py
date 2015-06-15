@@ -146,6 +146,7 @@ class HapiProcessor:
         self.__previous_hosts = None
         self.__previous_host_groups = None
         self.__previous_host_group_membership = None
+        self.__event_last_info = None
 
     def set_ms_info(self, ms_info):
         self.__ms_info = ms_info
@@ -261,6 +262,11 @@ class HapiProcessor:
         self.__sender.request("putTriggers", params, request_id)
         self._wait_response(request_id)
 
+    def get_cached_event_last_info(self):
+        if self.__event_last_info is None:
+            self.__event_last_info = self.get_last_info("event")
+        return self.__event_last_info
+
     def put_events(self, events, fetch_id=None):
 
         CHUNK_SIZE = 1000
@@ -285,6 +291,8 @@ class HapiProcessor:
             self._wait_acknowledge(request_id)
             self.__sender.request("putEvents", params, request_id)
             self._wait_response(request_id)
+
+        self.__event_last_info = last_info
 
     def _wait_acknowledge(self, request_id):
         TIMEOUT_SEC = 30
