@@ -27,6 +27,14 @@ import standardhap
 
 class Hap2NagiosNDOUtilsPoller(haplib.BasePoller):
 
+    STATE_OK = 0
+    STATE_WARNING = 1
+    STATE_CRITICAL = 2
+
+    STATUS_MAP = {STATE_OK: "OK", STATE_WARNING: "NG", STATE_CRITICAL: "NG"}
+    SEVERITY_MAP = \
+      {STATE_OK: "INFO", STATE_WARNING: "WARNING", STATE_CRITICAL: "CRITICAL"}
+
     def __init__(self, *args, **kwargs):
         haplib.BasePoller.__init__(self, *args, **kwargs) 
 
@@ -124,20 +132,26 @@ class Hap2NagiosNDOUtilsPoller(haplib.BasePoller):
         #       in order to improve performance.
         self.__cursor.execute(sql)
         result = self.__cursor.fetchall()
+
         triggers = []
+
         for row in result:
             (trigger_id, status, update_time, msg, host_id, host_name) = row
-            hapi_status = {0:"OK", 1:"NG"}.get(status)
+
+            hapi_status = self.STATUS_MAP.get(status)
             if hapi_status is None:
+                log.warning("Unknown status: " + str(status))
+                hapi_status = "UNKNOWN"
+
+            hapi_severity = self.SEVERITY_MAP.get(status)
+            if hapi_severity is None:
                 log.warning("Unknown status: " + str(status))
                 hapi_status = "UNKNOWN"
 
             triggers.append({
                 "triggerId": trigger_id,
                 "status": hapi_status,
-                # We always set ERROR. This behaivor is different from
-                # that in ArmNaigosNDOUtils. It is the same as Zabbix.
-                "severity": "ERROR",
+                "severity": hapi_severity,
                 # TODO: take into acount the timezone
                 "lastChangeTime": update_time.strftime("%Y%m%d%H%M%S"),
                 "hostId": host_id,
