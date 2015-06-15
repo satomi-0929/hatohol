@@ -112,19 +112,11 @@ class ZabbixAPIConductor:
         self.__trigger_last_info = \
             Utils.get_biggest_num_of_dict_array(triggers,
                                                 "lastChangeTime")
+        update_type = "ALL" if fetch_id is not None else "UPDATED"
 
-
-        params = {"triggers": triggers, "updateType": "UPDATED",
-                  "lastInfo": self.__trigger_last_info}
-
-        if fetch_id is not None:
-            params["fetchId"] = fetch_id
-            params["updateType"] = "ALL"
-
-        request_id = Utils.generate_request_id(self.__component_code)
-        self._wait_acknowledge(request_id)
-        self.__sender.request("updateTriggers", params, request_id)
-        self._wait_response(request_id)
+        self.put_triggers(triggers, update_type=update_type,
+                          last_info=self.__trigger_last_info,
+                          fetch_id=fetch_id)
 
     def update_events(self, last_info=None, count=None, direction="ASC",
                       fetch_id=None):
