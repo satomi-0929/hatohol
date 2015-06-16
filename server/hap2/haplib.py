@@ -711,7 +711,7 @@ class Utils:
             pm.error_message = "Not found: id"
             return pm
 
-        # If the message is a reply, sage to a dictionary
+        # The case the message is a reply
         if pm.message_dict.has_key("result"):
             return pm
 
