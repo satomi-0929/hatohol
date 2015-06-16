@@ -121,6 +121,7 @@ class DummyServer:
         self.__sender.response(result, call_id)
 
     def __rpc_put_arm_info(self, call_id, params):
+        logging.info(params)
         # TODO: Parse content
         result = "SUCCESS"
         self.__sender.response(result, call_id)
