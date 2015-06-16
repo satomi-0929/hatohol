@@ -707,7 +707,7 @@ class Utils:
 
         # 'id' is not included in the message.
         if pm.message_id is None:
-            pm.error_code = -32602
+            pm.error_code = ERR_CODE_INVALID_PARAMS
             pm.error_message = "Not found: id"
             return pm
 
@@ -755,11 +755,11 @@ class Utils:
                 if type_expect != type_actual:
                     msg = "Argument '%s': unexpected type: exp: %s, act: %s" \
                           % (arg_name, type_expect, type_actual)
-                    return (-32602, msg)
+                    return (ERR_CODE_INVALID_PARAMS, msg)
             except KeyError:
                 if arg_value["mandatory"]:
                     msg = "Missing a andatory paramter: %s" % arg_name
-                    return (-32602, msg)
+                    return (ERR_CODE_INVALID_PARAMS, msg)
         return (None, None)
 
     @staticmethod
