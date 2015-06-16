@@ -45,7 +45,7 @@ SERVER_PROCEDURES = {"exchangeProfile": True,
                      "updateTriggers": True,
                      "updateEvents": True,
                      "updateHostParent": True,
-                     "updateArmInfo": True}
+                     "putArmInfo": True}
 
 ERR_CODE_INVALID_REQUEST = -32600
 ERR_CODE_METHOD_NOT_FOUND = -32601
@@ -204,7 +204,7 @@ class HapiProcessor:
         else:
             self.__sender.response(procedures, response_id)
 
-    def update_arm_info(self, arm_info):
+    def put_arm_info(self, arm_info):
         params = {"lastStatus": arm_info.last_status,
                   "failureReason": arm_info.failure_reason,
                   "lastSuccessTime": arm_info.last_success_time,
@@ -214,7 +214,7 @@ class HapiProcessor:
 
         request_id = Utils.generate_request_id(self.__component_code)
         self._wait_acknowledge(request_id)
-        self.__sender.request("updateArmInfo", params, request_id)
+        self.__sender.request("putArmInfo", params, request_id)
         self._wait_response(request_id)
 
     def put_hosts(self, hosts):
@@ -623,7 +623,7 @@ class BasePoller(HapiProcessor):
         # Send ArmInfo
         try:
             arm_info.failure_reason = failure_reason
-            self.update_arm_info(arm_info)
+            self.put_arm_info(arm_info)
         except:
             logger.error("Failed to call put_arm_info.")
 

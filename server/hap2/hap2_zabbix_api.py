@@ -171,7 +171,7 @@ class Hap2ZabbixAPIPoller(haplib.BasePoller, ZabbixAPIConductor):
                 arm_info.failure_time = Utils.get_current_hatohol_time()
                 arm_info.num_failure += 1
 
-            self.update_arm_info(arm_info)
+            self.put_arm_info(arm_info)
             time.sleep(sleep_time)
 
 class Hap2ZabbixAPIMain(haplib.BaseMainPlugin, ZabbixAPIConductor):
