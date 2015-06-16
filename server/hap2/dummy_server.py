@@ -126,8 +126,7 @@ class DummyServer:
         result = "SUCCESS"
         self.__sender.response(result, call_id)
 
-
-if __name__ == '__main__':
+def basic_setup():
     logging.basicConfig(level=logging.INFO)
     logging.info("Dummy Server for HAPI 2.0")
     parser = argparse.ArgumentParser()
@@ -139,5 +138,11 @@ if __name__ == '__main__':
     transporter_args.update(transporter_class.parse_arguments(args))
     transporter_args["amqp_send_queue_suffix"] = "-T"
     transporter_args["amqp_recv_queue_suffix"] = "-S"
+
+    return transporter_args
+
+
+if __name__ == '__main__':
+    transporter_args = basic_setup()
     server = DummyServer(transporter_args)
     server()
