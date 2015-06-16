@@ -103,6 +103,10 @@ class DummyServer:
         logging.info(params)
         # TODO: Parse content
         # TODO: Remember lastInfo
+        last_info = params.get("lastInfo")
+        if last_info is not None:
+            self.__last_info["event"] = last_info
+            logging.info("lastInfo (event): '%s'" % last_info)
         result = "SUCCESS"
         self.__sender.response(result, call_id)
 
