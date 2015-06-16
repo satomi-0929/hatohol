@@ -617,7 +617,7 @@ class BasePoller(HapiProcessor):
             self.on_aborted_poll()
 
             arm_info.last_status = "NG"
-            arm_info.failure_time = Utils.get_current_hatohol_time()
+            arm_info.last_failure_time = Utils.get_current_hatohol_time()
             arm_info.num_failure += 1
 
         # Send ArmInfo
