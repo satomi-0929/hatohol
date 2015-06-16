@@ -46,10 +46,11 @@ SERVER_PROCEDURES = {"exchangeProfile": True,
                      "updateEvents": True,
                      "updateHostParent": True,
                      "updateArmInfo": True}
+ERR_CODE_METHOD_NOT_FOUND = -32601
 ERR_CODE_INVALID_PARAMS = -32602
 ERROR_DICT = {
     -32700: "Parse error", -32600: "invalid Request",
-    -32601: "Method not found",
+    ERR_CODE_METHOD_NOT_FOUND: "Method not found",
     ERR_CODE_INVALID_PARAMS: "invalid params"}
 
 class HandledException:
@@ -716,7 +717,7 @@ class Utils:
         if procedure_name in implemented_procedures:
             return
         else:
-            return -32601
+            return ERR_CODE_METHOD_NOT_FOUND
 
     @staticmethod
     def validate_arguments(json_dict):
