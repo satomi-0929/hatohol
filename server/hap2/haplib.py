@@ -48,10 +48,13 @@ SERVER_PROCEDURES = {"exchangeProfile": True,
                      "updateArmInfo": True}
 ERR_CODE_METHOD_NOT_FOUND = -32601
 ERR_CODE_INVALID_PARAMS = -32602
+ERR_CODE_PARSER_ERROR = -32700
 ERROR_DICT = {
-    -32700: "Parse error", -32600: "invalid Request",
+    -32600: "invalid Request",
     ERR_CODE_METHOD_NOT_FOUND: "Method not found",
-    ERR_CODE_INVALID_PARAMS: "invalid params"}
+    ERR_CODE_INVALID_PARAMS: "invalid params",
+    ERR_CODE_PARSER_ERROR: "Parse error",
+}
 
 class HandledException:
     pass
@@ -708,7 +711,7 @@ class Utils:
         try:
             json_dict = json.loads(json_string)
         except ValueError:
-            return (-32700, None)
+            return (ERR_CODE_PARSER_ERROR, None)
         else:
             return (None, json_dict)
 
