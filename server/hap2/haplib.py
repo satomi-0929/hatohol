@@ -185,7 +185,7 @@ class HapiProcessor:
         request_id = Utils.generate_request_id(self.__component_code)
         self._wait_acknowledge(request_id)
         self.__sender.request("getMonitoringServerInfo", params, request_id)
-        return MonitoringServerInfo(self._wait_response(request_id))
+        return MonitoringServerInfo(self.__wait_response(request_id))
 
     def get_last_info(self, element):
         params = element
@@ -193,14 +193,14 @@ class HapiProcessor:
         self._wait_acknowledge(request_id)
         self.__sender.request("getLastInfo", params, request_id)
 
-        return self._wait_response(request_id)
+        return self.__wait_response(request_id)
 
     def exchange_profile(self, procedures, response_id=None):
         if response_id is None:
             request_id = Utils.generate_request_id(self.__component_code)
             self._wait_acknowledge(request_id)
             self.__sender.request("exchangeProfile", procedures, request_id)
-            self._wait_response(request_id)
+            self.__wait_response(request_id)
         else:
             self.__sender.response(procedures, response_id)
 
@@ -215,7 +215,7 @@ class HapiProcessor:
         request_id = Utils.generate_request_id(self.__component_code)
         self._wait_acknowledge(request_id)
         self.__sender.request("putArmInfo", params, request_id)
-        self._wait_response(request_id)
+        self.__wait_response(request_id)
 
     def put_hosts(self, hosts):
         hosts.sort()
@@ -226,7 +226,7 @@ class HapiProcessor:
         request_id = Utils.generate_request_id(self.__component_code)
         self._wait_acknowledge(request_id)
         self.__sender.request("putHosts", hosts_params, request_id)
-        self._wait_response(request_id)
+        self.__wait_response(request_id)
         self.__previous_hosts = hosts
 
     def put_host_groups(self, host_groups):
@@ -238,7 +238,7 @@ class HapiProcessor:
         request_id = Utils.generate_request_id(self.__component_code)
         self._wait_acknowledge(request_id)
         self.__sender.request("putHostGroups", params, request_id)
-        self._wait_response(request_id)
+        self.__wait_response(request_id)
         self.__previous_host_groups = host_groups
 
 
@@ -254,7 +254,7 @@ class HapiProcessor:
         self._wait_acknowledge(request_id)
         self.__sender.request("putHostGroupMembership",
                               hg_membership_params, request_id)
-        self._wait_response(request_id)
+        self.__wait_response(request_id)
         self.__previous_host_group_membership = hg_membership
 
     def put_triggers(self, triggers, update_type,
@@ -269,7 +269,7 @@ class HapiProcessor:
         request_id = Utils.generate_request_id(self.__component_code)
         self._wait_acknowledge(request_id)
         self.__sender.request("putTriggers", params, request_id)
-        self._wait_response(request_id)
+        self.__wait_response(request_id)
 
     def get_cached_event_last_info(self):
         if self.__event_last_info is None:
@@ -315,7 +315,7 @@ class HapiProcessor:
             request_id = Utils.generate_request_id(self.__component_code)
             self._wait_acknowledge(request_id)
             self.__sender.request("putEvents", params, request_id)
-            self._wait_response(request_id)
+            self.__wait_response(request_id)
 
         self.__event_last_info = last_info
 
@@ -332,7 +332,7 @@ class HapiProcessor:
             logging.error("Request(ID: %d) is not accepted." % request_id)
             raise
 
-    def _wait_response(self, request_id):
+    def __wait_response(self, request_id):
         TIMEOUT_SEC = 30
         try:
             pm = self.__reply_queue.get(True, TIMEOUT_SEC)
