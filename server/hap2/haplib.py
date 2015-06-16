@@ -809,5 +809,5 @@ class Utils:
 
     @staticmethod
     def get_current_hatohol_time():
-        unix_time = float(time.mktime(datetime.now().utctimetuple()))
-        return Utils.translate_unix_time_to_hatohol_time(unix_time)
+        utc_now = datetime.utcnow()
+        return utc_now.strftime("%Y%m%d%H%M%S.") + str(utc_now.microsecond)
