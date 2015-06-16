@@ -145,34 +145,13 @@ class Hap2ZabbixAPIPoller(haplib.BasePoller, ZabbixAPIConductor):
         ZabbixAPIConductor.__init__(self)
         self.__sender = kwargs["sender"]
 
-    def __update(self):
+    # @override
+    def poll(self):
         self.make_sure_token()
         self.update_hosts_and_host_group_membership()
         self.update_host_groups()
         self.update_triggers()
         self.update_events()
-
-    def __call__(self):
-        arm_info = haplib.ArmInfo()
-        while True:
-            sleep_time = self.get_ms_info().polling_interval_sec
-            try:
-                self.__update()
-                arm_info.last_status = "OK"
-                arm_info.failure_reason = ""
-                arm_info.last_success_time = Utils.get_current_hatohol_time()
-                arm_info.num_success += 1
-            except:
-                self.reset()
-                sleep_time = self.get_ms_info().retry_interval_sec
-                arm_info.last_status = "NG"
-                #ToDo Think about how to input failure_reason
-                # arm_info.failure_reason = ""
-                arm_info.failure_time = Utils.get_current_hatohol_time()
-                arm_info.num_failure += 1
-
-            self.put_arm_info(arm_info)
-            time.sleep(sleep_time)
 
 class Hap2ZabbixAPIMain(haplib.BaseMainPlugin, ZabbixAPIConductor):
     def __init__(self, *args, **kwargs):
