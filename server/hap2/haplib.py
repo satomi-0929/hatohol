@@ -268,6 +268,16 @@ class HapiProcessor:
         return self.__event_last_info
 
     def put_events(self, events, fetch_id=None):
+        """
+        This method calls putEvents() and wait for a reply.
+        It divide events if the size is beyond the limitation.
+        It also calculates lastInfo from the eventId in events. The calculated
+        lastInfo is remebered in this object and can be obtained via
+        get_cached_event_last_info().
+
+        @param events A list of event (dictionary).
+        @param fetch_id A fetch ID.
+        """
 
         CHUNK_SIZE = 1000
         count = len(events) / CHUNK_SIZE + 1
@@ -276,6 +286,7 @@ class HapiProcessor:
             event_chunk = events[start:start + CHUNK_SIZE]
 
             # TODO: Use more efficient way to calculate last_info .
+            # TODO: Should be able to select the way to calculate lastInfo.
             last_info = \
                 Utils.get_biggest_num_of_dict_array(event_chunk, "eventId")
             params = {"events": event_chunk, "lastInfo": last_info,
@@ -611,7 +622,8 @@ class Utils:
       "putHostGroupMembership": {"hostGroupMembership": {"type": list(), "mandatory": True}},
       "putTriggers": {"triggers": {"type": list(), "mandatory": True},
                       "updateType": {"type": unicode(), "mandatory": True}},
-      "putEvents":  {"events": {"type": list(), "mandatory": True}}
+      "putEvents":  {"events": {"type": list(), "mandatory": True}},
+      "getLastInfo": {}
     }
 
     # ToDo Currently, this method does not have notification filter.

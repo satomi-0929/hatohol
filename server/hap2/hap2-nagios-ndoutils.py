@@ -24,6 +24,7 @@ import MySQLdb
 import time
 import haplib
 import standardhap
+import logging
 
 class Hap2NagiosNDOUtilsPoller(haplib.BasePoller):
 
@@ -160,11 +161,23 @@ class Hap2NagiosNDOUtilsPoller(haplib.BasePoller):
 
 
     def poll_events(self):
-        last_info = self.get_cached_event_last_info()
-
         t0 = "nagios_statehistory"
         t1 = "nagios_services"
         t2 = "nagios_hosts"
+
+        raw_last_info = self.get_cached_event_last_info()
+        condition = ""
+        if raw_last_info is not None:
+            # last_info is inserted into the SQL statement and should be
+            # strictly validated.
+            last_info = self.__extract_validated_event_last_info(raw_last_info)
+            if last_info is None:
+                logging.error("Malformed last_info: '%s'",
+                              str(raw_last_info))
+                logging.error("Getting events was aborted.")
+                return
+            condition = "WHERE %s.statehistory_id>%s" % (t0, last_info)
+
         sql = "SELECT " \
               + "%s.statehistory_id, " % t0 \
               + "%s.state, " % t0 \
@@ -177,7 +190,7 @@ class Hap2NagiosNDOUtilsPoller(haplib.BasePoller):
               + "ON %s.statehistory_id=%s.service_object_id " % (t0, t1) \
               + "INNER JOIN %s " % t2 \
               + "ON %s.host_object_id=%s.host_object_id " % (t1, t2) \
-              + "WHERE %s.statehistory_id>%s" % (t0, last_info)
+              + condition
         self.__cursor.execute(sql)
         result = self.__cursor.fetchall()
 
@@ -207,6 +220,16 @@ class Hap2NagiosNDOUtilsPoller(haplib.BasePoller):
                 "extendedInfo": ""
             })
         self.put_events(events)
+
+    def __extract_validated_event_last_info(self, last_info):
+        event_id = None
+        try:
+            event_id = int(last_info)
+        except:
+            pass
+        if event_id <= 0:
+            event_id = None
+        return event_id
 
     def __parse_status_and_severity(self, status):
         hapi_status = self.STATUS_MAP.get(status)
