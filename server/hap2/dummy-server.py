@@ -31,6 +31,7 @@ class DummyServer:
         self.__rpc_queue = multiprocessing.JoinableQueue()
         self.__dispatcher = haplib.Dispatcher(self.__rpc_queue)
         self.__dispatcher.daemonize();
+        self.__last_info = {"event":None}
 
         self.__handler_map = {
           "getMonitoringServerInfo": self.__rpc_get_monitoring_server_info,
@@ -101,13 +102,17 @@ class DummyServer:
     def __rpc_put_events(self, call_id, params):
         logging.info(params)
         # TODO: Parse content
+        # TODO: Remember lastInfo
         result = "SUCCESS"
         self.__sender.response(result, call_id)
 
     def __rpc_get_last_info(self, call_id, params):
         logging.info(params)
-        # TODO: Parse content
-        result = "SUCCESS"
+        if not params in self.__last_info:
+            logging.error("Invalid paramter: '%s'" % paramsa)
+            self.__sender.error(haplib.ERR_CODE_INVALID_PARAMS, call_id)
+            return
+        result = self.__last_info[params]
         self.__sender.response(result, call_id)
 
 

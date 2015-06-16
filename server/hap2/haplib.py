@@ -46,8 +46,11 @@ SERVER_PROCEDURES = {"exchangeProfile": True,
                      "updateEvents": True,
                      "updateHostParent": True,
                      "updateArmInfo": True}
-ERROR_DICT = {-32700: "Parse error", -32600: "invalid Request",
-              -32601: "Method not found", -32602: "invalid params"}
+ERR_CODE_INVALID_PARAMS = -32602
+ERROR_DICT = {
+    -32700: "Parse error", -32600: "invalid Request",
+    -32601: "Method not found",
+    ERR_CODE_INVALID_PARAMS: "invalid params"}
 
 class HandledException:
     pass
