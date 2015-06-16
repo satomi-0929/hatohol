@@ -283,7 +283,12 @@ class HapiProcessor:
         """
 
         CHUNK_SIZE = 1000
-        count = len(events) / CHUNK_SIZE + 1
+        num_events = len(events)
+        count = num_events / CHUNK_SIZE
+        if num_events % CHUNK_SIZE != 0:
+            count += 1
+        if count == 0:
+            return
         for num in range(0, count):
             start = num * CHUNK_SIZE
             event_chunk = events[start:start + CHUNK_SIZE]
