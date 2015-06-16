@@ -102,7 +102,6 @@ class DummyServer:
     def __rpc_put_events(self, call_id, params):
         logging.info(params)
         # TODO: Parse content
-        # TODO: Remember lastInfo
         last_info = params.get("lastInfo")
         if last_info is not None:
             self.__last_info["event"] = last_info
