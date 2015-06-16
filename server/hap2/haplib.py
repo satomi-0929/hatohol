@@ -657,7 +657,8 @@ class Utils:
       "putTriggers": {"triggers": {"type": list(), "mandatory": True},
                       "updateType": {"type": unicode(), "mandatory": True}},
       "putEvents":  {"events": {"type": list(), "mandatory": True}},
-      "getLastInfo": {}
+      "getLastInfo": {},
+      "putArmInfo": {},
     }
 
     # ToDo Currently, this method does not have notification filter.

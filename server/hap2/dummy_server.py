@@ -40,7 +40,9 @@ class DummyServer:
           "putHostGroupMembership": self.__rpc_put_host_group_membership,
           "putTriggers": self.__rpc_put_triggers,
           "putEvents": self.__rpc_put_events,
-          "getLastInfo": self.__rpc_get_last_info}
+          "getLastInfo": self.__rpc_get_last_info,
+          "putArmInfo": self.__rpc_put_arm_info,
+        }
 
         # launch receiver process
         dispatch_queue = self.__dispatcher.get_dispatch_queue()
@@ -116,6 +118,11 @@ class DummyServer:
             self.__sender.error(haplib.ERR_CODE_INVALID_PARAMS, call_id)
             return
         result = self.__last_info[params]
+        self.__sender.response(result, call_id)
+
+    def __rpc_put_arm_info(self, call_id, params):
+        # TODO: Parse content
+        result = "SUCCESS"
         self.__sender.response(result, call_id)
 
 
