@@ -46,11 +46,13 @@ SERVER_PROCEDURES = {"exchangeProfile": True,
                      "updateEvents": True,
                      "updateHostParent": True,
                      "updateArmInfo": True}
+
+ERR_CODE_INVALID_REQUEST = -32600
 ERR_CODE_METHOD_NOT_FOUND = -32601
 ERR_CODE_INVALID_PARAMS = -32602
 ERR_CODE_PARSER_ERROR = -32700
 ERROR_DICT = {
-    -32600: "invalid Request",
+    ERR_CODE_INVALID_REQUEST: "invalid Request",
     ERR_CODE_METHOD_NOT_FOUND: "Method not found",
     ERR_CODE_INVALID_PARAMS: "invalid params",
     ERR_CODE_PARSER_ERROR: "Parse error",
