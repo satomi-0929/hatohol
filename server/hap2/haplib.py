@@ -587,12 +587,14 @@ class BasePoller(HapiProcessor):
         pass
 
     def __call__(self):
+        arm_info = ArmInfo()
         while (True):
-            self.__poll_in_try_block()
+            self.__poll_in_try_block(arm_info)
 
-    def __poll_in_try_block(self):
+    def __poll_in_try_block(self, arm_info):
         logging.debug("Start polling.")
         succeeded = False
+        failure_reason = ""
         try:
             self.poll()
             succeeded = True
@@ -600,12 +602,30 @@ class BasePoller(HapiProcessor):
             pass
         except:
             (exctype, value, tb) = sys.exc_info()
-            logging.error("Unexpected error: %s, %s, %s" % (exctype, value, traceback.format_exc()))
+            logging.error("Unexpected error: %s, %s, %s" % \
+                          (exctype, value, traceback.format_exc()))
+            failure_reason = "%s, %s" % (exctype, value)
+
         if succeeded:
             sleep_time = self.__pollingInterval
+
+            arm_info.last_status = "OK"
+            arm_info.last_success_time = Utils.get_current_hatohol_time()
+            arm_info.num_success += 1
         else:
             sleep_time = self.__retryInterval
             self.on_aborted_poll()
+
+            arm_info.last_status = "NG"
+            arm_info.failure_time = Utils.get_current_hatohol_time()
+            arm_info.num_failure += 1
+
+        # Send ArmInfo
+        try:
+            arm_info.failure_reason = failure_reason
+            self.update_arm_info(arm_info)
+        except:
+            logger.error("Failed to call put_arm_info.")
 
         # NOTE: The following sleep() will be replaced with a blocking read
         #       from the queue in order to receive some control commands.
