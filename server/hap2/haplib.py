@@ -183,14 +183,14 @@ class HapiProcessor:
         """
         params = ""
         request_id = Utils.generate_request_id(self.__component_code)
-        self._wait_acknowledge(request_id)
+        self.__wait_acknowledge(request_id)
         self.__sender.request("getMonitoringServerInfo", params, request_id)
         return MonitoringServerInfo(self.__wait_response(request_id))
 
     def get_last_info(self, element):
         params = element
         request_id = Utils.generate_request_id(self.__component_code)
-        self._wait_acknowledge(request_id)
+        self.__wait_acknowledge(request_id)
         self.__sender.request("getLastInfo", params, request_id)
 
         return self.__wait_response(request_id)
@@ -198,7 +198,7 @@ class HapiProcessor:
     def exchange_profile(self, procedures, response_id=None):
         if response_id is None:
             request_id = Utils.generate_request_id(self.__component_code)
-            self._wait_acknowledge(request_id)
+            self.__wait_acknowledge(request_id)
             self.__sender.request("exchangeProfile", procedures, request_id)
             self.__wait_response(request_id)
         else:
@@ -213,7 +213,7 @@ class HapiProcessor:
                   "numFailure": arm_info.num_failure}
 
         request_id = Utils.generate_request_id(self.__component_code)
-        self._wait_acknowledge(request_id)
+        self.__wait_acknowledge(request_id)
         self.__sender.request("putArmInfo", params, request_id)
         self.__wait_response(request_id)
 
@@ -224,7 +224,7 @@ class HapiProcessor:
             return
         hosts_params = {"updateType": "ALL", "hosts": hosts}
         request_id = Utils.generate_request_id(self.__component_code)
-        self._wait_acknowledge(request_id)
+        self.__wait_acknowledge(request_id)
         self.__sender.request("putHosts", hosts_params, request_id)
         self.__wait_response(request_id)
         self.__previous_hosts = hosts
@@ -236,7 +236,7 @@ class HapiProcessor:
             return
         params = {"updateType": "ALL", "hostGroups": host_groups}
         request_id = Utils.generate_request_id(self.__component_code)
-        self._wait_acknowledge(request_id)
+        self.__wait_acknowledge(request_id)
         self.__sender.request("putHostGroups", params, request_id)
         self.__wait_response(request_id)
         self.__previous_host_groups = host_groups
@@ -251,7 +251,7 @@ class HapiProcessor:
         hg_membership_params = {"updateType": "ALL",
                                 "hostGroupMembership": hg_membership}
         request_id = Utils.generate_request_id(self.__component_code)
-        self._wait_acknowledge(request_id)
+        self.__wait_acknowledge(request_id)
         self.__sender.request("putHostGroupMembership",
                               hg_membership_params, request_id)
         self.__wait_response(request_id)
@@ -267,7 +267,7 @@ class HapiProcessor:
             params["fetchId"] = last_info
 
         request_id = Utils.generate_request_id(self.__component_code)
-        self._wait_acknowledge(request_id)
+        self.__wait_acknowledge(request_id)
         self.__sender.request("putTriggers", params, request_id)
         self.__wait_response(request_id)
 
@@ -313,13 +313,13 @@ class HapiProcessor:
                 params["mayMoreFlag"] = True
 
             request_id = Utils.generate_request_id(self.__component_code)
-            self._wait_acknowledge(request_id)
+            self.__wait_acknowledge(request_id)
             self.__sender.request("putEvents", params, request_id)
             self.__wait_response(request_id)
 
         self.__event_last_info = last_info
 
-    def _wait_acknowledge(self, request_id):
+    def __wait_acknowledge(self, request_id):
         TIMEOUT_SEC = 30
         self.__dispatch_queue.put((self.__process_id, request_id))
         self.__dispatch_queue.join()
