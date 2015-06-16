@@ -121,7 +121,7 @@ class Sender:
                                "id": response_id})
         self.__connector.reply(response)
 
-    def send_error_to_queue(self, error_code, response_id):
+    def error(self, error_code, response_id):
         response = json.dumps({"jsonrpc": "2.0",
                                "error": {"code": error_code,
                                          "message": ERROR_DICT[error_code]},
@@ -490,7 +490,7 @@ class BaseMainPlugin(HapiProcessor):
         pass
 
     def hap_return_error(self, error_code, response_id):
-        self.__sender.send_error_to_queue(error_code, response_id)
+        self.__sender.error(error_code, response_id)
 
     def request_exit(self):
         """
