@@ -171,6 +171,7 @@ class Common:
                 "brief": msg,
                 "extendedInfo": ""
             })
+        # TODO: see issue #42 https://github.com/project-hatohol/HAPI-2.0-Specification/issues/42
         # TODO: update_type should UPDATED.
         update_type = "ALL"
         self.put_triggers(triggers, update_type=update_type, fetch_id=fetch_id)
