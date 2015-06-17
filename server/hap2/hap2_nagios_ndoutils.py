@@ -26,28 +26,35 @@ import haplib
 import standardhap
 import logging
 
-class Hap2NagiosNDOUtilsPoller(haplib.BasePoller):
+class Common:
 
     STATE_OK = 0
     STATE_WARNING = 1
     STATE_CRITICAL = 2
 
     STATUS_MAP = {STATE_OK: "OK", STATE_WARNING: "NG", STATE_CRITICAL: "NG"}
-    SEVERITY_MAP = \
-      {STATE_OK: "INFO", STATE_WARNING: "WARNING", STATE_CRITICAL: "CRITICAL"}
+    SEVERITY_MAP = {
+        STATE_OK: "INFO", STATE_WARNING: "WARNING", STATE_CRITICAL: "CRITICAL"}
+    EVENT_TYPE_MAP = {
+        STATE_OK: "GOOD", STATE_WARNING: "BAD", STATE_CRITICAL: "BAD"}
 
-    EVENT_TYPE_MAP = {STATE_OK: "GOOD", STATE_WARNING: "BAD", STATE_CRITICAL: "BAD"}
 
-    def __init__(self, *args, **kwargs):
-        haplib.BasePoller.__init__(self, *args, **kwargs) 
-
+    def __init__(self):
         self.__db = None
         self.__db_server = "localhost"
         self.__db_name = "ndoutils"
         self.__db_user = "root"
         self.__db_passwd = ""
 
-    def poll_setup(self):
+    def close_connection(self):
+        if self.__cursor is not None:
+            self.__cursor.close()
+            self.__cursor = None
+        if self.__db is not None:
+            self.__db.close()
+            self.__db = None
+
+    def ensure_connection(self):
         if self.__db is not None:
             return
         try:
@@ -60,7 +67,7 @@ class Hap2NagiosNDOUtilsPoller(haplib.BasePoller):
             logging.error('MySQL Error [%d]: %s' % (errno, msg))
             raise haplib.HandledException
 
-    def poll_hosts(self):
+    def collect_hosts_and_put(self):
         t0 = "nagios_hosts"
         t1 = "nagios_objects"
         sql = "SELECT " \
@@ -77,7 +84,7 @@ class Hap2NagiosNDOUtilsPoller(haplib.BasePoller):
             hosts.append({"hostId":name1, "hostName":name})
         self.put_hosts(hosts)
 
-    def poll_host_groups(self):
+    def collect_host_groups_and_put(self):
         t0 = "nagios_hostgroups"
         t1 = "nagios_objects"
         sql = "SELECT " \
@@ -94,7 +101,7 @@ class Hap2NagiosNDOUtilsPoller(haplib.BasePoller):
             groups.append({"groupId":name1, "groupName":name})
         self.put_host_groups(groups)
 
-    def poll_host_group_membership(self):
+    def collect_host_group_membership_and_put(self):
         sql = "SELECT " \
               + "host_object_id, " \
               + "hostgroup_id " \
@@ -114,7 +121,7 @@ class Hap2NagiosNDOUtilsPoller(haplib.BasePoller):
             membership.append({"hostId":host_id, "groupIds":group_list})
         self.put_host_group_membership(membership)
 
-    def poll_triggers(self):
+    def collect_triggers_and_put(self, fetch_id=None, host_ids=None):
         t0 = "nagios_services"
         t1 = "nagios_servicestatus"
         t2 = "nagios_hosts"
@@ -129,6 +136,16 @@ class Hap2NagiosNDOUtilsPoller(haplib.BasePoller):
               + "ON %s.service_object_id=%s.service_object_id " % (t0, t1) \
               + "INNER JOIN %s " % t2 \
               + "ON %s.host_object_id=%s.host_object_id" % (t0, t2)
+
+        if host_ids is not None:
+            if not self.__validate_host_ids(host_ids):
+                # TODO: Send error
+                return
+            # We don't need to escape the string passed to the SQL statement
+            # because only numbers are allowed for host IDs.
+            in_cond = "','".join(host_ids)
+            sql += " WHERE %s.host_object_id in ('%s')" % (t2, in_cond)
+
         # NOTE: The update time update in the output is updated every status
         #       check in Nagios even if the value is not changed.
         # TODO: So we should has the previous result and compare it here
@@ -137,7 +154,6 @@ class Hap2NagiosNDOUtilsPoller(haplib.BasePoller):
         result = self.__cursor.fetchall()
 
         triggers = []
-
         for row in result:
             (trigger_id, state, update_time, msg, host_id, host_name) = row
 
@@ -157,10 +173,9 @@ class Hap2NagiosNDOUtilsPoller(haplib.BasePoller):
             })
         # TODO: update_type should UPDATED.
         update_type = "ALL"
-        self.put_triggers(triggers, update_type=update_type)
+        self.put_triggers(triggers, update_type=update_type, fetch_id=fetch_id)
 
-
-    def poll_events(self):
+    def collect_events_and_put(self):
         t0 = "nagios_statehistory"
         t1 = "nagios_services"
         t2 = "nagios_hosts"
@@ -244,22 +259,51 @@ class Hap2NagiosNDOUtilsPoller(haplib.BasePoller):
 
         return (hapi_status, hapi_severity)
 
-    def on_aborted_poll(self):
-        if self.__cursor is not None:
-            self.__cursor.close()
-            self.__cursor = None
-        if self.__db is not None:
-            self.__db.close()
-            self.__db = None
-        self.reset()
+    def __validate_host_ids(self, host_ids):
+        # TODO: implement
+        return True
 
-class Hap2NagiosNDOUtilsMain(haplib.BaseMainPlugin):
+
+class Hap2NagiosNDOUtilsPoller(haplib.BasePoller, Common):
+
+    def __init__(self, *args, **kwargs):
+        haplib.BasePoller.__init__(self, *args, **kwargs)
+        Common.__init__(self)
+
+    def poll_setup(self):
+        self.ensure_connection()
+
+    def poll_hosts(self):
+        self.collect_hosts_and_put()
+
+    def poll_host_groups(self):
+        self.collect_host_groups_and_put()
+
+    def poll_host_group_membership(self):
+        self.collect_host_group_membership_and_put()
+
+    def poll_triggers(self):
+        self.collect_triggers_and_put()
+
+    def poll_events(self):
+        self.collect_events_and_put()
+
+    def on_aborted_poll(self):
+        self.reset()
+        self.close_connection()
+
+
+class Hap2NagiosNDOUtilsMain(haplib.BaseMainPlugin, Common):
     def __init__(self, *args, **kwargs):
         haplib.BaseMainPlugin.__init__(self, kwargs["transporter_args"])
+        Common.__init__(self)
 
     def hap_fetch_triggers(self, params, request_id):
-        print "**** fetch_triggers: %s" % request_id
-        print params
+        self.ensure_connection()
+        fetch_id = params["fetchId"]
+        host_ids = params["hostIds"]
+        self.collect_triggers_and_put(fetch_id, host_ids)
+
 
 class Hap2NagiosNDOUtils(standardhap.StandardHap):
     def create_main_plugin(self, *args, **kwargs):

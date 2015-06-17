@@ -623,6 +623,7 @@ class BasePoller(HapiProcessor):
 
 class Utils:
 
+    # TODO: We need to specify custom validators
     PROCEDURES_ARGS = {
       "exchangeProfile": {"procedures": {"type": list(), "mandatory": True},
                           "name": {"type": unicode(), "mandatory": True}},
