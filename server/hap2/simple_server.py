@@ -73,8 +73,9 @@ class SimpleServer:
     def __rpc_exchange_profile(self, call_id, params):
         logging.info(params)
         # TODO: Parse content
-        #result = "SUCCESS"
-        #self.__sender.response(result, call_id)
+        result = {"name": "SimpleServer",
+                  "procedures": self.__handler_map.keys()}
+        self.__sender.response(result, call_id)
 
     def __rpc_get_monitoring_server_info(self, call_id, params):
         result = {

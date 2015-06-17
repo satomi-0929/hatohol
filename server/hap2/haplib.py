@@ -487,11 +487,14 @@ class BaseMainPlugin(HapiProcessor):
     def get_dispatcher(self):
         return self.__dispatcher
 
+    def exchange_profile(self, response_id=None):
+        HapiProcessor.exchange_profile(
+            self, self.__implemented_procedures.keys(), response_id=response_id)
+
     def hap_exchange_profile(self, params, request_id):
         Utils.optimize_server_procedures(SERVER_PROCEDURES,
                                          params["procedures"])
-        self.exchange_profile(self.__implemented_procedures.keys(),
-                              response_id=request_id)
+        self.exchange_profile(response_id=request_id)
 
     def hap_return_error(self, error_code, response_id):
         self.__sender.error(error_code, response_id)

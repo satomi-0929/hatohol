@@ -156,6 +156,9 @@ class StandardHap:
         self.__main_plugin.start_receiver()
         logging.info("started receiver process.")
 
+        self.__main_plugin.exchange_profile()
+        logging.info("exchanged profile.")
+
         ms_info = self.__main_plugin.get_monitoring_server_info()
         logging.info("got monitoring server info.")
         self.on_got_monitoring_server_info(ms_info)
