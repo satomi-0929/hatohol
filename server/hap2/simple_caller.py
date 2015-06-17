@@ -37,8 +37,10 @@ class SimpleCaller:
         self.__curr_command = None
 
     def __rpc_fetch_triggers(self, args):
-        # TODO: contents in params should be given by command line.
-        params = {"fetchId":"1", "hostIds":["1"]}
+        host_ids = args.host_ids
+        if host_ids is None:
+            host_ids = ["1"]
+        params = {"fetchId": "1", "hostIds": host_ids}
         self.__request(params)
 
     def __request(self, params):
@@ -51,7 +53,7 @@ class SimpleCaller:
         subparsers = parser.add_subparsers(dest='command',
                                            help='sub-command help')
         parser_fetch_trig = subparsers.add_parser('fetchTriggers')
-        #parser_fetch_trig.add_argument('bar', type=int, help='bar help')
+        parser_fetch_trig.add_argument('--host-ids', nargs="+")
 
 
 if __name__ == '__main__':
