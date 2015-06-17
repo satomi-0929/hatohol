@@ -27,6 +27,7 @@ class SimpleCaller:
     def __init__(self, transporter_args):
         self.__sender = haplib.Sender(transporter_args)
         self.__COMMAND_HANDLERS = {
+            "exchangeProfile": self.__rpc_exchange_profile,
             "fetchTriggers": self.__rpc_fetch_triggers,
             "fetchEvents":   self.__rpc_fetch_events,
         }
@@ -38,6 +39,10 @@ class SimpleCaller:
         self.__COMMAND_HANDLERS[args.command](args)
         self.__curr_command = None
         self.__curr_args = None
+
+    def __rpc_exchange_profile(self, args):
+        params = {"name": "SimpleCaller", "procedures": ["exchangeProfile"]}
+        self.__request(params)
 
     def __rpc_fetch_triggers(self, args):
         params = {"hostIds": args.host_ids}
@@ -59,6 +64,9 @@ class SimpleCaller:
         parser.add_argument('--fetch-id', default="1")
         subparsers = parser.add_subparsers(dest='command',
                                            help='sub-command help')
+
+        parser_fetch_trig = subparsers.add_parser('exchangeProfile')
+
         parser_fetch_trig = subparsers.add_parser('fetchTriggers')
         parser_fetch_trig.add_argument('--host-ids', nargs="+", default=["1"])
 
