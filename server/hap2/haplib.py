@@ -264,7 +264,7 @@ class HapiProcessor:
         if last_info is not None:
             params["lastInfo"] = last_info
         if fetch_id is not None:
-            params["fetchId"] = last_info
+            params["fetchId"] = fetch_id
 
         request_id = Utils.generate_request_id(self.__component_code)
         self.__wait_acknowledge(request_id)
