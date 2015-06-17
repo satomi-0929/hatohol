@@ -24,7 +24,7 @@ import transporter
 import argparse
 import logging
 
-class DummyServer:
+class SimpleServer:
 
     def __init__(self, transporter_args):
         self.__sender = haplib.Sender(transporter_args)
@@ -146,5 +146,5 @@ def basic_setup(arg_def_func=None):
 
 if __name__ == '__main__':
     args, transporter_args = basic_setup()
-    server = DummyServer(transporter_args)
+    server = SimpleServer(transporter_args)
     server()
