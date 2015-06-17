@@ -57,11 +57,17 @@ class SimpleServer:
             if pm.error_code is not None:
                 logging.error(pm.get_error_message())
                 continue
-            request = pm.message_dict
-            method = request["method"]
-            params = request["params"]
+            msg = pm.message_dict
+            method = msg.get("method")
+            if method is None:
+                if msg.get("result") is not None:
+                    logging.info("Receive: %s" % msg)
+                else:
+                    logging.error("Unexpected message: %s" % msg)
+                continue
+            params = msg["params"]
             logging.info("method: %s" % method)
-            call_id = request["id"]
+            call_id = msg["id"]
             self.__handler_map[method](call_id, params)
 
     def __rpc_exchange_profile(self, call_id, params):
