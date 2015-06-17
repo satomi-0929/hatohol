@@ -34,6 +34,7 @@ class SimpleServer:
         self.__last_info = {"event":None}
 
         self.__handler_map = {
+          "exchangeProfile": self.__rpc_exchange_profile,
           "getMonitoringServerInfo": self.__rpc_get_monitoring_server_info,
           "putHosts": self.__rpc_put_hosts,
           "putHostGroups": self.__rpc_put_host_groups,
@@ -62,6 +63,12 @@ class SimpleServer:
             logging.info("method: %s" % method)
             call_id = request["id"]
             self.__handler_map[method](call_id, params)
+
+    def __rpc_exchange_profile(self, call_id, params):
+        logging.info(params)
+        # TODO: Parse content
+        #result = "SUCCESS"
+        #self.__sender.response(result, call_id)
 
     def __rpc_get_monitoring_server_info(self, call_id, params):
         result = {
