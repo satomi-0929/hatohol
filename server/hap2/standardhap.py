@@ -38,10 +38,12 @@ class StandardHap:
         choices = ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")
         parser.add_argument("--log", dest="loglevel", choices=choices,
                             default="INFO")
+        parser.add_argument("-d", "--disable-poller", action="store_true")
         haplib.Utils.define_transporter_arguments(parser)
 
         self.__parser = parser
         self.__main_plugin = None
+        self.__poller = None
 
     def get_argument_parser(self):
         return self.__parser
@@ -142,8 +144,12 @@ class StandardHap:
         self.__main_plugin = self.create_main_plugin(transporter_args=transporter_args)
         logging.info("created main plugin.")
 
-        self.__poller = self.__create_poller(self.__main_plugin.get_sender(),
-                                             self.__main_plugin.get_dispatcher())
+        if args.disable_poller:
+            logging.info("Disabled: poller plugin.")
+        else:
+            self.__poller = self.__create_poller(
+                                self.__main_plugin.get_sender(),
+                                self.__main_plugin.get_dispatcher())
 
         self.__main_plugin.start_dispatcher()
         logging.info("started dispatcher process.")
@@ -154,7 +160,8 @@ class StandardHap:
         logging.info("got monitoring server info.")
         self.on_got_monitoring_server_info(ms_info)
 
-        self.__start_poller(self.__poller)
-        logging.info("started poller plugin.")
+        if not args.disable_poller:
+            self.__start_poller(self.__poller)
+            logging.info("started poller plugin.")
 
         self.__main_plugin()
