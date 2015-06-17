@@ -126,9 +126,9 @@ class SimpleServer:
         result = "SUCCESS"
         self.__sender.response(result, call_id)
 
-def basic_setup(arg_def_func=None):
+def basic_setup(arg_def_func=None, prog_name="Simple Server for HAPI 2.0"):
     logging.basicConfig(level=logging.INFO)
-    logging.info("Dummy Server for HAPI 2.0")
+    logging.info(prog_name)
     parser = argparse.ArgumentParser()
     haplib.Utils.define_transporter_arguments(parser)
     if arg_def_func is not None:
