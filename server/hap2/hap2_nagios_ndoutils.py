@@ -176,11 +176,13 @@ class Common:
         update_type = "ALL"
         self.put_triggers(triggers, update_type=update_type, fetch_id=fetch_id)
 
-    def collect_events_and_put(self):
+    def collect_events_and_put(self, fetch_id=None, last_info=None,
+                               count=None, direction=None):
         t0 = "nagios_statehistory"
         t1 = "nagios_services"
         t2 = "nagios_hosts"
 
+        # TODO validate fetch_id, last_info, count, and direction
         raw_last_info = self.get_cached_event_last_info()
         condition = ""
         if raw_last_info is not None:
@@ -235,7 +237,7 @@ class Common:
                 "brief": msg,
                 "extendedInfo": ""
             })
-        self.put_events(events)
+        self.put_events(events, fetch_id=fetch_id)
 
     def __extract_validated_event_last_info(self, last_info):
         event_id = None
@@ -304,6 +306,11 @@ class Hap2NagiosNDOUtilsMain(haplib.BaseMainPlugin, Common):
         fetch_id = params["fetchId"]
         host_ids = params["hostIds"]
         self.collect_triggers_and_put(fetch_id, host_ids)
+
+    def hap_fetch_events(self, params, request_id):
+        self.ensure_connection()
+        self.collect_events_and_put(params["fetchId"], params["lastInfo"],
+                                    params["count"], params["direction"])
 
 
 class Hap2NagiosNDOUtils(standardhap.StandardHap):
