@@ -126,11 +126,13 @@ class DummyServer:
         result = "SUCCESS"
         self.__sender.response(result, call_id)
 
-def basic_setup():
+def basic_setup(arg_def_func=None):
     logging.basicConfig(level=logging.INFO)
     logging.info("Dummy Server for HAPI 2.0")
     parser = argparse.ArgumentParser()
     haplib.Utils.define_transporter_arguments(parser)
+    if arg_def_func is not None:
+        arg_def_func(parser)
 
     args = parser.parse_args()
     transporter_class = haplib.Utils.load_transporter(args)
@@ -139,10 +141,10 @@ def basic_setup():
     transporter_args["amqp_send_queue_suffix"] = "-T"
     transporter_args["amqp_recv_queue_suffix"] = "-S"
 
-    return transporter_args
+    return args, transporter_args
 
 
 if __name__ == '__main__':
-    transporter_args = basic_setup()
+    args, transporter_args = basic_setup()
     server = DummyServer(transporter_args)
     server()
