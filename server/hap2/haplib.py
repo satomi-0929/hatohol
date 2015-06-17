@@ -624,6 +624,7 @@ class BasePoller(HapiProcessor):
 class Utils:
 
     # TODO: We need to specify custom validators
+    # TODO: Check the maximum length
     PROCEDURES_ARGS = {
       "exchangeProfile": {"procedures": {"type": list(), "mandatory": True},
                           "name": {"type": unicode(), "mandatory": True}},
