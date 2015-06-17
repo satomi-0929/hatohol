@@ -195,14 +195,15 @@ class HapiProcessor:
 
         return self.__wait_response(request_id)
 
-    def exchange_profile(self, procedures, response_id=None):
+    def exchange_profile(self, procedures, name="haplib", response_id=None):
+        content = {"name": name, "procedures": procedures}
         if response_id is None:
             request_id = Utils.generate_request_id(self.__component_code)
             self.__wait_acknowledge(request_id)
-            self.__sender.request("exchangeProfile", procedures, request_id)
+            self.__sender.request("exchangeProfile", content, request_id)
             self.__wait_response(request_id)
         else:
-            self.__sender.response(procedures, response_id)
+            self.__sender.response(content, response_id)
 
     def put_arm_info(self, arm_info):
         params = {"lastStatus": arm_info.last_status,
@@ -487,9 +488,10 @@ class BaseMainPlugin(HapiProcessor):
         return self.__dispatcher
 
     def hap_exchange_profile(self, params, request_id):
-        Utils.optimize_server_procedures(SERVER_PROCEDURES, params["procedures"])
-        #ToDo Output to log that is connect finish message with params["name"]
-        self.exchange_profile(self.__implemented_procedures, request_id)
+        Utils.optimize_server_procedures(SERVER_PROCEDURES,
+                                         params["procedures"])
+        self.exchange_profile(self.__implemented_procedures.keys(),
+                              response_id=request_id)
 
     def hap_return_error(self, error_code, response_id):
         self.__sender.error(error_code, response_id)
