@@ -35,33 +35,29 @@ class SimpleCaller:
     def __call__(self, args):
         logging.info("Command: %s" % args.command)
         self.__curr_command = args.command
-        self.__curr_args = args
         self.__COMMAND_HANDLERS[args.command](args)
         self.__curr_command = None
-        self.__curr_args = None
 
     def __rpc_exchange_profile(self, args):
         params = {"name": "SimpleCaller", "procedures": ["exchangeProfile"]}
         self.__request(params)
 
     def __rpc_fetch_triggers(self, args):
-        params = {"hostIds": args.host_ids}
+        params = {"hostIds": args.host_ids, "fetchId": args.fetch_id}
         self.__request(params)
 
     def __rpc_fetch_events(self, args):
         params = {"lastInfo": args.last_info, "count": args.count,
-                  "direction": args.direction}
+                  "direction": args.direction, "fetchId": args.fetch_id}
         self.__request(params)
 
     def __request(self, params):
         __component_code = 0
         request_id = haplib.Utils.generate_request_id(__component_code)
-        params["fetchId"] = self.__curr_args.fetch_id
         self.__sender.request(self.__curr_command, params, request_id)
 
     @staticmethod
     def arg_def(parser):
-        parser.add_argument('--fetch-id', default="1")
         subparsers = parser.add_subparsers(dest='command',
                                            help='sub-command help')
 
@@ -69,6 +65,7 @@ class SimpleCaller:
 
         parser_fetch_trig = subparsers.add_parser('fetchTriggers')
         parser_fetch_trig.add_argument('--host-ids', nargs="+", default=["1"])
+        parser_fetch_trig.add_argument('--fetch-id', default="1")
 
         parser_fetch_evt = subparsers.add_parser('fetchEvents')
         parser_fetch_evt.add_argument('--last-info', default="")
