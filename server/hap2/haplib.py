@@ -625,7 +625,7 @@ class BasePoller(HapiProcessor):
             arm_info.failure_reason = failure_reason
             self.put_arm_info(arm_info)
         except:
-            logger.error("Failed to call put_arm_info.")
+            logging.error("Failed to call put_arm_info.")
 
         # NOTE: The following sleep() will be replaced with a blocking read
         #       from the queue in order to receive some control commands.
