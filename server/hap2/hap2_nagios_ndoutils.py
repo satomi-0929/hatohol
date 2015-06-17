@@ -256,7 +256,10 @@ class Hap2NagiosNDOUtilsPoller(haplib.BasePoller):
 class Hap2NagiosNDOUtilsMain(haplib.BaseMainPlugin):
     def __init__(self, *args, **kwargs):
         haplib.BaseMainPlugin.__init__(self, kwargs["transporter_args"])
-        self.set_implemented_procedures(["exchangeProfile"])
+
+    def hap_fetch_triggers(self, params, request_id):
+        print "**** fetch_triggers: %s" % request_id
+        print params
 
 class Hap2NagiosNDOUtils(standardhap.StandardHap):
     def create_main_plugin(self, *args, **kwargs):

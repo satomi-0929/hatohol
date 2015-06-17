@@ -358,19 +358,16 @@ class Receiver:
         self.__connector = transporter.Factory.create(transporter_args)
         self.__dispatch_queue = dispatch_queue
         self.__connector.set_receiver(self.__messenger)
-        self.__implemented_procedures = procedures
+        self.__allowed_procedures = procedures
 
     def __messenger(self, ch, message):
         parsed = Utils.parse_received_message(message,
-                                              self.__implemented_procedures)
+                                              self.__allowed_procedures)
         self.__dispatch_queue.put(("Receiver", parsed))
 
     def __call__(self):
         # TODO: handle exceptions
         self.__connector.run_receive_loop()
-
-    def set_implemented_procedures(self, procedures):
-        self.__implemented_procedures = procedures
 
     def daemonize(self):
         receiver_process = multiprocessing.Process(target=self)
@@ -446,6 +443,7 @@ class BaseMainPlugin(HapiProcessor):
     __COMPONENT_CODE = 0x10
 
     def __init__(self, transporter_args):
+        self.__detect_implemented_procedures()
         self.__sender = Sender(transporter_args)
         self.__rpc_queue = multiprocessing.Queue()
         HapiProcessor.__init__(self, self.__sender, "Main",
@@ -457,19 +455,27 @@ class BaseMainPlugin(HapiProcessor):
         dispatch_queue = self.__dispatcher.get_dispatch_queue()
         self.set_dispatch_queue(dispatch_queue)
 
-        self.procedures = {"exchangeProfile": self.hap_exchange_profile,
-                           "fetchItems": self.hap_fetch_items,
-                           "fetchHistory": self.hap_fetch_history,
-                           "fetchTriggers": self.hap_fetch_triggers,
-                           "fetchEvents": self.hap_fetch_events}
-        #ToDo Currently, implement_method is fixed.
-        # I want to get its dynamically to to use function.
-        self.set_implemented_procedures(["exchangeProfile"])
-
         # launch receiver process
         self.__receiver = Receiver(transporter_args,
                                    dispatch_queue,
                                    self.__implemented_procedures)
+
+    def __detect_implemented_procedures(self):
+        PROCEDURES_MAP = {
+            "hap_exchange_profile": "exchangeProfile",
+            "hap_fetch_items":      "fetchItems",
+            "hap_fetch_history":    "fetchHistory",
+            "hap_fetch_triggers":   "fetchTriggers",
+            "hap_fetch_events":     "fetchEvents",
+        }
+        imp = {}
+        for func_name in dir(self):
+            procedure_name = PROCEDURES_MAP.get(func_name)
+            if procedure_name is None:
+                continue
+            imp[procedure_name] = eval("self.%s" % func_name)
+            logging.info("Detected procedure: %s" % func_name)
+        self.__implemented_procedures = imp
 
     def get_sender(self):
         return self.__sender
@@ -480,28 +486,10 @@ class BaseMainPlugin(HapiProcessor):
     def get_dispatcher(self):
         return self.__dispatcher
 
-    def set_implemented_procedures(self, procedures):
-        self.__implemented_procedures = procedures
-
-    def set_implemented_procedures_in_receiver(self):
-        self.__receiver.set_implemented_procedures(self.__implemented_procedures)
-
     def hap_exchange_profile(self, params, request_id):
         Utils.optimize_server_procedures(SERVER_PROCEDURES, params["procedures"])
         #ToDo Output to log that is connect finish message with params["name"]
         self.exchange_profile(self.__implemented_procedures, request_id)
-
-    def hap_fetch_items(self, params, request_id):
-        pass
-
-    def hap_fetch_history(self, params, request_id):
-        pass
-
-    def hap_fetch_triggers(self, params, request_id):
-        pass
-
-    def hap_fetch_events(self, params, request_id):
-        pass
 
     def hap_return_error(self, error_code, response_id):
         self.__sender.error(error_code, response_id)
@@ -537,13 +525,14 @@ class BaseMainPlugin(HapiProcessor):
                 logging.error(msg.get_error_message())
                 continue
 
-            try:
-                self.procedures[request["method"]](request["params"],
-                                                   request["id"])
-            except KeyError:
-                #The following sentense is used in case of receive notification
-                # from Hatohol server.
-                self.procedures[request["method"]](request["params"])
+            # TODO check if there are necessary parameters.
+            # Or should return error
+            procedure = self.__implemented_procedures[request["method"]]
+            args = [request.get("params")]
+            request_id = request.get("id")
+            if request_id is not None:
+                args.append(request_id)
+            procedure(*args)
 
 
 class BasePoller(HapiProcessor):
@@ -684,7 +673,7 @@ class Utils:
         return transporter_class
 
     @staticmethod
-    def parse_received_message(message, implemented_procedures):
+    def parse_received_message(message, allowed_procedures):
         """
         Parse a received message.
         @return A ParsedMessage object. Each attribute will be set as below.
@@ -716,8 +705,7 @@ class Utils:
             return pm
 
         method = pm.message_dict["method"]
-        pm.error_code = Utils.check_procedure_is_implemented( \
-                           method, implemented_procedures)
+        pm.error_code = Utils.is_allowed_procedure(method, allowed_procedures)
         if pm.error_code is not None:
             pm.error_message = "Unsupported method: '%s'" % method
             return pm
@@ -739,8 +727,8 @@ class Utils:
             return (None, json_dict)
 
     @staticmethod
-    def check_procedure_is_implemented(procedure_name, implemented_procedures):
-        if procedure_name in implemented_procedures:
+    def is_allowed_procedure(procedure_name, allowed_procedures):
+        if procedure_name in allowed_procedures:
             return
         else:
             return ERR_CODE_METHOD_NOT_FOUND
