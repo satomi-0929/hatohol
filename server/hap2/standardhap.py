@@ -78,7 +78,11 @@ class StandardHap:
         pass
 
     def on_got_monitoring_server_info(self, ms_info):
-        pass
+        self.get_main_plugin().set_ms_info(ms_info)
+
+        poller = self.get_poller()
+        if poller is not None:
+            poller.set_ms_info(ms_info)
 
     def __setup_logging_level(self, args):
         numeric_level = getattr(logging, args.loglevel.upper(), None)

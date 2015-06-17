@@ -265,9 +265,6 @@ class Hap2NagiosNDOUtils(standardhap.StandardHap):
     def create_poller(self, *args, **kwargs):
         return Hap2NagiosNDOUtilsPoller(self, *args, **kwargs)
 
-    def on_got_monitoring_server_info(self, ms_info):
-        self.get_main_plugin().set_ms_info(ms_info)
-        self.get_poller().set_ms_info(ms_info)
 
 if __name__ == '__main__':
     hap = Hap2NagiosNDOUtils()
