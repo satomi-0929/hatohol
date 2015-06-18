@@ -211,6 +211,7 @@ class Common:
                 logging.error("Malformed last_info: '%s'",
                               str(raw_last_info))
                 logging.error("Getting events was aborted.")
+                # TODO: notify error to the caller
                 return
             sql += " WHERE %s.statehistory_id>%s" % (t0, last_cond)
 
