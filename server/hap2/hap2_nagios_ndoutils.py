@@ -91,7 +91,7 @@ class Common:
         hosts = []
         for row in result:
             host_id, name, name1 = row
-            hosts.append({"hostId":name1, "hostName":name})
+            hosts.append({"hostId": name1, "hostName": name})
             self.__host_map[host_id] = name1
         logging.debug(sql)
         self.put_hosts(hosts)
@@ -110,7 +110,7 @@ class Common:
         groups = []
         for row in result:
             group_id, name, name1 = row
-            groups.append({"groupId":name1, "groupName":name})
+            groups.append({"groupId": name1, "groupName": name})
             self.__host_group_map[group_id] = name1
         self.put_host_groups(groups)
 
@@ -145,7 +145,7 @@ class Common:
                     continue
                 group_list.append(grp_id)
 
-            membership.append({"hostId":host_id, "groupIds":group_list})
+            membership.append({"hostId": host_id, "groupIds": group_list})
         self.put_host_group_membership(membership)
 
     def collect_triggers_and_put(self, fetch_id=None, host_ids=None):
