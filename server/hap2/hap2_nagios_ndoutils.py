@@ -129,6 +129,7 @@ class Common:
                 members[host_id] = []
             members[host_id].append(group_id)
 
+        # TODO: clean up
         membership = []
         for _host_id, _group_list in members.items():
 
