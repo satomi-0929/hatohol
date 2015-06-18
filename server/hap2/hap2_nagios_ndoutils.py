@@ -82,6 +82,7 @@ class Common:
         for row in result:
             host_id, name, name1 = row
             hosts.append({"hostId":name1, "hostName":name})
+        logging.debug(sql)
         self.put_hosts(hosts)
 
     def collect_host_groups_and_put(self):
@@ -92,7 +93,7 @@ class Common:
               + "%s.alias, " % t0 \
               + "%s.name1 " % t1 \
               + "FROM %s INNER JOIN %s " % (t0, t1) \
-              + "ON %s.hostgroup_id=%s.object_id" % (t0, t1)
+              + "ON %s.hostgroup_object_id=%s.object_id" % (t0, t1)
         self.__cursor.execute(sql)
         result = self.__cursor.fetchall()
         groups = []
