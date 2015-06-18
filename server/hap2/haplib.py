@@ -591,7 +591,17 @@ class BasePoller(HapiProcessor):
             self.__poll_in_try_block(arm_info)
 
     def __poll_in_try_block(self, arm_info):
-        logging.debug("Start polling.")
+
+        ms_info = self.get_ms_info()
+        if ms_info is None:
+            logging.warning("Not found monitoring server info.")
+        else:
+            self.__pollingInterval = ms_info.polling_interval_sec
+            self.__retryInterval = ms_info.retry_interval_sec
+
+        logging.info("Start polling. Interval: %d/%d",
+                     self.__pollingInterval, self.__retryInterval)
+
         succeeded = False
         failure_reason = ""
         try:
