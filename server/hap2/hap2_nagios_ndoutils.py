@@ -177,24 +177,10 @@ class Common:
         self.put_triggers(triggers, update_type=update_type, fetch_id=fetch_id)
 
     def collect_events_and_put(self, fetch_id=None, last_info=None,
-                               count=None, direction=None):
+                               count=None, direction="ASC"):
         t0 = "nagios_statehistory"
         t1 = "nagios_services"
         t2 = "nagios_hosts"
-
-        # TODO validate fetch_id, last_info, count, and direction
-        raw_last_info = self.get_cached_event_last_info()
-        condition = ""
-        if raw_last_info is not None:
-            # last_info is inserted into the SQL statement and should be
-            # strictly validated.
-            last_info = self.__extract_validated_event_last_info(raw_last_info)
-            if last_info is None:
-                logging.error("Malformed last_info: '%s'",
-                              str(raw_last_info))
-                logging.error("Getting events was aborted.")
-                return
-            condition = "WHERE %s.statehistory_id>%s" % (t0, last_info)
 
         sql = "SELECT " \
               + "%s.statehistory_id, " % t0 \
@@ -207,8 +193,35 @@ class Common:
               + "FROM %s INNER JOIN %s " % (t0, t1) \
               + "ON %s.statehistory_id=%s.service_object_id " % (t0, t1) \
               + "INNER JOIN %s " % t2 \
-              + "ON %s.host_object_id=%s.host_object_id " % (t1, t2) \
-              + condition
+              + "ON %s.host_object_id=%s.host_object_id" % (t1, t2)
+
+        # Event range to select
+        if last_info is not None:
+            raw_last_info = last_info
+        else:
+            raw_last_info = self.get_cached_event_last_info()
+
+        if raw_last_info is not None:
+            # The form of 'last_info' depends on a plugin. So the validation
+            # of it cannot be completed in haplib.Utils.validate_arguments().
+            # Since it is inserted into the SQL statement, we have to strictly
+            # validate it here.
+            last_cond = self.__extract_validated_event_last_info(raw_last_info)
+            if last_cond is None:
+                logging.error("Malformed last_info: '%s'",
+                              str(raw_last_info))
+                logging.error("Getting events was aborted.")
+                return
+            sql += " WHERE %s.statehistory_id>%s" % (t0, last_cond)
+
+        # Direction
+        if direction in ["ASC", "DESC"]:
+            sql += " ORDER BY %s.statehistory_id %s" % (t0, direction)
+
+        # The number of records
+        if count is not None:
+            sql += " LIMIT %d" % count
+
         logging.debug(sql)
         self.__cursor.execute(sql)
         result = self.__cursor.fetchall()

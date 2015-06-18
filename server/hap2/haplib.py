@@ -58,6 +58,8 @@ ERROR_DICT = {
     ERR_CODE_PARSER_ERROR: "Parse error",
 }
 
+MAX_EVENT_CHUNK_SIZE = 1000
+
 class HandledException:
     pass
 
@@ -289,7 +291,7 @@ class HapiProcessor:
         @param fetch_id A fetch ID.
         """
 
-        CHUNK_SIZE = 1000
+        CHUNK_SIZE = MAX_EVENT_CHUNK_SIZE
         num_events = len(events)
         count = num_events / CHUNK_SIZE
         if num_events % CHUNK_SIZE != 0:
@@ -649,6 +651,7 @@ class Utils:
                       "count":{"type": int(), "mandatory": True},
                       "direction": {"type": unicode(), "mandatory": True},
                       "fetchId": {"type": unicode(), "mandatory": True}},
+                      # TODO: validate: direction
       "getMonitoringServerInfo": {},
       "putHosts": {"hosts": {"type": list(), "mandatory": True}},
       "putHostGroups": {"hostGroups": {"type": list(), "mandatory": True}},
