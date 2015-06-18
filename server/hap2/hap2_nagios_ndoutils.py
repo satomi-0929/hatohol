@@ -145,11 +145,11 @@ class Common:
             members_for_host = members.get(host_id)
             if members_for_host is None:
                 members[host_id] = []
-            members[host_id].append(group_id)
+            members[host_id].append(str(group_id))
 
         membership = []
         for host_id, group_list in members.items():
-            membership.append({"hostId": host_id, "groupIds": group_list})
+            membership.append({"hostId": str(host_id), "groupIds": group_list})
         self.put_host_group_membership(membership)
 
     def collect_triggers_and_put(self, fetch_id=None, host_ids=None):
