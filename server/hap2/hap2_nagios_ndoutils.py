@@ -209,6 +209,7 @@ class Common:
               + "INNER JOIN %s " % t2 \
               + "ON %s.host_object_id=%s.host_object_id " % (t1, t2) \
               + condition
+        logging.debug(sql)
         self.__cursor.execute(sql)
         result = self.__cursor.fetchall()
 

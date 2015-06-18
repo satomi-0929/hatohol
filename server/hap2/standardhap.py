@@ -38,7 +38,7 @@ class StandardHap:
         choices = ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")
         parser.add_argument("--log", dest="loglevel", choices=choices,
                             default="INFO")
-        parser.add_argument("-d", "--disable-poller", action="store_true")
+        parser.add_argument("-p", "--disable-poller", action="store_true")
         haplib.Utils.define_transporter_arguments(parser)
 
         self.__parser = parser
