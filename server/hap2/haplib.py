@@ -295,7 +295,10 @@ class HapiProcessor:
         if num_events % CHUNK_SIZE != 0:
             count += 1
         if count == 0:
-            return
+            if fetch_id is None:
+                return
+            count = 1
+
         for num in range(0, count):
             start = num * CHUNK_SIZE
             event_chunk = events[start:start + CHUNK_SIZE]
