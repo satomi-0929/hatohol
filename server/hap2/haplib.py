@@ -646,6 +646,7 @@ class BasePoller(HapiProcessor):
 
         self.__pollingInterval = 30
         self.__retryInterval = 10
+        self.__command_queue = multiprocessing.Queue()
 
     def poll(self):
        ctx = self.poll_setup()
@@ -654,6 +655,9 @@ class BasePoller(HapiProcessor):
        self.poll_host_group_membership()
        self.poll_triggers()
        self.poll_events()
+
+    def get_command_queue(self):
+        return self.__command_queue
 
     def poll_setup(self):
         return None
@@ -723,9 +727,27 @@ class BasePoller(HapiProcessor):
         except:
             logging.error("Failed to call put_arm_info.")
 
-        # NOTE: The following sleep() will be replaced with a blocking read
-        #       from the queue in order to receive some control commands.
-        time.sleep(sleep_time)
+        wakeup_time = time.time() + sleep_time
+        while  True:
+            sleep_time = wakeup_time - time.time()
+            if sleep_time <= 0:
+                return
+            self.__interruptible_sleep(sleep_time)
+
+
+    def __interruptible_sleep(self, sleep_time):
+        try:
+            cmd = self.__command_queue.get(block=True, timeout=sleep_time)
+            self.__parse_command(cmd)
+        except Queue.Empty:
+            # If no command is forthcomming within timeout,
+            # this path is executed.
+            pass
+
+    def __parse_command(self, command):
+        # TO BE IMPLEMENTED
+        print "GET command: %s" % command
+        pass
 
 
 class Utils:
