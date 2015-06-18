@@ -150,6 +150,8 @@ class StandardHap:
             self.__poller = self.__create_poller(
                                 self.__main_plugin.get_sender(),
                                 self.__main_plugin.get_dispatcher())
+            cmd_que = self.__poller.get_command_queue()
+            self.__main_plugin.set_poller_command_queue(cmd_que)
 
         self.__main_plugin.start_dispatcher()
         logging.info("started dispatcher process.")

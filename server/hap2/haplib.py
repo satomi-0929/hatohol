@@ -536,6 +536,7 @@ class BaseMainPlugin(HapiProcessor):
         self.__detect_implemented_procedures()
         self.__sender = Sender(transporter_args)
         self.__rpc_queue = multiprocessing.Queue()
+        self.__poller_command_queue = None
         HapiProcessor.__init__(self, self.__sender, "Main",
                                self.__COMPONENT_CODE)
 
@@ -549,6 +550,9 @@ class BaseMainPlugin(HapiProcessor):
         self.__receiver = Receiver(transporter_args,
                                    dispatch_queue,
                                    self.__implemented_procedures)
+
+    def set_poller_command_queue(self, queue):
+        self.__poller_command_queue = None
 
     def __detect_implemented_procedures(self):
         PROCEDURES_MAP = {
