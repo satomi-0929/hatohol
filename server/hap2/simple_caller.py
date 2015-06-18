@@ -21,6 +21,7 @@
 import haplib
 import simple_server
 import logging
+import json
 
 class SimpleCaller:
 
@@ -30,6 +31,8 @@ class SimpleCaller:
             "exchangeProfile": self.__rpc_exchange_profile,
             "fetchTriggers": self.__rpc_fetch_triggers,
             "fetchEvents":   self.__rpc_fetch_events,
+            "notifyMonitoringServerInfo":
+              self.__rpc_notify_monitoring_server_info,
         }
 
     def __call__(self, args):
@@ -51,10 +54,19 @@ class SimpleCaller:
                   "direction": args.direction, "fetchId": args.fetch_id}
         self.__request(params)
 
+    def __rpc_notify_monitoring_server_info(self, args):
+        file_name = args.ms_info
+        with open(file_name, "r") as file:
+            params = json.load(file)
+        self.__notify(params)
+
     def __request(self, params):
         __component_code = 0
         request_id = haplib.Utils.generate_request_id(__component_code)
         self.__sender.request(self.__curr_command, params, request_id)
+
+    def __notify(self, params):
+        self.__sender.request(self.__curr_command, params, request_id=None)
 
     @staticmethod
     def arg_def(parser):
@@ -74,6 +86,8 @@ class SimpleCaller:
                                       default="ASC")
         parser_fetch_evt.add_argument('--fetch-id', default="1")
 
+        parser_notify_msi = subparsers.add_parser('notifyMonitoringServerInfo')
+        parser_notify_msi.add_argument('ms_info')
 
 if __name__ == '__main__':
     prog_name = "Simple Caller for HAPI 2.0"
