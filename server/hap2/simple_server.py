@@ -23,10 +23,24 @@ import multiprocessing
 import transporter
 import argparse
 import logging
+import json
 
 class SimpleServer:
 
-    def __init__(self, transporter_args):
+    DEFAULT_MS_INFO = {
+        "extendedInfo": "exampleExtraInfo",
+        "serverId": 1,
+        "url": "http://example.com:80",
+        "type": 0,
+        "nickName": "exampleName",
+        "userName": "Admin",
+        "password": "examplePass",
+        "pollingIntervalSec": 30,
+        "retryIntervalSec": 10
+    }
+
+    def __init__(self, args, transporter_args):
+        self.__args = args
         self.__sender = haplib.Sender(transporter_args)
         self.__rpc_queue = multiprocessing.JoinableQueue()
         self.__dispatcher = haplib.Dispatcher(self.__rpc_queue)
@@ -78,17 +92,12 @@ class SimpleServer:
         self.__sender.response(result, call_id)
 
     def __rpc_get_monitoring_server_info(self, call_id, params):
-        result = {
-            "extendedInfo": "exampleExtraInfo",
-            "serverId": 1,
-            "url": "http://example.com:80",
-            "type": 0,
-            "nickName": "exampleName",
-            "userName": "Admin",
-            "password": "examplePass",
-            "pollingIntervalSec": 30,
-            "retryIntervalSec": 10
-        }
+        file_name = self.__args.ms_info
+        if file_name is not None:
+            with open(file_name, "r") as file:
+                result = json.load(file)
+        else:
+            result = self.DEFAULT_MS_INFO 
         self.__sender.response(result, call_id)
 
     def __rpc_put_hosts(self, call_id, params):
@@ -157,8 +166,11 @@ def basic_setup(arg_def_func=None, prog_name="Simple Server for HAPI 2.0"):
 
     return args, transporter_args
 
+def arg_def(parser):
+    parser.add_argument("--ms-info",
+                        help="A file including monitoring server info.")
 
 if __name__ == '__main__':
-    args, transporter_args = basic_setup()
-    server = SimpleServer(transporter_args)
+    args, transporter_args = basic_setup(arg_def)
+    server = SimpleServer(args, transporter_args)
     server()

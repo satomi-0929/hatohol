@@ -38,12 +38,17 @@ class Common:
     EVENT_TYPE_MAP = {
         STATE_OK: "GOOD", STATE_WARNING: "BAD", STATE_CRITICAL: "BAD"}
 
+    DEFAULT_SERVER = "localhost"
+    DEFAULT_PORT = 3306
+    DEFAULT_DATABASE = "ndoutils"
+    DEFAULT_USER = "root"
 
     def __init__(self):
         self.__db = None
-        self.__db_server = "localhost"
-        self.__db_name = "ndoutils"
-        self.__db_user = "root"
+        self.__db_server = self.DEFAULT_SERVER
+        self.__db_port = self.DEFAULT_PORT
+        self.__db_name = self.DEFAULT_DATABASE
+        self.__db_user = self.DEFAULT_USER
         self.__db_passwd = ""
 
         # See https://github.com/project-hatohol/hatohol/issues/1151
@@ -67,8 +72,23 @@ class Common:
     def ensure_connection(self):
         if self.__db is not None:
             return
+
+        # load MonitoringServerInfo
+        ms_info = self.get_ms_info()
+        if ms_info is None:
+            logging.info("Use default connection parameters.")
+        else:
+            self.__db_server, self.__db_port, self.__db_name = \
+                self.__parse_url(ms_info.url)
+            self.__db_user = ms_info.user_name
+            self.__db_passwd = ms_info.password
+
+        logging.info("Try to connection: Sv: %s, DB: %s, User: %s" %
+                     (self.__db_server, self.__db_name, self.__db_user))
+
         try:
             self.__db = MySQLdb.connect(host=self.__db_server,
+                                        port=self.__db_port,
                                         db=self.__db_name,
                                         user=self.__db_user,
                                         passwd=self.__db_passwd)
@@ -76,6 +96,24 @@ class Common:
         except MySQLdb.Error as (errno, msg):
             logging.error('MySQL Error [%d]: %s' % (errno, msg))
             raise haplib.HandledException
+
+    def __parse_url(self, url):
+        # [URL] SERVER_IP:PORT/DATABASE
+        server = self.DEFAULT_SERVER
+        port = self.DEFAULT_PORT
+        database = self.DEFAULT_DATABASE
+
+        slash_idx = url.find("/")
+        if slash_idx >= 0:
+            database = url[slash_idx+1:]
+            server = url[0:slash_idx]
+
+        colon_idx = server.find(":")
+        if colon_idx >= 0:
+            port = server[colon_idx+1:]
+            server = server[0:colon_idx]
+
+        return server, port, database
 
     def collect_hosts_and_put(self):
         t0 = "nagios_hosts"
