@@ -269,6 +269,10 @@ class Common:
             hapi_status, hapi_severity = \
               self.__parse_status_and_severity(state)
 
+            invariant_host_id = self.__get_invariant_host_id(host_id)
+            if invariant_host_id is None:
+                continue
+
             events.append({
                 "eventId": str(event_id),
                 "time": event_time.strftime("%Y%m%d%H%M%S"),
@@ -276,7 +280,7 @@ class Common:
                 "triggerId": trigger_id,
                 "status": hapi_status,
                 "severity": hapi_severity,
-                "hostId": str(host_id),
+                "hostId": invariant_host_id,
                 "hostName": host_name,
                 "brief": msg,
                 "extendedInfo": ""
