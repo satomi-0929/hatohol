@@ -585,23 +585,19 @@ class BasePoller(HapiProcessor):
     def on_aborted_poll(self):
         pass
 
+    def set_ms_info(self, ms_info):
+        HapiProcessor.set_ms_info(self, ms_info)
+        self.__pollingInterval = ms_info.polling_interval_sec
+        self.__retryInterval = ms_info.retry_interval_sec
+        logging.info("Polling inverval: %d/%d",
+                     self.__pollingInterval, self.__retryInterval)
+
     def __call__(self):
         arm_info = ArmInfo()
         while (True):
             self.__poll_in_try_block(arm_info)
 
     def __poll_in_try_block(self, arm_info):
-
-        ms_info = self.get_ms_info()
-        if ms_info is None:
-            logging.warning("Not found monitoring server info.")
-        else:
-            self.__pollingInterval = ms_info.polling_interval_sec
-            self.__retryInterval = ms_info.retry_interval_sec
-
-        logging.info("Start polling. Interval: %d/%d",
-                     self.__pollingInterval, self.__retryInterval)
-
         succeeded = False
         failure_reason = ""
         try:
