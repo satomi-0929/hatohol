@@ -46,6 +46,12 @@ class Common:
         self.__db_user = "root"
         self.__db_passwd = ""
 
+        # See https://github.com/project-hatohol/hatohol/issues/1151
+        # for the reason the host name and group name conversion with the
+        # following variables are needed.
+        self.__host_map = {}
+        self.__host_group_map = {}
+
     def close_connection(self):
         if self.__cursor is not None:
             self.__cursor.close()
@@ -53,6 +59,10 @@ class Common:
         if self.__db is not None:
             self.__db.close()
             self.__db = None
+
+        # TODO: Should we change the method name ?
+        self.__host_map = {}
+        self.__host_group_map = {}
 
     def ensure_connection(self):
         if self.__db is not None:
@@ -82,6 +92,7 @@ class Common:
         for row in result:
             host_id, name, name1 = row
             hosts.append({"hostId":name1, "hostName":name})
+            self.__host_map[host_id] = name1
         logging.debug(sql)
         self.put_hosts(hosts)
 
@@ -100,6 +111,7 @@ class Common:
         for row in result:
             group_id, name, name1 = row
             groups.append({"groupId":name1, "groupName":name})
+            self.__host_group_map[group_id] = name1
         self.put_host_groups(groups)
 
     def collect_host_group_membership_and_put(self):
@@ -118,7 +130,20 @@ class Common:
             members[host_id].append(group_id)
 
         membership = []
-        for host_id, group_list in members.items():
+        for _host_id, _group_list in members.items():
+
+            host_id = self.__host_map.get(_host_id)
+            if host_id is None:
+                logging.error("Not found host ID: %s" % _host_id)
+                continue
+            group_list = []
+            for _grp_id in _group_list:
+                grp_id = self.__host_group_map.get(_grp_id)
+                if grp_id is None:
+                    logging.error("Not found host group ID: %s" % _grp_id)
+                    continue
+                group_list.append(grp_id)
+
             membership.append({"hostId":host_id, "groupIds":group_list})
         self.put_host_group_membership(membership)
 
