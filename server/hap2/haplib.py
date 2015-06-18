@@ -84,6 +84,10 @@ PROCEDURES_DEFS = {
             "fetchId": {"type": unicode(), "mandatory": True}
         }
     },
+    "notifyMonitoringServerInfo": {
+        "notification": True,
+        "args": {} # TODO: fill content
+    },
     "getMonitoringServerInfo": {
         "args": {}
     },
@@ -553,6 +557,7 @@ class BaseMainPlugin(HapiProcessor):
             "hap_fetch_history":    "fetchHistory",
             "hap_fetch_triggers":   "fetchTriggers",
             "hap_fetch_events":     "fetchEvents",
+            "hap_notify_monitoring_server_info": "notifyMonitoringServerInfo",
         }
         imp = {}
         for func_name in dir(self):
@@ -580,6 +585,9 @@ class BaseMainPlugin(HapiProcessor):
         Utils.optimize_server_procedures(SERVER_PROCEDURES,
                                          params["procedures"])
         self.exchange_profile(response_id=request_id)
+
+    def hap_notify_monitoring_server_info(self, params):
+        print params
 
     def hap_return_error(self, error_code, response_id):
         self.__sender.error(error_code, response_id)
