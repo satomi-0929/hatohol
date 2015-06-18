@@ -280,6 +280,7 @@ class Common:
                 logging.error("Getting events was aborted.")
                 # TODO: notify error to the caller
                 return
+            # TODO: Fix when direction is 'DESC'
             sql += " WHERE %s.statehistory_id>%s" % (t0, last_cond)
 
         # Direction
