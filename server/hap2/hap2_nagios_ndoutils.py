@@ -187,13 +187,17 @@ class Common:
             hapi_status, hapi_severity = \
               self.__parse_status_and_severity(state)
 
+            uniq_host_id = self.__get_unique_host_id(host_id)
+            if uniq_host_id is None:
+                continue
+
             triggers.append({
                 "triggerId": str(trigger_id),
                 "status": hapi_status,
                 "severity": hapi_severity,
                 # TODO: take into acount the timezone
                 "lastChangeTime": update_time.strftime("%Y%m%d%H%M%S"),
-                "hostId": str(host_id),
+                "hostId": uniq_host_id,
                 "hostName": host_name,
                 "brief": msg,
                 "extendedInfo": ""
@@ -308,6 +312,11 @@ class Common:
         # TODO: implement
         return True
 
+    def __get_unique_host_id(self, host_id):
+        uniq_host_id = self.__host_map.get(host_id)
+        if uniq_host_id is None:
+            logging.error("Not found unique host ID for '%s'" % _host_id)
+        return uniq_host_id
 
 class Hap2NagiosNDOUtilsPoller(haplib.BasePoller, Common):
 
