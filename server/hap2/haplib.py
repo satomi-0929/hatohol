@@ -588,6 +588,9 @@ class BaseMainPlugin(HapiProcessor):
 
     def hap_notify_monitoring_server_info(self, params):
         print params
+        ms_info = MonitoringServerInfo(params)
+        self.set_ms_info(ms_info)
+        # TODO: Send ms_info to poller
 
     def hap_return_error(self, error_code, response_id):
         self.__sender.error(error_code, response_id)
