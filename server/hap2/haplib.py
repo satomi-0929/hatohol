@@ -47,6 +47,81 @@ SERVER_PROCEDURES = {"exchangeProfile": True,
                      "updateHostParent": True,
                      "putArmInfo": True}
 
+PROCEDURES_DEFS = {
+    "exchangeProfile": {
+        "args": {
+            "procedures": {"type": list(), "mandatory": True},
+            "name": {"type": unicode(), "mandatory": True},
+         }
+    },
+    "fetchItems": {
+        "args": {
+            "hostIds": {"type": list(), "mandatory": False},
+            "fetchId": {"type": unicode(), "mandatory": True},
+        }
+    },
+    "fetchHistory": {
+        "args": {
+          "hostId":{"type": unicode(), "mandatory": True},
+          "itemId": {"type": unicode, "mandatory": True},
+          "beginTime": {"type": unicode(), "mandatory": True},
+          "endTime": {"type": unicode(), "mandatory": True},
+          "fetchId": {"type": unicode(), "mandatory": True},
+        }
+    },
+    "fetchTriggers": {
+        "args": {
+            "hostIds": {"type": list(), "mandatory": False},
+            "fetchId": {"type": unicode(), "mandatory": True}
+        }
+    },
+    "fetchEvents": {
+        "args": {
+            "lastInfo":{"type": unicode(), "mandatory": True},
+            "count":{"type": int(), "mandatory": True},
+            # TODO: validate: direction
+            "direction": {"type": unicode(), "mandatory": True},
+            "fetchId": {"type": unicode(), "mandatory": True}
+        }
+    },
+    "getMonitoringServerInfo": {
+        "args": {}
+    },
+    "putHosts": {
+        "args": {
+            "hosts": {"type": list(), "mandatory": True}
+        }
+    },
+    "putHostGroups": {
+        "args": {
+            "hostGroups": {"type": list(), "mandatory": True}
+        }
+    },
+    "putHostGroupMembership": {
+        "args": {
+            "hostGroupMembership": {"type": list(), "mandatory": True}
+        }
+    },
+    "putTriggers": {
+        "args": {
+            "triggers": {"type": list(), "mandatory": True},
+            "updateType": {"type": unicode(), "mandatory": True}
+        }
+    },
+    "putEvents": {
+        "args": {
+            "events": {"type": list(), "mandatory": True}
+        }
+    },
+    "getLastInfo": {
+        "args": {}
+    },
+    "putArmInfo": {
+        "args": {}
+    },
+}
+
+
 ERR_CODE_INVALID_REQUEST = -32600
 ERR_CODE_METHOD_NOT_FOUND = -32601
 ERR_CODE_INVALID_PARAMS = -32602
@@ -646,34 +721,6 @@ class Utils:
 
     # TODO: We need to specify custom validators
     # TODO: Check the maximum length
-    PROCEDURES_ARGS = {
-      "exchangeProfile": {"procedures": {"type": list(), "mandatory": True},
-                          "name": {"type": unicode(), "mandatory": True}},
-      "fetchItems": {"hostIds": {"type": list(), "mandatory": False},
-                     "fetchId": {"type": unicode(), "mandatory": True}},
-      "fetchHistory": {"hostId":{"type": unicode(), "mandatory": True},
-                       "itemId": {"type": unicode, "mandatory": True},
-                       "beginTime": {"type": unicode(), "mandatory": True},
-                       "endTime": {"type": unicode(), "mandatory": True},
-                       "fetchId": {"type": unicode(), "mandatory": True}},
-      "fetchTriggers": {"hostIds": {"type": list(), "mandatory": False},
-                        "fetchId": {"type": unicode(), "mandatory": True}},
-      "fetchEvents": {"lastInfo":{"type": unicode(), "mandatory": True},
-                      "count":{"type": int(), "mandatory": True},
-                      "direction": {"type": unicode(), "mandatory": True},
-                      "fetchId": {"type": unicode(), "mandatory": True}},
-                      # TODO: validate: direction
-      "getMonitoringServerInfo": {},
-      "putHosts": {"hosts": {"type": list(), "mandatory": True}},
-      "putHostGroups": {"hostGroups": {"type": list(), "mandatory": True}},
-      "putHostGroupMembership": {"hostGroupMembership": {"type": list(), "mandatory": True}},
-      "putTriggers": {"triggers": {"type": list(), "mandatory": True},
-                      "updateType": {"type": unicode(), "mandatory": True}},
-      "putEvents":  {"events": {"type": list(), "mandatory": True}},
-      "getLastInfo": {},
-      "putArmInfo": {},
-    }
-
     # ToDo Currently, this method does not have notification filter.
     # If we implement notification procedures, should insert notification filter.
 
@@ -718,20 +765,27 @@ class Utils:
         if pm.error_code is not None:
             return pm
 
+        # The case the message is a reply
+        need_id = True
+        should_reply = pm.message_dict.has_key("result")
+
+        if not should_reply:
+            method = pm.message_dict["method"]
+            pm.error_code = Utils.is_allowed_procedure(method,
+                                                       allowed_procedures)
+            if pm.error_code is not None:
+                pm.error_message = "Unsupported method: '%s'" % method
+                return pm
+            if PROCEDURES_DEFS[method].get("notification"):
+                need_id = False
+
         # 'id' is not included in the message.
-        if pm.message_id is None:
+        if need_id and pm.message_id is None:
             pm.error_code = ERR_CODE_INVALID_PARAMS
             pm.error_message = "Not found: id"
             return pm
 
-        # The case the message is a reply
-        if pm.message_dict.has_key("result"):
-            return pm
-
-        method = pm.message_dict["method"]
-        pm.error_code = Utils.is_allowed_procedure(method, allowed_procedures)
-        if pm.error_code is not None:
-            pm.error_message = "Unsupported method: '%s'" % method
+        if should_reply:
             return pm
 
         pm.error_code, pm.error_message = \
@@ -759,7 +813,7 @@ class Utils:
 
     @staticmethod
     def validate_arguments(json_dict):
-        args_dict = Utils.PROCEDURES_ARGS[json_dict["method"]]
+        args_dict = PROCEDURES_DEFS[json_dict["method"]]["args"]
         for arg_name, arg_value in args_dict.iteritems():
             try:
                 type_expect = type(json_dict["params"][arg_name])
