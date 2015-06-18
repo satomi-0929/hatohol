@@ -123,9 +123,10 @@ class Sender:
         self.__connector = connector
 
     def request(self, procedure_name, params, request_id):
-        request = json.dumps({"jsonrpc": "2.0", "method": procedure_name,
-                              "params": params, "id": request_id})
-        self.__connector.call(request)
+        body = {"jsonrpc": "2.0", "method": procedure_name, "params": params}
+        if request_id is not None:
+            body["id"] = request_id
+        self.__connector.call(json.dumps(body))
 
     def response(self, result, response_id):
         response = json.dumps({"jsonrpc": "2.0", "result": result,
@@ -138,6 +139,10 @@ class Sender:
                                          "message": ERROR_DICT[error_code]},
                                "id": response_id})
         self.__connector.reply(response)
+
+    def notify(self, procedure_name, params):
+        self.request(procedure_name, params, request_id=None)
+
 
 """
 Issue HAPI requests and responses.
