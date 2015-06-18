@@ -116,75 +116,49 @@ class Common:
         return server, port, database
 
     def collect_hosts_and_put(self):
-        t0 = "nagios_hosts"
-        t1 = "nagios_objects"
-        sql = "SELECT " \
-              + "%s.host_object_id, " % t0 \
-              + "%s.display_name, " % t0 \
-              + "%s.name1 " % t1 \
-              + "FROM %s INNER JOIN %s " % (t0, t1) \
-              + "ON %s.host_object_id=%s.object_id" % (t0, t1)
+        sql = "SELECT host_object_id,display_name FROM nagios_hosts"
         self.__cursor.execute(sql)
         result = self.__cursor.fetchall()
-        hosts = []
-        for row in result:
-            host_id, name, name1 = row
-            hosts.append({"hostId": name1, "hostName": name})
-            self.__host_map[host_id] = name1
-        logging.debug(sql)
+        hosts = [{"hostId": str(hid), "hostName": name} for hid, name in result]
         self.put_hosts(hosts)
 
     def collect_host_groups_and_put(self):
-        t0 = "nagios_hostgroups"
-        t1 = "nagios_objects"
-        sql = "SELECT " \
-              + "%s.hostgroup_id, " % t0 \
-              + "%s.alias, " % t0 \
-              + "%s.name1 " % t1 \
-              + "FROM %s INNER JOIN %s " % (t0, t1) \
-              + "ON %s.hostgroup_object_id=%s.object_id" % (t0, t1)
+        sql = "SELECT hostgroup_object_id,alias FROM nagios_hostgroups"
         self.__cursor.execute(sql)
         result = self.__cursor.fetchall()
-        groups = []
-        for row in result:
-            group_id, name, name1 = row
-            groups.append({"groupId": name1, "groupName": name})
-            self.__host_group_map[group_id] = name1
+        groups = \
+          [{"groupId": str(grid), "groupName": name} for grid, name in result]
         self.put_host_groups(groups)
 
     def collect_host_group_membership_and_put(self):
+        tbl0 = "nagios_hostgroup_members"
+        tbl1 = "nagios_hostgroups"
         sql = "SELECT " \
-              + "host_object_id, " \
-              + "hostgroup_id " \
-              + "FROM nagios_hostgroup_members"
+            + "%s.host_object_id, " % tbl0 \
+            + "%s.hostgroup_object_id " % tbl1 \
+            + "FROM %s INNER JOIN %s " % (tbl0, tbl1) \
+            + "ON %s.hostgroup_id=%s.hostgroup_id" % (tbl0, tbl1)
         self.__cursor.execute(sql)
         result = self.__cursor.fetchall()
         members = {}
-        for row in result:
-            host_id, group_id = row
+        for host_id, group_id in result:
             members_for_host = members.get(host_id)
             if members_for_host is None:
                 members[host_id] = []
             members[host_id].append(group_id)
 
-        # TODO: clean up
         membership = []
         for host_id, group_list in members.items():
-            invariant_host_id = self.__get_invariant_host_id(host_id)
-            if invariant_host_id is None:
-                continue
-            invariant_group_list = []
-            for grp_id in group_list:
-                inv_grp_id = self.__get_invariant_host_group_id(grp_id)
-                if inv_grp_id is None:
-                    continue
-                invariant_group_list.append(inv_grp_id)
-
-            membership.append({"hostId": invariant_host_id,
-                               "groupIds": invariant_group_list})
+            membership.append({"hostId": host_id, "groupIds": group_list})
         self.put_host_group_membership(membership)
 
     def collect_triggers_and_put(self, fetch_id=None, host_ids=None):
+
+        if host_ids is not None and not self.__validate_object_ids(host_ids):
+            logging.error("Invalid: host_ids: %s" % host_ids)
+            # TODO: send error
+            return
+
         t0 = "nagios_services"
         t1 = "nagios_servicestatus"
         t2 = "nagios_hosts"
@@ -201,11 +175,6 @@ class Common:
               + "ON %s.host_object_id=%s.host_object_id" % (t0, t2)
 
         if host_ids is not None:
-            if not self.__validate_host_ids(host_ids):
-                # TODO: Send error
-                return
-            # We don't need to escape the string passed to the SQL statement
-            # because only numbers are allowed for host IDs.
             in_cond = "','".join(host_ids)
             sql += " WHERE %s.host_object_id in ('%s')" % (t2, in_cond)
 
@@ -223,17 +192,13 @@ class Common:
             hapi_status, hapi_severity = \
               self.__parse_status_and_severity(state)
 
-            invariant_host_id = self.__get_invariant_host_id(host_id)
-            if invariant_host_id is None:
-                continue
-
             triggers.append({
                 "triggerId": str(trigger_id),
                 "status": hapi_status,
                 "severity": hapi_severity,
                 # TODO: take into acount the timezone
                 "lastChangeTime": update_time.strftime("%Y%m%d%H%M%S"),
-                "hostId": invariant_host_id,
+                "hostId": str(host_id),
                 "hostName": host_name,
                 "brief": msg,
                 "extendedInfo": ""
@@ -296,9 +261,8 @@ class Common:
         result = self.__cursor.fetchall()
 
         events = []
-        for row in result:
-            (event_id, state, event_time, msg, \
-             trigger_id, host_id, host_name) = row
+        for (event_id, state, event_time, msg, \
+             trigger_id, host_id, host_name) in result:
 
             hapi_event_type = self.EVENT_TYPE_MAP.get(state)
             if hapi_event_type is None:
@@ -308,10 +272,6 @@ class Common:
             hapi_status, hapi_severity = \
               self.__parse_status_and_severity(state)
 
-            invariant_host_id = self.__get_invariant_host_id(host_id)
-            if invariant_host_id is None:
-                continue
-
             events.append({
                 "eventId": str(event_id),
                 "time": event_time.strftime("%Y%m%d%H%M%S"),
@@ -319,12 +279,26 @@ class Common:
                 "triggerId": trigger_id,
                 "status": hapi_status,
                 "severity": hapi_severity,
-                "hostId": invariant_host_id,
+                "hostId": str(host_id),
                 "hostName": host_name,
                 "brief": msg,
                 "extendedInfo": ""
             })
         self.put_events(events, fetch_id=fetch_id)
+
+
+    def __validate_object_ids(self, host_ids):
+        for host_id in host_ids:
+            if not self.__validate_object_id(host_id):
+                return False
+        return True
+
+    def __validate_object_id(self, host_id):
+        try:
+            obj_id = int(host_id)
+        except:
+            return False
+        return obj_id >= 0
 
     def __extract_validated_event_last_info(self, last_info):
         event_id = None
@@ -348,10 +322,6 @@ class Common:
             hapi_severity = "UNKNOWN"
 
         return (hapi_status, hapi_severity)
-
-    def __validate_host_ids(self, host_ids):
-        # TODO: implement
-        return True
 
     def __get_invariant_host_id(self, host_id):
         invariant_host_id = self.__host_map.get(host_id)
