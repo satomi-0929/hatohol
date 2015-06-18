@@ -131,21 +131,19 @@ class Common:
 
         # TODO: clean up
         membership = []
-        for _host_id, _group_list in members.items():
-
-            host_id = self.__host_map.get(_host_id)
-            if host_id is None:
-                logging.error("Not found host ID: %s" % _host_id)
+        for host_id, group_list in members.items():
+            invariant_host_id = self.__get_invariant_host_id(host_id)
+            if invariant_host_id is None:
                 continue
-            group_list = []
-            for _grp_id in _group_list:
-                grp_id = self.__host_group_map.get(_grp_id)
-                if grp_id is None:
-                    logging.error("Not found host group ID: %s" % _grp_id)
+            invariant_group_list = []
+            for grp_id in group_list:
+                inv_grp_id = self.__get_invariant_host_group_id(grp_id)
+                if inv_grp_id is None:
                     continue
-                group_list.append(grp_id)
+                invariant_group_list.append(inv_grp_id)
 
-            membership.append({"hostId": host_id, "groupIds": group_list})
+            membership.append({"hostId": invariant_host_id,
+                               "groupIds": invariant_group_list})
         self.put_host_group_membership(membership)
 
     def collect_triggers_and_put(self, fetch_id=None, host_ids=None):
@@ -187,8 +185,8 @@ class Common:
             hapi_status, hapi_severity = \
               self.__parse_status_and_severity(state)
 
-            uniq_host_id = self.__get_unique_host_id(host_id)
-            if uniq_host_id is None:
+            invariant_host_id = self.__get_invariant_host_id(host_id)
+            if invariant_host_id is None:
                 continue
 
             triggers.append({
@@ -197,7 +195,7 @@ class Common:
                 "severity": hapi_severity,
                 # TODO: take into acount the timezone
                 "lastChangeTime": update_time.strftime("%Y%m%d%H%M%S"),
-                "hostId": uniq_host_id,
+                "hostId": invariant_host_id,
                 "hostName": host_name,
                 "brief": msg,
                 "extendedInfo": ""
@@ -312,11 +310,18 @@ class Common:
         # TODO: implement
         return True
 
-    def __get_unique_host_id(self, host_id):
-        uniq_host_id = self.__host_map.get(host_id)
-        if uniq_host_id is None:
-            logging.error("Not found unique host ID for '%s'" % _host_id)
-        return uniq_host_id
+    def __get_invariant_host_id(self, host_id):
+        invariant_host_id = self.__host_map.get(host_id)
+        if invariant_host_id is None:
+            logging.error("Not found invariant host ID for '%s'" % host_id)
+        return invariant_host_id
+
+    def __get_invariant_host_group_id(self, group_id):
+        invariant_group_id = self.__host_group_map.get(group_id)
+        if invariant_group_id is None:
+            logging.error(
+                "Not found invariant host group ID for '%s'" % group_id)
+        return invariant_group_id
 
 class Hap2NagiosNDOUtilsPoller(haplib.BasePoller, Common):
 
