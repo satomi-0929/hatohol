@@ -143,6 +143,62 @@ class HandledException:
     pass
 
 
+class Callback:
+    def __init__(self):
+        self.__handlers = {}
+
+    def register(self, code, handler):
+        handler_list = self.__handlers.get(code)
+        if handler_list is None:
+            handler_list = []
+            self.__handlers[code] = handler_list
+        handler_list.append(handler)
+
+    def __call__(self, code, *args, **kwargs):
+        handler_list = self.__handlers.get(code)
+        if handler_list is None:
+            return
+        for handler in handler_list:
+            handler(*args, **kwargs)
+
+
+class CommandQueue(Callback):
+    def __init__(self):
+        Callback.__init__(self)
+        self.__q = multiprocessing.Queue()
+
+    def wait(self, duration):
+        """
+        Wait for commands and run the command when it receives in the
+        given duration.
+        @parameter duration
+        This method returns after the time of this parameter goes by.
+        """
+        wakeup_time = time.time() + duration
+        while  True:
+            sleep_time = wakeup_time - time.time()
+            if sleep_time <= 0:
+                return
+            self.__wait(sleep_time)
+
+    def __wait(self, sleep_time):
+        try:
+            code, args = \
+                self.__q.get(block=True, timeout=sleep_time)
+            self(code, args)
+        except Queue.Empty:
+            # If no command is forthcomming within timeout,
+            # this path is executed.
+            pass
+
+    def push(self, code, args):
+        self.__q.put((code, args), block=False)
+
+    def pop_all(self):
+        while not self.__q.empty():
+            self.__wait(0)
+
+
 class MonitoringServerInfo:
     def __init__(self, ms_info_dict):
         self.server_id = ms_info_dict["serverId"]
@@ -527,18 +583,19 @@ class Dispatcher:
         dispatch_process.daemon = True
         dispatch_process.start()
 
-
 class BaseMainPlugin(HapiProcessor):
 
     __COMPONENT_CODE = 0x10
+
+    CB_NOTIFY_MONITORING_SERVER_INFO = 1
 
     def __init__(self, transporter_args):
         self.__detect_implemented_procedures()
         self.__sender = Sender(transporter_args)
         self.__rpc_queue = multiprocessing.Queue()
-        self.__poller_command_queue = None
         HapiProcessor.__init__(self, self.__sender, "Main",
                                self.__COMPONENT_CODE)
+        self.__callback = Callback()
 
         # launch dispatcher process
         self.__dispatcher = Dispatcher(self.__rpc_queue)
@@ -551,8 +608,8 @@ class BaseMainPlugin(HapiProcessor):
                                    dispatch_queue,
                                    self.__implemented_procedures)
 
-    def set_poller_command_queue(self, queue):
-        self.__poller_command_queue = None
+    def register_callback(self, code, arg):
+        self.__callback.register(code, arg)
 
     def __detect_implemented_procedures(self):
         PROCEDURES_MAP = {
@@ -591,10 +648,8 @@ class BaseMainPlugin(HapiProcessor):
         self.exchange_profile(response_id=request_id)
 
     def hap_notify_monitoring_server_info(self, params):
-        print params
         ms_info = MonitoringServerInfo(params)
-        self.set_ms_info(ms_info)
-        # TODO: Send ms_info to poller
+        self.__callback(self.CB_NOTIFY_MONITORING_SERVER_INFO, ms_info)
 
     def hap_return_error(self, error_code, response_id):
         self.__sender.error(error_code, response_id)
@@ -639,10 +694,10 @@ class BaseMainPlugin(HapiProcessor):
                 args.append(request_id)
             procedure(*args)
 
-
 class BasePoller(HapiProcessor):
 
     __COMPONENT_CODE = 0x20
+    __CMD_MONITORING_SERVER_INFO = 1
 
     def __init__(self, *args, **kwargs):
         HapiProcessor.__init__(self, kwargs["sender"], kwargs["process_id"],
@@ -650,7 +705,9 @@ class BasePoller(HapiProcessor):
 
         self.__pollingInterval = 30
         self.__retryInterval = 10
-        self.__command_queue = multiprocessing.Queue()
+        self.__command_queue = CommandQueue()
+        self.__command_queue.register(self.__CMD_MONITORING_SERVER_INFO,
+                                      self.__set_ms_info)
 
     def poll(self):
        ctx = self.poll_setup()
@@ -685,6 +742,9 @@ class BasePoller(HapiProcessor):
         pass
 
     def set_ms_info(self, ms_info):
+        self.__command_queue.push(self.__CMD_MONITORING_SERVER_INFO, ms_info)
+
+    def __set_ms_info(self, ms_info):
         HapiProcessor.set_ms_info(self, ms_info)
         self.__pollingInterval = ms_info.polling_interval_sec
         self.__retryInterval = ms_info.retry_interval_sec
@@ -700,6 +760,7 @@ class BasePoller(HapiProcessor):
         succeeded = False
         failure_reason = ""
         try:
+            self.__command_queue.pop_all()
             self.poll()
             succeeded = True
         except HandledException:
@@ -731,27 +792,7 @@ class BasePoller(HapiProcessor):
         except:
             logging.error("Failed to call put_arm_info.")
 
-        wakeup_time = time.time() + sleep_time
-        while  True:
-            sleep_time = wakeup_time - time.time()
-            if sleep_time <= 0:
-                return
-            self.__interruptible_sleep(sleep_time)
-
-
-    def __interruptible_sleep(self, sleep_time):
-        try:
-            cmd = self.__command_queue.get(block=True, timeout=sleep_time)
-            self.__parse_command(cmd)
-        except Queue.Empty:
-            # If no command is forthcomming within timeout,
-            # this path is executed.
-            pass
-
-    def __parse_command(self, command):
-        # TO BE IMPLEMENTED
-        print "GET command: %s" % command
-        pass
+        self.__command_queue.wait(sleep_time)
 
 
 class Utils:

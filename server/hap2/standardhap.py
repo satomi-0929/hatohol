@@ -142,6 +142,9 @@ class StandardHap:
         transporter_args.update(transporter_class.parse_arguments(args))
 
         self.__main_plugin = self.create_main_plugin(transporter_args=transporter_args)
+        self.__main_plugin.register_callback(
+            haplib.BaseMainPlugin.CB_NOTIFY_MONITORING_SERVER_INFO,
+            self.on_got_monitoring_server_info)
         logging.info("created main plugin.")
 
         if args.disable_poller:
@@ -150,8 +153,6 @@ class StandardHap:
             self.__poller = self.__create_poller(
                                 self.__main_plugin.get_sender(),
                                 self.__main_plugin.get_dispatcher())
-            cmd_que = self.__poller.get_command_queue()
-            self.__main_plugin.set_poller_command_queue(cmd_que)
 
         self.__main_plugin.start_dispatcher()
         logging.info("started dispatcher process.")
