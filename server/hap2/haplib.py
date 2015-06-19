@@ -139,8 +139,17 @@ ERROR_DICT = {
 
 MAX_EVENT_CHUNK_SIZE = 1000
 
+def handle_exception():
+    (exctype, value, tb) = sys.exc_info()
+    if exctype is not HandledException:
+        logging.error("Unexpected error: %s, %s, %s" % \
+                      (exctype, value, traceback.format_exc()))
+    return exctype, value
+
+
 class HandledException:
-    pass
+    def __init__(self, restart=False):
+        self.restart = restart
 
 
 class Callback:
@@ -750,6 +759,7 @@ class BasePoller(HapiProcessor):
         self.__retryInterval = ms_info.retry_interval_sec
         logging.info("Polling inverval: %d/%d",
                      self.__pollingInterval, self.__retryInterval)
+        raise HandledException(restart=True)
 
     def __call__(self):
         arm_info = ArmInfo()
@@ -763,13 +773,13 @@ class BasePoller(HapiProcessor):
             self.__command_queue.pop_all()
             self.poll()
             succeeded = True
-        except HandledException:
-            pass
         except:
-            (exctype, value, tb) = sys.exc_info()
-            logging.error("Unexpected error: %s, %s, %s" % \
-                          (exctype, value, traceback.format_exc()))
-            failure_reason = "%s, %s" % (exctype, value)
+            exctype, value = handle_exception()
+            if exctype is HandledException:
+                if value.restart:
+                    return
+            else:
+                failure_reason = "%s, %s" % (exctype, value)
 
         if succeeded:
             sleep_time = self.__pollingInterval
@@ -790,9 +800,12 @@ class BasePoller(HapiProcessor):
             arm_info.failure_reason = failure_reason
             self.put_arm_info(arm_info)
         except:
-            logging.error("Failed to call put_arm_info.")
+            handle_exception()
 
-        self.__command_queue.wait(sleep_time)
+        try:
+            self.__command_queue.wait(sleep_time)
+        except:
+            handle_exception()
 
 
 class Utils:
