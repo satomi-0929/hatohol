@@ -139,15 +139,17 @@ ERROR_DICT = {
 
 MAX_EVENT_CHUNK_SIZE = 1000
 
-def handle_exception():
+def handle_exception(raises=()):
     (exctype, value, tb) = sys.exc_info()
-    if exctype is not HandledException:
+    if exctype in raises:
+        raise
+    if exctype is not Signal:
         logging.error("Unexpected error: %s, %s, %s" % \
                       (exctype, value, traceback.format_tb(tb)))
     return exctype, value
 
 
-class HandledException:
+class Signal:
     def __init__(self, restart=False):
         self.restart = restart
 
@@ -759,7 +761,7 @@ class BasePoller(HapiProcessor):
         self.__retryInterval = ms_info.retry_interval_sec
         logging.info("Polling inverval: %d/%d",
                      self.__pollingInterval, self.__retryInterval)
-        raise HandledException(restart=True)
+        raise Signal(restart=True)
 
     def __call__(self):
         arm_info = ArmInfo()
@@ -775,7 +777,7 @@ class BasePoller(HapiProcessor):
             succeeded = True
         except:
             exctype, value = handle_exception()
-            if exctype is HandledException:
+            if exctype is Signal:
                 if value.restart:
                     return
             else:

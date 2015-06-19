@@ -103,14 +103,9 @@ class StandardHap:
         while True:
             try:
                 self.__run()
-            except KeyboardInterrupt:
-                break
-            except (AssertionError, SystemExit):
-                raise
             except:
-                (ty, val, tb) = sys.exc_info()
-                logging.error("type: " + str(ty) + ", value: " + str(val) + "\n"
-                              + traceback.format_exc())
+                raises = (KeyboardInterrupt, AssertionError, SystemExit)
+                exctype, value = haplib.handle_exception(raises=raises)
             else:
                 break
             #TODO: make sure poller and receiver has been killed.
