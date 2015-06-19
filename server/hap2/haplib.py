@@ -143,7 +143,7 @@ def handle_exception():
     (exctype, value, tb) = sys.exc_info()
     if exctype is not HandledException:
         logging.error("Unexpected error: %s, %s, %s" % \
-                      (exctype, value, traceback.format_exc()))
+                      (exctype, value, traceback.format_tb(tb)))
     return exctype, value
 
 
