@@ -194,6 +194,27 @@ class Common:
             return None
         return value
 
+    @staticmethod
+    def parse_time(time):
+        """
+        Parse time strings returned from OpenStack.
+
+        @param time
+        A time string such as
+        - 2014-09-05T06:25:26.007000
+        - 2014-09-05T06:25:26
+
+        @return A datetime object.
+        """
+
+        EXPECT_LEN_WITHOUT_MICRO = 19
+        EXPECT_LEN_WITH_MICRO = EXPECT_LEN_WITHOUT_MICRO + 7
+        formats = {
+            EXPECT_LEN_WITHOUT_MICRO: "%Y-%m-%dT%H:%M:%S",
+            EXPECT_LEN_WITH_MICRO: "%Y-%m-%dT%H:%M:%S.%f",
+        }
+        return datetime.datetime.strptime(time, formats[len(time)])
+
 
 class Hap2CeilometerPoller(haplib.BasePoller, Common):
 
