@@ -20,24 +20,56 @@
 """
 
 import sys
-import MySQLdb
 import time
 import haplib
 import standardhap
 import logging
+import urllib2
+import json
+import datetime
 
 class Common:
 
     def __init__(self):
-        pass
+        self.__token = None
 
     def close_connection(self):
-        # remove session ID
-        pass
+        self.__token = None
 
     def ensure_connection(self):
-        # get the session ID
-        pass
+        if self.__token is not None:
+            RETOKEN_MARGIN = datetime.timedelta(minutes=5)
+            now  = datetime.datetime.utcnow()
+            if self.__expires - now > RETOKEN_MARGIN:
+                return
+
+        ms_info = self.get_ms_info()
+        if ms_info is None:
+            logging.error("Not found: MonitoringServerInfo.")
+            raise haplib.Signal()
+
+        auth_url = ms_info.url + "/tokens"
+        ext_info_type = haplib.MonitoringServerInfo.EXTENDED_INFO_JSON
+        ext_info = ms_info.get_extended_info(ext_info_type)
+        data = {
+            "auth": {
+                "tenantName": ext_info["tenantName"],
+                "passwordCredentials": {
+                    "username": ms_info.user_name,
+                    "password": ms_info.password,
+                }
+            }
+        }
+        header = {"Content-Type": "application/json"}
+        request = urllib2.Request(auth_url, json.dumps(data), header)
+        raw_response = urllib2.urlopen(request).read()
+        response = json.loads(raw_response)
+
+        self.__token = response["access"]["token"]["id"]
+        expires = response["access"]["token"]["expires"]
+        self.__expires = datetime.datetime.strptime(expires,
+                                                    "%Y-%m-%dT%H:%M:%SZ")
+        logging.info("Got token, expires: %s" % self.__expires)
 
     def collect_hosts_and_put(self):
         pass
