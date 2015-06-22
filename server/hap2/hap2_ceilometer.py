@@ -39,6 +39,7 @@ class Common:
         self.__token = None
         self.__nova_ep = None
         self.__ceilometer_ep = None
+        self.__host_cache = {}
 
     def ensure_connection(self):
         if self.__token is not None:
@@ -109,7 +110,10 @@ class Common:
 
         hosts = []
         for server in response["servers"]:
-            hosts.append({"hostId": server["id"], "hostName": server["name"]})
+            host_id = server["id"]
+            host_name = server["name"]
+            hosts.append({"hostId": host_id, "hostName": host_name})
+            self.__host_cache[host_id] = host_name
         self.put_hosts(hosts)
 
     def collect_host_groups_and_put(self):
@@ -172,8 +176,7 @@ class Common:
         else:
             return "N/A", "N/A"
 
-        # TODO: get host_name
-        host_name = "TODO: Get host name"
+        host_name = self.__host_cache.get(host_id, "N/A")
         return host_id, host_name
 
     def __parse_alarm_host_each(self, query):
