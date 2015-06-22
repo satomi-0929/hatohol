@@ -106,9 +106,7 @@ class Common:
     def collect_hosts_and_put(self):
         url = self.__nova_ep + "/servers/detail?all_tenants=1"
         headers = {"X-Auth-Token": self.__token}
-        request = urllib2.Request(url, headers=headers)
-        raw_response = urllib2.urlopen(request).read()
-        response = json.loads(raw_response)
+        response = self.__request(url, headers)
 
         hosts = []
         for server in response["servers"]:
