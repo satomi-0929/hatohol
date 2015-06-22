@@ -65,10 +65,9 @@ class Common:
                 }
             }
         }
-        header = {"Content-Type": "application/json"}
-        request = urllib2.Request(auth_url, json.dumps(data), header)
-        raw_response = urllib2.urlopen(request).read()
-        response = json.loads(raw_response)
+        headers = {"Content-Type": "application/json"}
+        response = self.__request(auth_url, headers, use_token=False,
+                                  data=json.dumps(data))
 
         self.__token = response["access"]["token"]["id"]
         expires = response["access"]["token"]["expires"]
@@ -154,10 +153,10 @@ class Common:
                                count=None, direction="ASC"):
         pass
 
-    def __request(self, url, headers={}, use_token=True):
+    def __request(self, url, headers={}, use_token=True, data=None):
         if use_token:
             headers["X-Auth-Token"] = self.__token
-        request = urllib2.Request(url, headers=headers)
+        request = urllib2.Request(url, headers=headers, data=data)
         raw_response = urllib2.urlopen(request).read()
         return json.loads(raw_response)
 
