@@ -88,7 +88,7 @@ class Common:
             del target_eps[name]
 
         if len(target_eps) > 0:
-            logging.error("Not found Endpoints: Nova: %s, Ceiloemeter: %s",
+            logging.error("Not found Endpoints: Nova: %s, Ceiloemeter: %s" % \
                           self.__nova_ep, self.__ceilometer_ep)
             raise haplib.Signal()
 
@@ -102,7 +102,16 @@ class Common:
         self.__ceilometer_ep = ep
 
     def collect_hosts_and_put(self):
-        pass
+        url = self.__nova_ep + "/servers/detail?all_tenants=1"
+        headers = {"X-Auth-Token": self.__token}
+        request = urllib2.Request(url, headers=headers)
+        raw_response = urllib2.urlopen(request).read()
+        response = json.loads(raw_response)
+
+        hosts = []
+        for server in response["servers"]:
+            hosts.append({"hostId": server["id"], "hostName": server["name"]})
+        self.put_hosts(hosts)
 
     def collect_host_groups_and_put(self):
         pass
