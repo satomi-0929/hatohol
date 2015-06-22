@@ -30,6 +30,8 @@ import datetime
 
 class Common:
 
+    STATUS_MAP = {"ok": "OK", "insufficient data": "UNKNOWN", "alarm": "NG"}
+
     def __init__(self):
         self.close_connection()
 
@@ -120,11 +122,77 @@ class Common:
         pass
 
     def collect_triggers_and_put(self, fetch_id=None, host_ids=None):
-        pass
+
+        # TODO: Take care of host_ids
+
+        url = self.__ceilometer_ep + "/v2/alarms";
+        headers = {"X-Auth-Token": self.__token}
+        response = self.__request(url, headers)
+
+        triggers = []
+        for alarm in response:
+            threshold_rule = alarm["threshold_rule"]
+            meter_name = threshold_rule["meter_name"]
+            ts = datetime.datetime.strptime(alarm["state_timestamp"],
+                                            "%Y-%m-%dT%H:%M:%S.%f")
+            timestamp_str = ts.strftime("%Y%m%d%H%M%S.") + str(ts.microsecond)
+
+            host_id, host_name = self.__parse_alarm_host(threshold_rule)
+            trigger = {
+                "triggerId": alarm["alarm_id"],
+                "status": self.STATUS_MAP[alarm["state"]],
+                "severity": "ERROR",
+                "lastChangeTime": timestamp_str,
+                "hostId": host_id,
+                "hostName": host_name,
+                "brief": "%s: %s" % (meter_name, alarm["description"]),
+                "extendedInfo": "",
+            }
+            triggers.append(trigger)
+        update_type = "ALL"
+        self.put_triggers(triggers, update_type=update_type, fetch_id=fetch_id)
 
     def collect_events_and_put(self, fetch_id=None, last_info=None,
                                count=None, direction="ASC"):
         pass
+
+    def __request(self, url, headers={}, use_token=True):
+        if use_token:
+            headers["X-Auth-Token"] = self.__token
+        request = urllib2.Request(url, headers=headers)
+        raw_response = urllib2.urlopen(request).read()
+        return json.loads(raw_response)
+
+    def __parse_alarm_host(self, threshold_rule):
+        query_array = threshold_rule.get("query")
+        if query_array is None:
+            return "N/A", "N/A"
+
+        for query in query_array:
+            host_id = self.__parse_alarm_host_each(query)
+            if host_id is not None:
+                break
+        else:
+            return "N/A", "N/A"
+
+        # TODO: get host_name
+        host_name = "TODO: Get host name"
+        return host_id, host_name
+
+    def __parse_alarm_host_each(self, query):
+        field = query.get("field")
+        if field is None:
+            return None
+        value = query.get("value")
+        if value is None:
+            return None
+        op = query.get("op")
+        if value is None:
+            return None
+        if op != "eq":
+            logger.info("Unknown eperator: %s" % op)
+            return None
+        return value
 
 
 class Hap2CeilometerPoller(haplib.BasePoller, Common):
