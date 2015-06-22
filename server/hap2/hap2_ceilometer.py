@@ -31,10 +31,12 @@ import datetime
 class Common:
 
     def __init__(self):
-        self.__token = None
+        self.close_connection()
 
     def close_connection(self):
         self.__token = None
+        self.__nova_ep = None
+        self.__ceilometer_ep = None
 
     def ensure_connection(self):
         if self.__token is not None:
@@ -43,7 +45,8 @@ class Common:
             if self.__expires - now > RETOKEN_MARGIN:
                 return
 
-        ms_info = self.get_ms_info()
+        self.__ms_info = self.get_ms_info()
+        ms_info = self.__ms_info
         if ms_info is None:
             logging.error("Not found: MonitoringServerInfo.")
             raise haplib.Signal()
@@ -70,6 +73,33 @@ class Common:
         self.__expires = datetime.datetime.strptime(expires,
                                                     "%Y-%m-%dT%H:%M:%SZ")
         logging.info("Got token, expires: %s" % self.__expires)
+
+        # Extract endpoints
+        target_eps = {"nova": self.__set_nova_ep,
+                      "ceilometer": self.__set_ceilometer_ep}
+        for catalog in response["access"]["serviceCatalog"]:
+            if len(target_eps) == 0:
+                break
+            name = catalog["name"]
+            ep_setter = target_eps.get(name)
+            if ep_setter is None:
+                continue
+            ep_setter(catalog["endpoints"][0]["publicURL"])
+            del target_eps[name]
+
+        if len(target_eps) > 0:
+            logging.error("Not found Endpoints: Nova: %s, Ceiloemeter: %s",
+                          self.__nova_ep, self.__ceilometer_ep)
+            raise haplib.Signal()
+
+        logging.info("EP: Nova: %s", self.__nova_ep)
+        logging.info("EP: Ceiloemeter: %s", self.__ceilometer_ep)
+
+    def __set_nova_ep(self, ep):
+        self.__nova_ep = ep
+
+    def __set_ceilometer_ep(self, ep):
+        self.__ceilometer_ep = ep
 
     def collect_hosts_and_put(self):
         pass
