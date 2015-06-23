@@ -125,12 +125,25 @@ class SimpleServer:
         self.__sender.response(result, call_id)
 
     def __rpc_put_events(self, call_id, params):
-        logging.info(params)
-        # TODO: Parse content
+        NUM_MAX_SHOW_EVENTS = 100
+
+        events = params.get("events")
+        num_events = len(events) if events is not None else 0
         last_info = params.get("lastInfo")
+        msg = "num_events: %d, fetch_id: %s, mayMoreFlag: %s, lastIfno: %s" % (
+                num_events, params.get("fetchId"), params.get("mayMoreFlag"),
+                last_info)
+        logging.info(msg)
+
+        if num_events <= NUM_MAX_SHOW_EVENTS:
+            logging.info(params)
+        else:
+            msg = "Skip to show events to suppress flooding."
+            logging.info(msg)
+
+        # TODO: Parse content
         if last_info is not None:
             self.__last_info["event"] = last_info
-            logging.info("lastInfo (event): '%s'" % last_info)
         result = "SUCCESS"
         self.__sender.response(result, call_id)
 
