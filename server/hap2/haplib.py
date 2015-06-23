@@ -618,7 +618,9 @@ class HapiProcessor:
             self.__event_last_info = self.get_last_info("event")
         return self.__event_last_info
 
-    def put_events(self, events, fetch_id=None, last_info_generator=None):
+    def put_events(self, events, fetch_id=None,
+                   last_info_generator=Utils.get_maximum_eventid):
+
         """
         This method calls putEvents() and wait for a reply.
         It divide events if the size is beyond the limitation.
@@ -642,9 +644,6 @@ class HapiProcessor:
             if fetch_id is None:
                 return
             count = 1
-
-        if last_info_generator is None:
-            last_info_generator = Utils.get_maximum_eventid
 
         for num in range(0, count):
             start = num * CHUNK_SIZE
