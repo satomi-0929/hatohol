@@ -469,7 +469,7 @@ class Utils:
         return utc_now.strftime("%Y%m%d%H%M%S.") + str(utc_now.microsecond)
 
     @staticmethod
-    def conv_hapi_time(date_time):
+    def conv_to_hapi_time(date_time):
         """
         Convert a datetime object to a string formated for HAPI
         @param date_time A datatime object

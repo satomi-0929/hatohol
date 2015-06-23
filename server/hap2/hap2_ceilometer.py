@@ -203,7 +203,7 @@ class Common:
 
             events.append({
                 "eventId": history["event_id"],
-                "time": haplib.Utils.conv_hapi_time(timestamp),
+                "time": haplib.Utils.conv_to_hapi_time(timestamp),
                 "type": hapi_event_type,
                 "triggerId": alarm_id,
                 "status": hapi_status,
