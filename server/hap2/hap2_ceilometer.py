@@ -28,6 +28,7 @@ import urllib2
 import json
 import datetime
 import cPickle
+import base64
 
 class Common:
 
@@ -43,6 +44,9 @@ class Common:
         self.__ceilometer_ep = None
         self.__host_cache = {} # key: host_id, value: host_name
         self.__alarm_cache = {} # key: alarm_id, value: {host_id, brief}
+
+         # key: alarm_id, value: last_alarm time (HAPI format)
+        self.__alarm_last_time_map = {}
 
     def ensure_connection(self):
         if self.__token is not None:
@@ -170,10 +174,10 @@ class Common:
         if last_info is None:
             return None
         try:
-            # key: alarm_id, value: datetime object
-            last_alarm_timestamp_map = cPickle.loads(last_info)
-        except:
-            logging.error("Failed to unpickle.")
+            pickled = base64.b64decode(ast_info)
+            last_alarm_timestamp_map = cPickle.loads(pickled)
+        except Exception as e:
+            logging.error("Failed to decode: %s."  % e)
             return None
         return last_alarm_timestamp_map.get(alarm_id)
 
@@ -213,7 +217,28 @@ class Common:
                 "brief": brief,
                 "extendedInfo": ""
             })
-        self.put_events(events, fetch_id=fetch_id)
+        # TODO: we have to sort events in time asc order
+        self.put_events(events, fetch_id=fetch_id,
+                        last_info_generator=self.__last_info_generator)
+
+    def __last_info_generator(self, events):
+        # TODO: check the alarms that are no longer existing and remove them
+        for evt in events:
+            alarm_id = evt["triggerId"]
+            alarm_time = evt["time"]
+
+            doUpdate = True
+            latest_time = self.__alarm_last_time_map.get(alarm_id)
+            if latest_time is not None:
+                # TODO: FIX: This is too easy and imprecise
+                doUpdate = float(alarm_time) > float(latest_time)
+            if doUpdate:
+                self.__alarm_last_time_map[alarm_id] = alarm_time
+
+        pickled = cPickle.dumps(self.__alarm_last_time_map)
+        b64enc = base64.b64encode(pickled)
+        assert len(b64enc) <= haplib.MAX_LAST_INFO_SIZE
+        return b64enc
 
     def __get_history_query_option(self, last_alarm_time):
         if last_alarm_time is None:

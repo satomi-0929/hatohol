@@ -138,6 +138,7 @@ ERROR_DICT = {
 }
 
 MAX_EVENT_CHUNK_SIZE = 1000
+MAX_LAST_INFO_SIZE = 32767
 
 def handle_exception(raises=()):
     (exctype, value, tb) = sys.exc_info()
@@ -475,7 +476,7 @@ class Utils:
         @param date_time A datatime object
         @return A string of the date and time in HAPI2.0
         """
-        return date_time.strftime("%Y%m%d%H%M%S.") + str(date_time.microsecond)
+        return date_time.strftime("%Y%m%d%H%M%S.") + "%06d" % date_time.microsecond
 
 
 """
