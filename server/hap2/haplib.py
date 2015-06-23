@@ -982,3 +982,12 @@ class Utils:
     def get_current_hatohol_time():
         utc_now = datetime.utcnow()
         return utc_now.strftime("%Y%m%d%H%M%S.") + str(utc_now.microsecond)
+
+    @staticmethod
+    def conv_hapi_time(date_time):
+        """
+        Convert a datetime object to a string formated for HAPI
+        @param date_time A datatime object
+        @return A string of the date and time in HAPI2.0
+        """
+        return date_time.strftime("%Y%m%d%H%M%S.") + str(date_time.microsecond)

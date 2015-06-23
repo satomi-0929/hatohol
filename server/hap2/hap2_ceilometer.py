@@ -31,6 +31,7 @@ import datetime
 class Common:
 
     STATUS_MAP = {"ok": "OK", "insufficient data": "UNKNOWN", "alarm": "NG"}
+    STATUS_EVENT_MAP = {"OK": "GOOD", "NG": "BAD", "UNKNOWN": "UNKNOWN"}
 
     def __init__(self):
         self.close_connection()
@@ -39,7 +40,8 @@ class Common:
         self.__token = None
         self.__nova_ep = None
         self.__ceilometer_ep = None
-        self.__host_cache = {}
+        self.__host_cache = {} # key: host_id, value: host_name
+        self.__alarm_cache = {} # key: alarm_id, value: {host_id, brief}
 
     def ensure_connection(self):
         if self.__token is not None:
@@ -130,8 +132,11 @@ class Common:
         headers = {"X-Auth-Token": self.__token}
         response = self.__request(url, headers)
 
+        # Now we get all the alarms. So the list shoud be cleared here
+        self.__alarm_cache = {}
         triggers = []
         for alarm in response:
+            alarm_id = alarm["alarm_id"]
             threshold_rule = alarm["threshold_rule"]
             meter_name = threshold_rule["meter_name"]
             ts = datetime.datetime.strptime(alarm["state_timestamp"],
@@ -139,6 +144,7 @@ class Common:
             timestamp_str = ts.strftime("%Y%m%d%H%M%S.") + str(ts.microsecond)
 
             host_id, host_name = self.__parse_alarm_host(threshold_rule)
+            brief = "%s: %s" % (meter_name, alarm["description"]),
             trigger = {
                 "triggerId": alarm["alarm_id"],
                 "status": self.STATUS_MAP[alarm["state"]],
@@ -146,16 +152,69 @@ class Common:
                 "lastChangeTime": timestamp_str,
                 "hostId": host_id,
                 "hostName": host_name,
-                "brief": "%s: %s" % (meter_name, alarm["description"]),
+                "brief": brief,
                 "extendedInfo": "",
             }
             triggers.append(trigger)
+            self.__alarm_cache[alarm_id] = {
+                "host_id": host_id, "brief": brief}
         update_type = "ALL"
         self.put_triggers(triggers, update_type=update_type, fetch_id=fetch_id)
 
     def collect_events_and_put(self, fetch_id=None, last_info=None,
                                count=None, direction="ASC"):
-        pass
+        for alarm_id in self.__alarm_cache.keys():
+            last_alarm_time = self.__get_last_alarm_time(alarm_id, last_info)
+            self.__collect_events_and_put(alarm_id, last_alarm_time, fetch_id)
+
+    def __get_last_alarm_time(self, alarm_id, last_info):
+        # TODO: implement
+        # TODO: Take care of old events prevention mechanism
+        return
+
+    def __collect_events_and_put(self, alarm_id, last_alarm_time, fetch_id):
+        query_option = self.__get_history_query_option(last_alarm_time)
+        url = self.__ceilometer_ep + \
+              "/v2/alarms/%s/history%s" % (alarm_id, query_option)
+        headers = {"X-Auth-Token": self.__token}
+        response = self.__request(url, headers)
+
+        # host_id, host_name and brief
+        alarm_cache = self.__alarm_cache.get(alarm_id)
+        if alarm_cache is not None:
+            host_id = alarm_cache["host_id"]
+            brief = alarm_cache["brief"]
+        else:
+            host_id = "N/A"
+            brief = "N/A"
+        host_name = self.__host_cache.get(host_id, "N/A")
+
+        # make the events to put
+        events = []
+        for history in response:
+            hapi_status = self.alarm_to_hapi_status(
+                        history["type"], history.get("detail"))
+            hapi_event_type = self.status_to_hapi_event_type(hapi_status)
+            timestamp = self.parse_time(history["timestamp"])
+
+            events.append({
+                "eventId": history["event_id"],
+                "time": haplib.Utils.conv_hapi_time(timestamp),
+                "type": hapi_event_type,
+                "triggerId": alarm_id,
+                "status": hapi_status,
+                "severity": "ERROR",
+                "hostId": host_id,
+                "hostName": host_name,
+                "brief": brief,
+                "extendedInfo": ""
+            })
+        self.put_events(events, fetch_id=fetch_id)
+
+    def __get_history_query_option(self, last_alarm_time):
+        if last_alarm_time is None:
+            return ""
+        return "?q.field=timestamp&q.op=gt&q.value=%s" % last_alarm_time
 
     def __request(self, url, headers={}, use_token=True, data=None):
         if use_token:
@@ -193,6 +252,17 @@ class Common:
             logger.info("Unknown eperator: %s" % op)
             return None
         return value
+
+    @classmethod
+    def alarm_to_hapi_status(cls, alarm_type, detail_json):
+        assert alarm_type == "creation" or alarm_type == "state transition"
+        detail = json.loads(detail_json)
+        state = detail["state"]
+        return cls.STATUS_MAP[state]
+
+    @classmethod
+    def status_to_hapi_event_type(cls, hapi_status):
+        return cls.STATUS_EVENT_MAP[hapi_status]
 
     @staticmethod
     def parse_time(time):
