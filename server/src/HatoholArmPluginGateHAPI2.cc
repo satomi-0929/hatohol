@@ -318,7 +318,17 @@ struct HatoholArmPluginGateHAPI2::Impl
 		}
 	};
 
-	bool launchPluginProcess(void)
+	bool startPlugin(void)
+	{
+		return runPluginControlScript("start");
+	}
+
+	bool stopPlugin(void)
+	{
+		return runPluginControlScript("stop");
+	}
+
+	bool runPluginControlScript(const string command)
 	{
 		const char *ENV_NAME_AMQP_BROKER_URL = "HAPI_AMQP_BROKER_URL";
 		const char *ENV_NAME_AMQP_QUEUE_NAME = "HAPI_AMQP_QUEUE_NAME";
@@ -348,6 +358,7 @@ struct HatoholArmPluginGateHAPI2::Impl
 		ChildProcessManager::CreateArg arg;
 		arg.eventCb = eventCb;
 		arg.args.push_back(m_pluginInfo.path);
+		arg.args.push_back(command);
 		arg.addFlag(G_SPAWN_SEARCH_PATH);
 
 		// Envrionment variables passsed to the plugin process
