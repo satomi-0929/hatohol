@@ -27,6 +27,7 @@ import logging
 import urllib2
 import json
 import datetime
+import cPickle
 
 class Common:
 
@@ -162,13 +163,16 @@ class Common:
     def collect_events_and_put(self, fetch_id=None, last_info=None,
                                count=None, direction="ASC"):
         for alarm_id in self.__alarm_cache.keys():
+            print "last_info: %s" % last_info
             last_alarm_time = self.__get_last_alarm_time(alarm_id, last_info)
             self.__collect_events_and_put(alarm_id, last_alarm_time, fetch_id)
 
     def __get_last_alarm_time(self, alarm_id, last_info):
-        # TODO: implement
-        # TODO: Take care of old events prevention mechanism
-        return
+        if last_info is None:
+            return None
+        # key: alarm_id, value: datetime object
+        last_alarm_timestamp_map = cPickle.loads(last_info)
+        return last_alarm_timestamp_map.get(alarm_id)
 
     def __collect_events_and_put(self, alarm_id, last_alarm_time, fetch_id):
         query_option = self.__get_history_query_option(last_alarm_time)
