@@ -72,3 +72,33 @@ class TestCommon(unittest.TestCase):
         self.assertRaises(
             Exception,
             Common.alarm_to_hapi_status, (alarm_type, detail))
+
+    def test_hapi_time_to_url_enc_openstack_time(self):
+        hapi_time = "20150624081005"
+        actual = Common.hapi_time_to_url_enc_openstack_time(hapi_time)
+        expect = "2015-06-24T08%3A10%3A05.000000"
+        self.assertEqual(actual, expect)
+
+    def test_hapi_time_to_url_enc_openstack_time_with_us(self):
+        hapi_time = "20150624081005.123456"
+        actual = Common.hapi_time_to_url_enc_openstack_time(hapi_time)
+        expect = "2015-06-24T08%3A10%3A05.123456"
+        self.assertEqual(actual, expect)
+
+    def test_hapi_time_to_url_enc_openstack_time_with_ns(self):
+        hapi_time = "20150624081005.123456789"
+        actual = Common.hapi_time_to_url_enc_openstack_time(hapi_time)
+        expect = "2015-06-24T08%3A10%3A05.123456"
+        self.assertEqual(actual, expect)
+
+    def test_hapi_time_to_url_enc_openstack_time_with_ms(self):
+        hapi_time = "20150624081005.123"
+        actual = Common.hapi_time_to_url_enc_openstack_time(hapi_time)
+        expect = "2015-06-24T08%3A10%3A05.123000"
+        self.assertEqual(actual, expect)
+
+    def test_hapi_time_to_url_enc_openstack_time_with_dot_only(self):
+        hapi_time = "20150624081005."
+        actual = Common.hapi_time_to_url_enc_openstack_time(hapi_time)
+        expect = "2015-06-24T08%3A10%3A05.000000"
+        self.assertEqual(actual, expect)

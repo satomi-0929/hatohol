@@ -166,6 +166,10 @@ class Common:
 
     def collect_events_and_put(self, fetch_id=None, last_info=None,
                                count=None, direction="ASC"):
+        if last_info is None:
+            last_info = self.get_cached_event_last_info()
+        # TODO: validate raw_last_info
+
         for alarm_id in self.__alarm_cache.keys():
             last_alarm_time = self.__get_last_alarm_time(alarm_id, last_info)
             self.__collect_events_and_put(alarm_id, last_alarm_time, fetch_id)
@@ -181,7 +185,7 @@ class Common:
         if last_info is None:
             return None
         try:
-            pickled = base64.b64decode(ast_info)
+            pickled = base64.b64decode(last_info)
             last_alarm_timestamp_map = cPickle.loads(pickled)
         except Exception as e:
             logging.error("Failed to decode: %s."  % e)
@@ -250,7 +254,26 @@ class Common:
     def __get_history_query_option(self, last_alarm_time):
         if last_alarm_time is None:
             return ""
-        return "?q.field=timestamp&q.op=gt&q.value=%s" % last_alarm_time
+        time_value = self.hapi_time_to_url_enc_openstack_time(last_alarm_time)
+        return "?q.field=timestamp&q.op=gt&q.value=%s" % time_value
+
+    @staticmethod
+    def hapi_time_to_url_enc_openstack_time(hapi_time):
+        year  = hapi_time[0:4]
+        month = hapi_time[4:6]
+        day   = hapi_time[6:8]
+        hour  = hapi_time[8:10]
+        min   = hapi_time[10:12]
+        sec   = hapi_time[12:14]
+        if hapi_time[14:15] == ".":
+            frac_len = len(hapi_time) - 15
+            zero_pads = "".join(["0" for i in range(0, 6 - frac_len)])
+            microsec = hapi_time[15:21] + zero_pads
+        else:
+            microsec = "000000"
+
+        return "%04s-%02s-%02sT%02s%%3A%02s%%3A%02s.%s" % \
+               (year, month, day, hour, min, sec, microsec)
 
     def __request(self, url, headers={}, use_token=True, data=None):
         if use_token:
