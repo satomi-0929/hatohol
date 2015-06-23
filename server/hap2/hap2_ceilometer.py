@@ -107,8 +107,7 @@ class Common:
 
     def collect_hosts_and_put(self):
         url = self.__nova_ep + "/servers/detail?all_tenants=1"
-        headers = {"X-Auth-Token": self.__token}
-        response = self.__request(url, headers)
+        response = self.__request(url)
 
         hosts = []
         for server in response["servers"]:
@@ -129,8 +128,7 @@ class Common:
         # TODO: Take care of host_ids
 
         url = self.__ceilometer_ep + "/v2/alarms";
-        headers = {"X-Auth-Token": self.__token}
-        response = self.__request(url, headers)
+        response = self.__request(url)
 
         # Now we get all the alarms. So the list shoud be cleared here
         self.__alarm_cache = {}
@@ -176,8 +174,7 @@ class Common:
         query_option = self.__get_history_query_option(last_alarm_time)
         url = self.__ceilometer_ep + \
               "/v2/alarms/%s/history%s" % (alarm_id, query_option)
-        headers = {"X-Auth-Token": self.__token}
-        response = self.__request(url, headers)
+        response = self.__request(url)
 
         # host_id, host_name and brief
         alarm_cache = self.__alarm_cache.get(alarm_id)
