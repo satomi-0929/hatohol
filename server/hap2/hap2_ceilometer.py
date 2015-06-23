@@ -170,6 +170,13 @@ class Common:
             last_alarm_time = self.__get_last_alarm_time(alarm_id, last_info)
             self.__collect_events_and_put(alarm_id, last_alarm_time, fetch_id)
 
+    def collect_items_and_put(self, fetch_id, host_ids):
+        assert False, "Not implemented"
+
+    def collect_items_and_put(self, fetch_id, host_id, item_id,
+                              begin_time, end_time):
+        assert False, "Not implemented"
+
     def __get_last_alarm_time(self, alarm_id, last_info):
         if last_info is None:
             return None
@@ -361,10 +368,12 @@ class Hap2CeilometerMain(haplib.BaseMainPlugin, Common):
                                     params["count"], params["direction"])
 
     def hap_fetch_items(self, params, request_id):
-        logging.error("Not implemented")
+        self.collect_items_and_put(params["fetchId"], params["hostIds"])
 
-    def hap_fetch_items(self, params, request_id):
-        logging.error("Not implemented")
+    def hap_fetch_history(self, params, request_id):
+        self.collect_history_and_put(params["fetchId"],
+                                     params["hostId"], params["itemId"],
+                                     params["beginTime"], params["endTime"])
 
 
 class Hap2Ceilometer(standardhap.StandardHap):
