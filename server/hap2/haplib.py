@@ -442,16 +442,19 @@ class HapiProcessor:
             self.__event_last_info = self.get_last_info("event")
         return self.__event_last_info
 
-    def put_events(self, events, fetch_id=None):
+    def put_events(self, events, fetch_id=None, last_info_generator=None):
         """
         This method calls putEvents() and wait for a reply.
         It divide events if the size is beyond the limitation.
-        It also calculates lastInfo from the eventId in events. The calculated
-        lastInfo is remebered in this object and can be obtained via
+        It also calculates lastInfo for the divided events,
+        remebers it in this object and provide lastInfo via
         get_cached_event_last_info().
 
         @param events A list of event (dictionary).
         @param fetch_id A fetch ID.
+        @param last_info_generator
+        A callable object whose argument is the list of the devided events.
+
         """
 
         CHUNK_SIZE = MAX_EVENT_CHUNK_SIZE
@@ -464,14 +467,14 @@ class HapiProcessor:
                 return
             count = 1
 
+        if last_info_generator is None:
+            last_info_generator = Utils.get_maximum_eventid
+
         for num in range(0, count):
             start = num * CHUNK_SIZE
             event_chunk = events[start:start + CHUNK_SIZE]
 
-            # TODO: Use more efficient way to calculate last_info .
-            # TODO: Should be able to select the way to calculate lastInfo.
-            last_info = \
-                Utils.get_biggest_num_of_dict_array(event_chunk, "eventId")
+            last_info = last_info_generator(event_chunk)
             params = {"events": event_chunk, "lastInfo": last_info,
                       "updateType": "UPDATE"}
 
@@ -959,6 +962,11 @@ class Utils:
             valid_procedures_dict[procedure] = True
 
     #This method is created on the basis of getting same number of digits under the decimal.
+
+    @staticmethod
+    def get_maximum_eventid(events):
+        return Utils.get_biggest_num_of_dict_array(events, "eventId")
+
     @staticmethod
     def get_biggest_num_of_dict_array(array, key):
         last_info = None
