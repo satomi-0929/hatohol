@@ -122,6 +122,12 @@ PROCEDURES_DEFS = {
             "items": {"type": list(), "mandatory": True}
         }
     },
+    "putHistory": {
+        "args": {
+            "histories": {"type": list(), "mandatory": True},
+            "itemId": {"type": unicode(), "mandatory": True},
+        }
+    },
     "getLastInfo": {
         "args": {}
     },

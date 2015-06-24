@@ -56,6 +56,7 @@ class SimpleServer:
           "putTriggers": self.__rpc_put_triggers,
           "putEvents": self.__rpc_put_events,
           "putItems": self.__rpc_put_items,
+          "putHistory": self.__rpc_put_history,
           "getLastInfo": self.__rpc_get_last_info,
           "putArmInfo": self.__rpc_put_arm_info,
         }
@@ -149,6 +150,12 @@ class SimpleServer:
         self.__sender.response(result, call_id)
 
     def __rpc_put_items(self, call_id, params):
+        logging.info(params)
+        # TODO: Parse content
+        result = "SUCCESS"
+        self.__sender.response(result, call_id)
+
+    def __rpc_put_history(self, call_id, params):
         logging.info(params)
         # TODO: Parse content
         result = "SUCCESS"
