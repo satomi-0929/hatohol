@@ -194,7 +194,18 @@ class Common:
 
     def collect_history_and_put(self, fetch_id, host_id, item_id,
                                 begin_time, end_time):
-        assert False, "Not implemented"
+        base_url = "%s/v2/meters/%s" % ("/v2/alarms", item_id)
+        query1 = "?q.field=resource_id&q.field=timestamp&q.field=timestamp"
+        query2 = "&q.op=eq&q.op=gt&q.op=lt"
+
+        t_beg = hapi_time_to_url_enc_openstack_time(begin_time)
+        t_end = hapi_time_to_url_enc_openstack_time(end_time)
+        query3 = "&q.value=%s&q.value=%s&q.value=%s" % (host_id, t_beg, t_end)
+
+        url = base_url + query1 + query1 + query3
+        print url
+        response = self.__request(url)
+        print response
 
     def __collect_items_and_put(self, host_id):
         url = "%s/v2/resources/%s" % (self.__ceilometer_ep, host_id)
