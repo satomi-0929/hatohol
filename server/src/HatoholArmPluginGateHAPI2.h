@@ -80,6 +80,9 @@ public:
 	static bool parseTimeStamp(const std::string &timeStampString,
 				   timespec &timeStamp);
 	void onSetPluginInitialInfo(void);
+	void setPluginAvailableTrigger(const HAPI2PluginCollectType &type,
+				       const TriggerIdType &trrigerId,
+				       const HatoholError &hatoholError);
 
 private:
 	struct Impl;
