@@ -31,6 +31,7 @@ class SimpleCaller:
             "exchangeProfile": self.__rpc_exchange_profile,
             "fetchTriggers": self.__rpc_fetch_triggers,
             "fetchEvents":   self.__rpc_fetch_events,
+            "fetchItems":    self.__rpc_fetch_items,
             "notifyMonitoringServerInfo":
               self.__rpc_notify_monitoring_server_info,
         }
@@ -52,6 +53,10 @@ class SimpleCaller:
     def __rpc_fetch_events(self, args):
         params = {"lastInfo": args.last_info, "count": args.count,
                   "direction": args.direction, "fetchId": args.fetch_id}
+        self.__request(params)
+
+    def __rpc_fetch_items(self, args):
+        params = {"fetchId": args.fetch_id, "hostIds": args.host_ids}
         self.__request(params)
 
     def __rpc_notify_monitoring_server_info(self, args):
@@ -88,6 +93,11 @@ class SimpleCaller:
 
         parser_notify_msi = subparsers.add_parser('notifyMonitoringServerInfo')
         parser_notify_msi.add_argument('ms_info')
+
+        parser_fetch_item = subparsers.add_parser('fetchItems')
+        parser_fetch_item.add_argument('--host-ids', nargs="+", required=True)
+        parser_fetch_item.add_argument('--fetch-id', default="1")
+
 
 if __name__ == '__main__':
     prog_name = "Simple Caller for HAPI 2.0"

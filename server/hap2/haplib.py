@@ -667,6 +667,13 @@ class HapiProcessor:
 
         self.__event_last_info = last_info
 
+    def put_items(self, items, fetch_id):
+        params = {"fetchId": fetch_id, "items": items}
+        request_id = Utils.generate_request_id(self.__component_code)
+        self.__wait_acknowledge(request_id)
+        self.__sender.request("putItems", params, request_id)
+        self.__wait_response(request_id)
+
     def __wait_acknowledge(self, request_id):
         TIMEOUT_SEC = 30
         self.__dispatch_queue.put((self.__process_id, request_id))

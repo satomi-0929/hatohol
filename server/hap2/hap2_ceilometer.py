@@ -37,6 +37,18 @@ class Common:
 
     def __init__(self):
         self.close_connection()
+        self.__target_items = {
+            "cpu",
+            "cpu_util",
+            "disk.read.requests",
+            "disk.read.requests.rate",
+            "disk.read.bytes",
+            "disk.read.bytes.rate",
+            "disk.write.requests",
+            "disk.write.requests.rate",
+            "disk.write.bytes",
+            "disk.write.bytes.rate",
+        }
 
     def close_connection(self):
         self.__token = None
@@ -175,11 +187,56 @@ class Common:
             self.__collect_events_and_put(alarm_id, last_alarm_time, fetch_id)
 
     def collect_items_and_put(self, fetch_id, host_ids):
+        items = []
+        for host_id in host_ids:
+            items.append(self.__collect_items_and_put(host_id))
+        self.put_items(items, fetch_id)
+
+    def collect_history_and_put(self, fetch_id, host_id, item_id,
+                                begin_time, end_time):
         assert False, "Not implemented"
 
-    def collect_items_and_put(self, fetch_id, host_id, item_id,
-                              begin_time, end_time):
-        assert False, "Not implemented"
+    def __collect_items_and_put(self, host_id):
+        url = "%s/v2/resources/%s" % (self.__ceilometer_ep, host_id)
+        response = self.__request(url)
+
+        items = []
+        for links in response["links"]:
+            rel = links.get("rel")
+            if rel not in self.__target_items:
+                continue
+            href = links.get("href")
+            if href is None:
+                continue
+            rc = self.__get_resource(rel, href)
+            if rc is None:
+                continue
+
+            timestamp = self.parse_time(rc["timestamp"])
+            hapi_time = haplib.Utils.conv_to_hapi_time(timestamp)
+            items.append({
+                "itemId": rc["resource_id"],
+                "hostd": host_id,
+                "brief": rc["counter_name"],
+                "lastValueTime": hapi_time,
+                "lastValue": str(rc["counter_volume"]),
+                "itemGroupName": "",
+                "unit": rc["counter_unit"],
+            })
+        return items
+
+    def __get_resource(self, rel, href):
+        url = href + "&limit=1";
+        response = self.__request(url)
+        len_resources = len(response)
+        if len_resources == 0:
+            logging.warning("Number of resources: %s: 0." % rel)
+            return None
+        if len_resources >= 2:
+            msg = "Number of resources: %s: %d. We use the first one" \
+                  % (rel, len_resources)
+            logging.warning(msg)
+        return response[0]
 
     def __get_last_alarm_time(self, alarm_id, last_info):
         if last_info is None:
@@ -391,9 +448,11 @@ class Hap2CeilometerMain(haplib.BaseMainPlugin, Common):
                                     params["count"], params["direction"])
 
     def hap_fetch_items(self, params, request_id):
+        self.ensure_connection()
         self.collect_items_and_put(params["fetchId"], params["hostIds"])
 
     def hap_fetch_history(self, params, request_id):
+        self.ensure_connection()
         self.collect_history_and_put(params["fetchId"],
                                      params["hostId"], params["itemId"],
                                      params["beginTime"], params["endTime"])
