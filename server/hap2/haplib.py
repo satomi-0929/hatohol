@@ -117,6 +117,11 @@ PROCEDURES_DEFS = {
             "events": {"type": list(), "mandatory": True}
         }
     },
+    "putItems": {
+        "args": {
+            "items": {"type": list(), "mandatory": True}
+        }
+    },
     "getLastInfo": {
         "args": {}
     },

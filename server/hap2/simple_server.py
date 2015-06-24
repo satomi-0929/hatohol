@@ -55,6 +55,7 @@ class SimpleServer:
           "putHostGroupMembership": self.__rpc_put_host_group_membership,
           "putTriggers": self.__rpc_put_triggers,
           "putEvents": self.__rpc_put_events,
+          "putItems": self.__rpc_put_items,
           "getLastInfo": self.__rpc_get_last_info,
           "putArmInfo": self.__rpc_put_arm_info,
         }
@@ -144,6 +145,12 @@ class SimpleServer:
         # TODO: Parse content
         if last_info is not None:
             self.__last_info["event"] = last_info
+        result = "SUCCESS"
+        self.__sender.response(result, call_id)
+
+    def __rpc_put_items(self, call_id, params):
+        logging.info(params)
+        # TODO: Parse content
         result = "SUCCESS"
         self.__sender.response(result, call_id)
 
