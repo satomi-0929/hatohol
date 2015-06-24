@@ -204,7 +204,17 @@ class Common:
 
         url = base_url + query1 + query2 + query3
         response = self.__request(url)
-        print response
+
+        samples = []
+        for history in response:
+            timestamp = self.parse_time(history["timestamp"])
+            hapi_time = haplib.Utils.conv_to_hapi_time(timestamp)
+            samples.append({
+                "time": hapi_time,
+                "value": str(history["counter_volume"]),
+            })
+        # TODO: consider: We need to sort the samples ?
+        self.put_history(samples, item_id, fetch_id)
 
     def __collect_items_and_put(self, host_id):
         url = "%s/v2/resources/%s" % (self.__ceilometer_ep, host_id)
@@ -466,7 +476,6 @@ class Hap2CeilometerMain(haplib.BaseMainPlugin, Common):
 
     def hap_fetch_history(self, params, request_id):
         self.ensure_connection()
-        print params
         self.collect_history_and_put(params["fetchId"],
                                      params["hostId"], params["itemId"],
                                      params["beginTime"], params["endTime"])
