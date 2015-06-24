@@ -32,6 +32,7 @@ class SimpleCaller:
             "fetchTriggers": self.__rpc_fetch_triggers,
             "fetchEvents":   self.__rpc_fetch_events,
             "fetchItems":    self.__rpc_fetch_items,
+            "fetchHistory":  self.__rpc_fetch_history,
             "notifyMonitoringServerInfo":
               self.__rpc_notify_monitoring_server_info,
         }
@@ -57,6 +58,12 @@ class SimpleCaller:
 
     def __rpc_fetch_items(self, args):
         params = {"fetchId": args.fetch_id, "hostIds": args.host_ids}
+        self.__request(params)
+
+    def __rpc_fetch_history(self, args):
+        params = {"fetchId": args.fetch_id,
+                  "hostId": args.host_id, "itemId": args.item_id,
+                  "beginTime": args.begin_time, "endTime": args.end_time}
         self.__request(params)
 
     def __rpc_notify_monitoring_server_info(self, args):

@@ -194,16 +194,15 @@ class Common:
 
     def collect_history_and_put(self, fetch_id, host_id, item_id,
                                 begin_time, end_time):
-        base_url = "%s/v2/meters/%s" % ("/v2/alarms", item_id)
+        meter_name = item_id.split(".", 1)[1]
+        base_url = "%s/v2/meters/%s" % (self.__ceilometer_ep, meter_name)
         query1 = "?q.field=resource_id&q.field=timestamp&q.field=timestamp"
         query2 = "&q.op=eq&q.op=gt&q.op=lt"
-
-        t_beg = hapi_time_to_url_enc_openstack_time(begin_time)
-        t_end = hapi_time_to_url_enc_openstack_time(end_time)
+        t_beg = self.hapi_time_to_url_enc_openstack_time(begin_time)
+        t_end = self.hapi_time_to_url_enc_openstack_time(end_time)
         query3 = "&q.value=%s&q.value=%s&q.value=%s" % (host_id, t_beg, t_end)
 
-        url = base_url + query1 + query1 + query3
-        print url
+        url = base_url + query1 + query2 + query3
         response = self.__request(url)
         print response
 
@@ -467,6 +466,7 @@ class Hap2CeilometerMain(haplib.BaseMainPlugin, Common):
 
     def hap_fetch_history(self, params, request_id):
         self.ensure_connection()
+        print params
         self.collect_history_and_put(params["fetchId"],
                                      params["hostId"], params["itemId"],
                                      params["beginTime"], params["endTime"])

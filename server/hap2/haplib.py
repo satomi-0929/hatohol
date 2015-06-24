@@ -63,7 +63,7 @@ PROCEDURES_DEFS = {
     "fetchHistory": {
         "args": {
           "hostId":{"type": unicode(), "mandatory": True},
-          "itemId": {"type": unicode, "mandatory": True},
+          "itemId": {"type": unicode(), "mandatory": True},
           "beginTime": {"type": unicode(), "mandatory": True},
           "endTime": {"type": unicode(), "mandatory": True},
           "fetchId": {"type": unicode(), "mandatory": True},
@@ -125,7 +125,7 @@ PROCEDURES_DEFS = {
     "putHistory": {
         "args": {
             "histories": {"type": list(), "mandatory": True},
-            "itemId": {"type": unicode(), "mandatory": True},
+            "itemId": {"type": unicode(), "mandatory": True}
         }
     },
     "getLastInfo": {
