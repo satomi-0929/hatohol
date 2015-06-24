@@ -189,7 +189,7 @@ class Common:
     def collect_items_and_put(self, fetch_id, host_ids):
         items = []
         for host_id in host_ids:
-            items.append(self.__collect_items_and_put(host_id))
+            items.extend(self.__collect_items_and_put(host_id))
         self.put_items(items, fetch_id)
 
     def collect_history_and_put(self, fetch_id, host_id, item_id,
@@ -216,7 +216,7 @@ class Common:
             hapi_time = haplib.Utils.conv_to_hapi_time(timestamp)
             items.append({
                 "itemId": rc["resource_id"],
-                "hostd": host_id,
+                "hostId": host_id,
                 "brief": rc["counter_name"],
                 "lastValueTime": hapi_time,
                 "lastValue": str(rc["counter_volume"]),
