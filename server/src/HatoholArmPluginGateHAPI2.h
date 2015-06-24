@@ -79,7 +79,7 @@ private:
 public:
 	static bool parseTimeStamp(const std::string &timeStampString,
 				   timespec &timeStamp);
-	void onSetPluginInitialInfo(void);
+	virtual void onSetPluginInitialInfo(void) override;
 	void setPluginAvailableTrigger(const HAPI2PluginCollectType &type,
 				       const TriggerIdType &trrigerId,
 				       const HatoholError &hatoholError);
