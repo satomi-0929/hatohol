@@ -225,10 +225,13 @@ class Common:
 
             timestamp = self.parse_time(rc["timestamp"])
             hapi_time = haplib.Utils.conv_to_hapi_time(timestamp)
+            counter_name = rc["counter_name"]
             items.append({
-                "itemId": rc["resource_id"],
+                # Item ID must be unique so we generate it with the host ID
+                # and the counter name.
+                "itemId": host_id + "." + counter_name,
                 "hostId": host_id,
-                "brief": rc["counter_name"],
+                "brief": counter_name,
                 "lastValueTime": hapi_time,
                 "lastValue": str(rc["counter_volume"]),
                 "itemGroupName": "",
