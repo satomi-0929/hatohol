@@ -308,8 +308,8 @@ class Common:
                 "brief": brief,
                 "extendedInfo": ""
             })
-        # TODO: we have to sort events in time asc order
-        self.put_events(events, fetch_id=fetch_id,
+        sorted_events = sorted(events, key=lambda evt: evt["time"])
+        self.put_events(sorted_events, fetch_id=fetch_id,
                         last_info_generator=self.__last_info_generator)
 
     def __last_info_generator(self, events):
