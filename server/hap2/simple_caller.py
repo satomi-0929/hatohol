@@ -98,12 +98,12 @@ class SimpleCaller:
         parser_fetch_item.add_argument('--host-ids', nargs="+", required=True)
         parser_fetch_item.add_argument('--fetch-id', default="1")
 
-        parser_fetch_item = subparsers.add_parser('fetchHistory')
-        parser_fetch_item.add_argument('--item-id', required=True)
-        parser_fetch_item.add_argument('--begin-time', required=True)
-        parser_fetch_item.add_argument('--end-time', required=True)
-        parser_fetch_item.add_argument('--host-ids', nargs="+", required=True)
-        parser_fetch_item.add_argument('--fetch-id', default="1")
+        parser_fetch_hist = subparsers.add_parser('fetchHistory')
+        parser_fetch_hist.add_argument('--hist-id', required=True)
+        parser_fetch_hist.add_argument('--begin-time', required=True)
+        parser_fetch_hist.add_argument('--end-time', required=True)
+        parser_fetch_hist.add_argument('--host-ids', nargs="+", required=True)
+        parser_fetch_hist.add_argument('--fetch-id', default="1")
 
 
 if __name__ == '__main__':
