@@ -274,6 +274,11 @@ class Common:
             raise
         return last_alarm_timestamp_map
 
+    def __encode_last_alarm_timestamp_map(self, last_alarm_timestamp_map):
+        pickled = cPickle.dumps(last_alarm_timestamp_map)
+        b64enc = base64.b64encode(pickled)
+        return b64enc
+
     def __collect_events_and_put(self, alarm_id, last_alarm_time, fetch_id):
         query_option = self.__get_history_query_option(last_alarm_time)
         url = self.__ceilometer_ep + \
@@ -328,10 +333,10 @@ class Common:
             if doUpdate:
                 self.__alarm_last_time_map[alarm_id] = alarm_time
 
-        pickled = cPickle.dumps(self.__alarm_last_time_map)
-        b64enc = base64.b64encode(pickled)
-        assert len(b64enc) <= haplib.MAX_LAST_INFO_SIZE
-        return b64enc
+        last_info = \
+            self.__encode_last_alarm_timestamp_map(self.__alarm_last_time_map)
+        assert len(last_info) <= haplib.MAX_LAST_INFO_SIZE
+        return last_info
 
     def __get_history_query_option(self, last_alarm_time):
         if last_alarm_time is None:
