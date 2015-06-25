@@ -213,8 +213,8 @@ class Common:
                 "time": hapi_time,
                 "value": str(history["counter_volume"]),
             })
-        # TODO: consider: We need to sort the samples ?
-        self.put_history(samples, item_id, fetch_id)
+        sorted_samples = sorted(samples, key=lambda s: s["time"])
+        self.put_history(sorted_samples, item_id, fetch_id)
 
     def __collect_items_and_put(self, host_id):
         url = "%s/v2/resources/%s" % (self.__ceilometer_ep, host_id)
