@@ -59,6 +59,7 @@ class Common:
 
         # key: alarm_id, value: last_alarm time (HAPI format)
         self.__alarm_last_time_map = {}
+        self.__alarm_cache_has_all = False
 
     def ensure_connection(self):
         if self.__token is not None:
@@ -146,6 +147,7 @@ class Common:
 
         # Now we get all the alarms. So the list shoud be cleared here
         self.__alarm_cache = {}
+        self.__alarm_cache_has_all = False
         triggers = []
         for alarm in response:
             alarm_id = alarm["alarm_id"]
@@ -174,6 +176,8 @@ class Common:
             triggers.append(trigger)
             self.__alarm_cache[alarm_id] = {
                 "host_id": host_id, "brief": brief}
+
+        self.__alarm_cache_has_all = (host_ids is None)
         update_type = "ALL"
         self.put_triggers(triggers, update_type=update_type, fetch_id=fetch_id)
 
@@ -320,7 +324,6 @@ class Common:
                         last_info_generator=self.__last_info_generator)
 
     def __last_info_generator(self, events):
-        # TODO: check the alarms that are no longer existing and remove them
         for evt in events:
             alarm_id = evt["triggerId"]
             alarm_time = evt["time"]
@@ -333,10 +336,21 @@ class Common:
             if doUpdate:
                 self.__alarm_last_time_map[alarm_id] = alarm_time
 
+        self.__remove_missing_alarm(self.__alarm_last_time_map)
         last_info = \
             self.__encode_last_alarm_timestamp_map(self.__alarm_last_time_map)
         assert len(last_info) <= haplib.MAX_LAST_INFO_SIZE
         return last_info
+
+    def __remove_missing_alarm(self, alarm_time_map):
+        if not self.__alarm_cache_has_all:
+            # We cloud get all the alarms from OpenStack, however, current implementation
+            # fails to do so to avoid long time to get them.
+            return
+
+        for alarm_id in alarm_time_map.keys():
+            if alarm_id not in self.__alarm_cache:
+                del alarm_time_map[alarm_id]
 
     def __get_history_query_option(self, last_alarm_time):
         if last_alarm_time is None:
