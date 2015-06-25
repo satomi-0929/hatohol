@@ -182,8 +182,10 @@ class Common:
         if last_info is None:
             last_info = self.get_cached_event_last_info()
 
+        last_alarm_timestamp_map = \
+            self.__decode_last_alarm_timestamp_map(last_info)
         for alarm_id in self.__alarm_cache.keys():
-            last_alarm_time = self.__get_last_alarm_time(alarm_id, last_info)
+            last_alarm_time = last_alarm_timestamp_map.get(alarm_id)
             self.__collect_events_and_put(alarm_id, last_alarm_time, fetch_id)
 
     def collect_items_and_put(self, fetch_id, host_ids):
@@ -261,16 +263,16 @@ class Common:
             logging.warning(msg)
         return response[0]
 
-    def __get_last_alarm_time(self, alarm_id, last_info):
+    def __decode_last_alarm_timestamp_map(self, last_info):
         if last_info is None:
-            return None
+            return {}
         try:
             pickled = base64.b64decode(last_info)
             last_alarm_timestamp_map = cPickle.loads(pickled)
         except Exception as e:
             logging.error("Failed to decode: %s."  % e)
-            return None
-        return last_alarm_timestamp_map.get(alarm_id)
+            raise
+        return last_alarm_timestamp_map
 
     def __collect_events_and_put(self, alarm_id, last_alarm_time, fetch_id):
         query_option = self.__get_history_query_option(last_alarm_time)
