@@ -124,7 +124,7 @@ PROCEDURES_DEFS = {
     },
     "putHistory": {
         "args": {
-            "histories": {"type": list(), "mandatory": True},
+            "samples": {"type": list(), "mandatory": True},
             "itemId": {"type": unicode(), "mandatory": True}
         }
     },
@@ -686,7 +686,7 @@ class HapiProcessor:
         self.__wait_response(request_id)
 
     def put_history(self, samples, item_id, fetch_id):
-        params = {"fetchId": fetch_id, "itemId": item_id, "histories": samples}
+        params = {"fetchId": fetch_id, "itemId": item_id, "samples": samples}
         request_id = Utils.generate_request_id(self.__component_code)
         self.__wait_acknowledge(request_id)
         self.__sender.request("putHistory", params, request_id)

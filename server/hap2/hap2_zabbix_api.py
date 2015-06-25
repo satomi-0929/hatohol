@@ -81,15 +81,9 @@ class ZabbixAPIConductor:
         self.__sender.request("putItems", params, request_id)
         self._wait_response(request_id)
 
-    def put_history(self, item_id, begin_time, end_time, fetch_id):
-        params = {"itemId": item_id,
-                  "histories": self.__api.get_history(item_id, begin_time, end_time),
-                  "fetchId": fetch_id}
-
-        request_id = Utils.generate_request_id(self.__component_code)
-        self._wait_acknowledge(request_id)
-        self.__sender.request("putHistory", params, request_id)
-        self._wait_response(request_id)
+    def collect_and_put_history(self, item_id, begin_time, end_time, fetch_id):
+        self.put_history(self.__api.get_history(item_id, begin_time, end_time),
+                         item_id, fetch_id)
 
     def update_hosts_and_host_group_membership(self):
         hosts, hg_membership = self.__api.get_hosts()
@@ -166,8 +160,8 @@ class Hap2ZabbixAPIMain(haplib.BaseMainPlugin, ZabbixAPIConductor):
     def hap_fetch_history(self, params, request_id):
         self.make_sure_token()
         self.get_sender().response("SUCCESS", request_id)
-        self.put_history(params["itemId"], params["beginTime"],
-                         params["endTime"], params["fetchId"])
+        self.collect_and_put_history(params["itemId"], params["beginTime"],
+                                     params["endTime"], params["fetchId"])
 
     def hap_fetch_triggers(self, params, request_id):
         self.make_sure_token()
