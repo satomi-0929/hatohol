@@ -71,15 +71,8 @@ class ZabbixAPIConductor:
     def get_sender(self, request_id):
         raise NotImplementedError
 
-    def put_items(self, host_ids=None, fetch_id=None):
-        params = {"items": self.__api.get_items(host_ids)}
-        if fetch_id is not None:
-            params["fetchId"] = fetch_id
-
-        request_id = Utils.generate_request_id(self.__component_code)
-        self._wait_acknowledge(request_id)
-        self.__sender.request("putItems", params, request_id)
-        self._wait_response(request_id)
+    def collect_and_put_items(self, host_ids=None, fetch_id=None):
+        self.put_items(self.__api.get_items(host_ids), fetch_id)
 
     def collect_and_put_history(self, item_id, begin_time, end_time, fetch_id):
         self.put_history(self.__api.get_history(item_id, begin_time, end_time),
@@ -155,7 +148,7 @@ class Hap2ZabbixAPIMain(haplib.BaseMainPlugin, ZabbixAPIConductor):
     def hap_fetch_items(self, params, request_id):
         self.make_sure_token()
         self.get_sender().response("SUCCESS", request_id)
-        self.put_items(params.get("hostIds"), params["fetchId"])
+        self.collect_and_put_items(params.get("hostIds"), params["fetchId"])
 
     def hap_fetch_history(self, params, request_id):
         self.make_sure_token()
