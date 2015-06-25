@@ -141,9 +141,6 @@ class Common:
         pass
 
     def collect_triggers_and_put(self, fetch_id=None, host_ids=None):
-
-        # TODO: Take care of host_ids
-
         url = self.__ceilometer_ep + "/v2/alarms";
         response = self.__request(url)
 
@@ -153,12 +150,16 @@ class Common:
         for alarm in response:
             alarm_id = alarm["alarm_id"]
             threshold_rule = alarm["threshold_rule"]
+            host_id, host_name = self.__parse_alarm_host(threshold_rule)
+            if host_ids is not None:
+                if host_id not in host_ids:
+                    continue
+
             meter_name = threshold_rule["meter_name"]
             ts = datetime.datetime.strptime(alarm["state_timestamp"],
                                             "%Y-%m-%dT%H:%M:%S.%f")
             timestamp_str = ts.strftime("%Y%m%d%H%M%S.") + str(ts.microsecond)
 
-            host_id, host_name = self.__parse_alarm_host(threshold_rule)
             brief = "%s: %s" % (meter_name, alarm["description"]),
             trigger = {
                 "triggerId": alarm["alarm_id"],
@@ -363,6 +364,7 @@ class Common:
         return json.loads(raw_response)
 
     def __parse_alarm_host(self, threshold_rule):
+        # TODO: we should handle the case many hosts are involved in the alarm.
         query_array = threshold_rule.get("query")
         if query_array is None:
             return "N/A", "N/A"
