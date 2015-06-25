@@ -41,6 +41,7 @@ import json
   <http://www.gnu.org/licenses/>.
 """
 
+
 class SimpleCaller:
 
     def __init__(self, transporter_args):
@@ -52,7 +53,7 @@ class SimpleCaller:
             "fetchItems":    self.__rpc_fetch_items,
             "fetchHistory":  self.__rpc_fetch_history,
             "notifyMonitoringServerInfo":
-              self.__rpc_notify_monitoring_server_info,
+            self.__rpc_notify_monitoring_server_info,
         }
 
     def __call__(self, args):
