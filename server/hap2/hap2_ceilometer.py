@@ -57,7 +57,7 @@ class Common:
         self.__host_cache = {} # key: host_id, value: host_name
         self.__alarm_cache = {} # key: alarm_id, value: {host_id, brief}
 
-         # key: alarm_id, value: last_alarm time (HAPI format)
+        # key: alarm_id, value: last_alarm time (HAPI format)
         self.__alarm_last_time_map = {}
 
     def ensure_connection(self):
