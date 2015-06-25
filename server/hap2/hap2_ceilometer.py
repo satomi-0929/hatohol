@@ -160,7 +160,7 @@ class Common:
                                             "%Y-%m-%dT%H:%M:%S.%f")
             timestamp_str = ts.strftime("%Y%m%d%H%M%S.") + str(ts.microsecond)
 
-            brief = "%s: %s" % (meter_name, alarm["description"]),
+            brief = "%s: %s" % (meter_name, alarm["description"])
             trigger = {
                 "triggerId": alarm["alarm_id"],
                 "status": self.STATUS_MAP[alarm["state"]],
