@@ -25,6 +25,7 @@ import argparse
 import logging
 import json
 
+
 class SimpleServer:
 
     DEFAULT_MS_INFO = {
@@ -44,21 +45,21 @@ class SimpleServer:
         self.__sender = haplib.Sender(transporter_args)
         self.__rpc_queue = multiprocessing.JoinableQueue()
         self.__dispatcher = haplib.Dispatcher(self.__rpc_queue)
-        self.__dispatcher.daemonize();
-        self.__last_info = {"event":None}
+        self.__dispatcher.daemonize()
+        self.__last_info = {"event": None}
 
         self.__handler_map = {
-          "exchangeProfile": self.__rpc_exchange_profile,
-          "getMonitoringServerInfo": self.__rpc_get_monitoring_server_info,
-          "putHosts": self.__rpc_put_hosts,
-          "putHostGroups": self.__rpc_put_host_groups,
-          "putHostGroupMembership": self.__rpc_put_host_group_membership,
-          "putTriggers": self.__rpc_put_triggers,
-          "putEvents": self.__rpc_put_events,
-          "putItems": self.__rpc_put_items,
-          "putHistory": self.__rpc_put_history,
-          "getLastInfo": self.__rpc_get_last_info,
-          "putArmInfo": self.__rpc_put_arm_info,
+            "exchangeProfile": self.__rpc_exchange_profile,
+            "getMonitoringServerInfo": self.__rpc_get_monitoring_server_info,
+            "putHosts": self.__rpc_put_hosts,
+            "putHostGroups": self.__rpc_put_host_groups,
+            "putHostGroupMembership": self.__rpc_put_host_group_membership,
+            "putTriggers": self.__rpc_put_triggers,
+            "putEvents": self.__rpc_put_events,
+            "putItems": self.__rpc_put_items,
+            "putHistory": self.__rpc_put_history,
+            "getLastInfo": self.__rpc_get_last_info,
+            "putArmInfo": self.__rpc_put_arm_info,
         }
 
         # launch receiver process
@@ -99,7 +100,7 @@ class SimpleServer:
             with open(file_name, "r") as file:
                 result = json.load(file)
         else:
-            result = self.DEFAULT_MS_INFO 
+            result = self.DEFAULT_MS_INFO
         self.__sender.response(result, call_id)
 
     def __rpc_put_hosts(self, call_id, params):
@@ -133,8 +134,8 @@ class SimpleServer:
         num_events = len(events) if events is not None else 0
         last_info = params.get("lastInfo")
         msg = "num_events: %d, fetch_id: %s, mayMoreFlag: %s, lastIfno: %s" % (
-                num_events, params.get("fetchId"), params.get("mayMoreFlag"),
-                last_info)
+              num_events, params.get("fetchId"), params.get("mayMoreFlag"),
+              last_info)
         logging.info(msg)
 
         if num_events <= NUM_MAX_SHOW_EVENTS:
@@ -176,6 +177,7 @@ class SimpleServer:
         result = "SUCCESS"
         self.__sender.response(result, call_id)
 
+
 def basic_setup(arg_def_func=None, prog_name="Simple Server for HAPI 2.0"):
     logging.basicConfig(level=logging.INFO)
     logging.info(prog_name)
@@ -192,6 +194,7 @@ def basic_setup(arg_def_func=None, prog_name="Simple Server for HAPI 2.0"):
     transporter_args["amqp_recv_queue_suffix"] = "-S"
 
     return args, transporter_args
+
 
 def arg_def(parser):
     parser.add_argument("--ms-info",
