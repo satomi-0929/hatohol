@@ -181,7 +181,6 @@ class Common:
                                count=None, direction="ASC"):
         if last_info is None:
             last_info = self.get_cached_event_last_info()
-        # TODO: validate raw_last_info
 
         for alarm_id in self.__alarm_cache.keys():
             last_alarm_time = self.__get_last_alarm_time(alarm_id, last_info)
