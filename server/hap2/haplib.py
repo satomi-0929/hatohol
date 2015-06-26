@@ -117,6 +117,17 @@ PROCEDURES_DEFS = {
             "events": {"type": list(), "mandatory": True}
         }
     },
+    "putItems": {
+        "args": {
+            "items": {"type": list(), "mandatory": True}
+        }
+    },
+    "putHistory": {
+        "args": {
+            "samples": {"type": list(), "mandatory": True},
+            "itemId": {"type": unicode(), "mandatory": True}
+        }
+    },
     "getLastInfo": {
         "args": {}
     },
@@ -137,8 +148,15 @@ ERROR_DICT = {
     ERR_CODE_PARSER_ERROR: "Parse error",
 }
 
-MAX_EVENT_CHUNK_SIZE = 1000
+EVENT_TYPES = sets.ImmutableSet(
+    ["GOOD", "BAD", "UNKNOWN", "NOTIFICATION"])
+TRIGGER_STATUS = sets.ImmutableSet(
+    ["OK", "NG", "UNKNOWN"])
+TRIGGER_SEVERITY = sets.ImmutableSet(
+    ["UNKNOWN", "INFO", "WARNING", "ERROR", "CRITICAL", "EMERGENCY"])
 
+MAX_EVENT_CHUNK_SIZE = 1000
+MAX_LAST_INFO_SIZE = 32767
 
 def handle_exception(raises=()):
     """
