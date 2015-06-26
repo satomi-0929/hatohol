@@ -100,18 +100,17 @@ class Hap2FluentdMain(haplib.BaseMainPlugin):
             "brief": brief,
             "extendedInfo": ""
         })
-        self.put_events(events)
+        self.put_events(events, last_info_generator=lambda x: None)
 
     def __get_parameter(self, msg, key, default_value, candidates):
         param = msg.get(key, default_value)
         if param not in candidates:
-            logging.error("Unknown parameter: %s for key: %s", (param, key))
+            logging.error("Unknown parameter: %s for key: %s" % (param, key))
             param = default_value
         return param
 
     def __generate_event_id(self):
-        # TODO: implement
-        return "1"
+        return datetime.datetime.utcnow().strftime("%Y%m%d%H%M%S%f")
 
     def __parse_line(self, line):
         # TODO: handle exception due to the unexpected form of input
