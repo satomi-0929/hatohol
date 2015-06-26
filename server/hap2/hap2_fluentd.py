@@ -31,6 +31,7 @@ class Hap2FluentdMain(haplib.BaseMainPlugin):
 
     def __init__(self, *args, **kwargs):
         haplib.BaseMainPlugin.__init__(self, kwargs["transporter_args"])
+
         self.__manager = None
         self.__default_host = "UNKNOWN"
         self.__default_type = "UNKNOWN"
@@ -46,6 +47,10 @@ class Hap2FluentdMain(haplib.BaseMainPlugin):
         self.__accept_tag_reg = "^hatohol\..*"
         self.__accept_tag_pattern = re.compile(self.__accept_tag_reg)
 
+    def set_arguments(self, args):
+        # TODO: Support escape of space characters
+        self.__launch_args = args.fluentd_launch.split(" ")
+
     def set_ms_info(self, ms_info):
         if self.__manager is not None:
             return
@@ -57,12 +62,9 @@ class Hap2FluentdMain(haplib.BaseMainPlugin):
     def __fluentd_manager_main(self):
         # TODO: add action when the sub proccess is unexpectedly terminated.
         logging.info("Started fluentd manger process.")
-        # TODO: argument list should be created from monitoring server info.
-        fluentd_args = ["td-agent", "--suppress-config-dump",
-                        "-c", "td-agent.conf"]
 
         # TODO: handle when the launch failed.
-        fluentd = subprocess.Popen(fluentd_args, stdout=subprocess.PIPE)
+        fluentd = subprocess.Popen(self.__launch_args, stdout=subprocess.PIPE)
 
         while True:
             line = fluentd.stdout.readline()
@@ -142,8 +144,22 @@ class Hap2FluentdMain(haplib.BaseMainPlugin):
         return utc_timestamp, tag
 
 class Hap2Fluentd(standardhap.StandardHap):
+
+    def __init__(self):
+        standardhap.StandardHap.__init__(self)
+
+        parser = self.get_argument_parser()
+        parser.add_argument("--fluentd-launch",
+                            default="td-agent --suppress-config-dump",
+                            help="A command line to launch fluentd.")
+
+    def on_parsed_argument(self, args):
+        self.__args = args
+
     def create_main_plugin(self, *args, **kwargs):
-        return Hap2FluentdMain(*args, **kwargs)
+        plugin = Hap2FluentdMain(*args, **kwargs)
+        plugin.set_arguments(self.__args)
+        return plugin
 
 if __name__ == '__main__':
     hap = Hap2Fluentd()
