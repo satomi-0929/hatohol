@@ -60,6 +60,11 @@ class Hap2FluentdMain(haplib.BaseMainPlugin):
         manager.start()
 
     def __fluentd_manager_main(self):
+        try:
+            self.__fluentd_manager_main_in_try_block()
+        except:
+
+    def __fluentd_manager_main_in_try_block(self):
         # TODO: add action when the sub proccess is unexpectedly terminated.
         logging.info("Started fluentd manger process.")
 

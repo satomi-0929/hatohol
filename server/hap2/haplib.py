@@ -19,20 +19,20 @@
   <http://www.gnu.org/licenses/>.
 """
 
+import sys
+import time
+import logging
+import traceback
+import multiprocessing
+import Queue
 import json
 from datetime import datetime
-import time
-import pika
 import random
-import Queue
-import logging
-import multiprocessing
+import argparse
 import imp
 import transporter
 from rabbitmqconnector import RabbitMQConnector
-import pickle
-import sys
-import traceback
+import calendar
 import sets
 
 SERVER_PROCEDURES = {"exchangeProfile": True,
@@ -53,7 +53,7 @@ PROCEDURES_DEFS = {
         "args": {
             "procedures": {"type": list(), "mandatory": True},
             "name": {"type": unicode(), "mandatory": True},
-         }
+        }
     },
     "fetchItems": {
         "args": {
@@ -63,11 +63,11 @@ PROCEDURES_DEFS = {
     },
     "fetchHistory": {
         "args": {
-          "hostId":{"type": unicode(), "mandatory": True},
-          "itemId": {"type": unicode(), "mandatory": True},
-          "beginTime": {"type": unicode(), "mandatory": True},
-          "endTime": {"type": unicode(), "mandatory": True},
-          "fetchId": {"type": unicode(), "mandatory": True},
+            "hostId": {"type": unicode(), "mandatory": True},
+            "itemId": {"type": unicode(), "mandatory": True},
+            "beginTime": {"type": unicode(), "mandatory": True},
+            "endTime": {"type": unicode(), "mandatory": True},
+            "fetchId": {"type": unicode(), "mandatory": True},
         }
     },
     "fetchTriggers": {
@@ -78,8 +78,8 @@ PROCEDURES_DEFS = {
     },
     "fetchEvents": {
         "args": {
-            "lastInfo":{"type": unicode(), "mandatory": True},
-            "count":{"type": int(), "mandatory": True},
+            "lastInfo": {"type": unicode(), "mandatory": True},
+            "count": {"type": int(), "mandatory": True},
             # TODO: validate: direction
             "direction": {"type": unicode(), "mandatory": True},
             "fetchId": {"type": unicode(), "mandatory": True}
@@ -87,7 +87,7 @@ PROCEDURES_DEFS = {
     },
     "notifyMonitoringServerInfo": {
         "notification": True,
-        "args": {} # TODO: fill content
+        "args": {}  # TODO: fill content
     },
     "getMonitoringServerInfo": {
         "args": {}
