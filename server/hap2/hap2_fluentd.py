@@ -35,6 +35,7 @@ class Hap2FluentdMain(haplib.BaseMainPlugin):
         if self.__manager is not None:
             return
         manager = multiprocessing.Process(target=self.__fluentd_manager_main)
+        self.__manager = manager
         manager.daemon = True
         manager.start()
 
@@ -51,6 +52,7 @@ class Hap2FluentdMain(haplib.BaseMainPlugin):
         while True:
             line = fluentd.stdout.readline()
             timestamp, tag, msg = self.__parse_line(line)
+            # TODO: check the tag
             self.__put_event(timestamp, tag, msg)
 
     def __put_event(self, timestamp, tag, msg):
