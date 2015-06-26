@@ -24,12 +24,23 @@ import subprocess
 import logging
 import multiprocessing
 import datetime
+import json
 
 class Hap2FluentdMain(haplib.BaseMainPlugin):
 
     def __init__(self, *args, **kwargs):
         haplib.BaseMainPlugin.__init__(self, kwargs["transporter_args"])
         self.__manager = None
+        self.__default_host = "UNKNOWN"
+        self.__default_type = "UNKNOWN"
+        self.__default_status = "UNKNOWN"
+        self.__default_severity = "UNKNOWN"
+
+        self.__message_key = "message"
+        self.__host_key = "host"
+        self.__type_key = "type"
+        self.__severity_key = "severity"
+        self.__status_key = "status"
 
     def set_ms_info(self, ms_info):
         if self.__manager is not None:
@@ -51,19 +62,31 @@ class Hap2FluentdMain(haplib.BaseMainPlugin):
 
         while True:
             line = fluentd.stdout.readline()
-            timestamp, tag, msg = self.__parse_line(line)
+            timestamp, tag, raw_msg = self.__parse_line(line)
             # TODO: check the tag
-            self.__put_event(timestamp, tag, msg)
+            self.__put_event(timestamp, tag, raw_msg)
 
-    def __put_event(self, timestamp, tag, msg):
-        # TODO: calculate event_id
-        last_info = self.get_cached_event_last_info()
-        event_id = "1"
+    def __put_event(self, timestamp, tag, raw_msg):
+        event_id = self.__generate_event_id()
+        try:
+            msg = json.loads(raw_msg)
+        except:
+            msg = {}
 
         # TODO parse msg to determine the following parameters.
-        hapi_event_type = "NOTIFICATION"
-        hapi_status = "UNKNOWN"
-        hapi_severity = "UNKNOWN"
+        brief = msg.get(self.__message_key, raw_msg)
+        host = msg.get(self.__host_key, self.__default_host)
+
+        hapi_event_type = self.__get_parameter(msg, self.__type_key,
+                                               self.__default_type,
+                                               haplib.EVENT_TYPES)
+        hapi_status = self.__get_parameter(msg, self.__status_key,
+                                           self.__default_status,
+                                           haplib.TRIGGER_STATUS)
+        hapi_severity = self.__get_parameter(msg, self.__severity_key,
+                                             self.__default_severity,
+                                             haplib.TRIGGER_SEVERITY)
+
 
         events = []
         events.append({
@@ -72,12 +95,23 @@ class Hap2FluentdMain(haplib.BaseMainPlugin):
             "type": hapi_event_type,
             "status": hapi_status,
             "severity": hapi_severity,
-            "hostId": "0",
-            "hostName": "N/A",
-            "brief": msg,
+            "hostId": host,
+            "hostName": host,
+            "brief": brief,
             "extendedInfo": ""
         })
         self.put_events(events)
+
+    def __get_parameter(self, msg, key, default_value, candidates):
+        param = msg.get(key, default_value)
+        if param not in candidates:
+            logging.error("Unknown parameter: %s for key: %s", (param, key))
+            param = default_value
+        return param
+
+    def __generate_event_id(self):
+        # TODO: implement
+        return "1"
 
     def __parse_line(self, line):
         # TODO: handle exception due to the unexpected form of input
@@ -87,6 +121,7 @@ class Hap2FluentdMain(haplib.BaseMainPlugin):
 
     def __parse_header(self, header):
         LEN_DATE_TIME = 19
+        print header
         timestamp = datetime.datetime.strptime(header[:LEN_DATE_TIME],
                                                "%Y-%m-%d %H:%M:%S")
         IDX_OFS_SIGN = LEN_DATE_TIME + 1
@@ -100,7 +135,7 @@ class Hap2FluentdMain(haplib.BaseMainPlugin):
         offset = datetime.timedelta(hours=offset_hour, minutes=offset_hour)
         utc_timestamp = timestamp - offset
 
-        IDX_HEADER_BEGIN = IDX_OFS_MINUTE + 1
+        IDX_HEADER_BEGIN = IDX_OFS_MINUTE + 3
         tag = header[IDX_HEADER_BEGIN:]
         return utc_timestamp, tag
 

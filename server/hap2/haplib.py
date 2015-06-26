@@ -33,6 +33,7 @@ from rabbitmqconnector import RabbitMQConnector
 import pickle
 import sys
 import traceback
+import sets
 
 SERVER_PROCEDURES = {"exchangeProfile": True,
                      "getMonitoringServerInfo": True,
@@ -147,6 +148,13 @@ ERROR_DICT = {
     ERR_CODE_INVALID_PARAMS: "invalid params",
     ERR_CODE_PARSER_ERROR: "Parse error",
 }
+
+EVENT_TYPES = sets.ImmutableSet(
+    ["GOOD", "BAD", "UNKNOWN", "NOTIFICATION"])
+TRIGGER_STATUS = sets.ImmutableSet(
+    ["OK", "NG", "UNKNOWN"])
+TRIGGER_SEVERITY = sets.ImmutableSet(
+    ["UNKNOWN", "INFO", "WARNING", "ERROR", "CRITICAL", "EMERGENCY"])
 
 MAX_EVENT_CHUNK_SIZE = 1000
 MAX_LAST_INFO_SIZE = 32767
