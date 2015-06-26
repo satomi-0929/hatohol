@@ -25,6 +25,7 @@ import logging
 import multiprocessing
 import datetime
 import json
+import re
 
 class Hap2FluentdMain(haplib.BaseMainPlugin):
 
@@ -42,6 +43,9 @@ class Hap2FluentdMain(haplib.BaseMainPlugin):
         self.__severity_key = "severity"
         self.__status_key = "status"
 
+        self.__accept_tag_reg = "^hatohol\..*"
+        self.__accept_tag_pattern = re.compile(self.__accept_tag_reg)
+
     def set_ms_info(self, ms_info):
         if self.__manager is not None:
             return
@@ -54,7 +58,7 @@ class Hap2FluentdMain(haplib.BaseMainPlugin):
         # TODO: add action when the sub proccess is unexpectedly terminated.
         logging.info("Started fluentd manger process.")
         # TODO: argument list should be created from monitoring server info.
-        fluentd_args = ["td-agent", "--suppress-config-dump",   
+        fluentd_args = ["td-agent", "--suppress-config-dump",
                         "-c", "td-agent.conf"]
 
         # TODO: handle when the launch failed.
@@ -63,7 +67,8 @@ class Hap2FluentdMain(haplib.BaseMainPlugin):
         while True:
             line = fluentd.stdout.readline()
             timestamp, tag, raw_msg = self.__parse_line(line)
-            # TODO: check the tag
+            if not self.__accept_tag_pattern.match(tag):
+                continue
             self.__put_event(timestamp, tag, raw_msg)
 
     def __put_event(self, timestamp, tag, raw_msg):
@@ -73,7 +78,6 @@ class Hap2FluentdMain(haplib.BaseMainPlugin):
         except:
             msg = {}
 
-        # TODO parse msg to determine the following parameters.
         brief = msg.get(self.__message_key, raw_msg)
         host = msg.get(self.__host_key, self.__default_host)
 
@@ -120,7 +124,6 @@ class Hap2FluentdMain(haplib.BaseMainPlugin):
 
     def __parse_header(self, header):
         LEN_DATE_TIME = 19
-        print header
         timestamp = datetime.datetime.strptime(header[:LEN_DATE_TIME],
                                                "%Y-%m-%d %H:%M:%S")
         IDX_OFS_SIGN = LEN_DATE_TIME + 1
