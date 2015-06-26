@@ -85,7 +85,7 @@ PROCEDURES_DEFS = {
             "fetchId": {"type": unicode(), "mandatory": True}
         }
     },
-    "notifyMonitoringServerInfo": {
+    "updateMonitoringServerInfo": {
         "notification": True,
         "args": {}  # TODO: fill content
     },
@@ -160,6 +160,18 @@ MAX_EVENT_CHUNK_SIZE = 1000
 MAX_LAST_INFO_SIZE = 32767
 
 def handle_exception(raises=()):
+    """
+    Logging exception information including back trace and return
+    some information. This method is supposed to be used in 'except:' block.
+    Note that if the exception class is Signal, this method doesn't log it.
+
+    @raises
+    A sequence of exceptionclass names. If the handling exception is one of
+    it, this method just raises it again.
+
+    @return
+    A sequence of exception class and the instance of the handling exception.
+    """
     (exctype, value, tb) = sys.exc_info()
     if exctype in raises:
         raise
@@ -170,6 +182,11 @@ def handle_exception(raises=()):
 
 
 class Signal:
+    """
+    This class is supposed to raise as an exception in order to
+    propagate some events and jump over stack frames.
+    """
+
     def __init__(self, restart=False):
         self.restart = restart
 
@@ -206,7 +223,7 @@ class CommandQueue(Callback):
         This method returns after the time of this parameter goes by.
         """
         wakeup_time = time.time() + duration
-        while  True:
+        while True:
             sleep_time = wakeup_time - time.time()
             if sleep_time <= 0:
                 return
@@ -275,6 +292,7 @@ class ArmInfo:
         self.num_success = int()
         self.num_failure = int()
 
+
 class RabbitMQHapiConnector(RabbitMQConnector):
     def setup(self, transporter_args):
         send_queue_suffix = transporter_args.get("amqp_send_queue_suffix", "-S")
@@ -286,8 +304,9 @@ class RabbitMQHapiConnector(RabbitMQConnector):
         if "amqp_hapi_queue" not in transporter_args:
             transporter_args["amqp_hapi_queue"] = transporter_args["amqp_queue"]
         transporter_args["amqp_queue"] = \
-          transporter_args["amqp_hapi_queue"] + suffix
+            transporter_args["amqp_hapi_queue"] + suffix
         RabbitMQConnector.setup(self, transporter_args)
+
 
 class Sender:
     def __init__(self, transporter_args):
@@ -757,7 +776,6 @@ class Receiver:
 
 
 class Dispatcher:
-
     def __init__(self, rpc_queue):
         self.__id_res_q_map = {}
         self.__destination_q_map = {}
@@ -818,6 +836,7 @@ class Dispatcher:
         dispatch_process.daemon = True
         dispatch_process.start()
 
+
 class BaseMainPlugin(HapiProcessor):
 
     __COMPONENT_CODE = 0x10
@@ -853,7 +872,7 @@ class BaseMainPlugin(HapiProcessor):
             "hap_fetch_history":    "fetchHistory",
             "hap_fetch_triggers":   "fetchTriggers",
             "hap_fetch_events":     "fetchEvents",
-            "hap_notify_monitoring_server_info": "notifyMonitoringServerInfo",
+            "hap_notify_monitoring_server_info": "updateMonitoringServerInfo",
         }
         imp = {}
         for func_name in dir(self):
@@ -929,8 +948,8 @@ class BaseMainPlugin(HapiProcessor):
                 args.append(request_id)
             procedure(*args)
 
-class BasePoller(HapiProcessor):
 
+class BasePoller(HapiProcessor):
     __COMPONENT_CODE = 0x20
     __CMD_MONITORING_SERVER_INFO = 1
 
