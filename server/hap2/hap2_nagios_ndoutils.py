@@ -372,12 +372,14 @@ class Hap2NagiosNDOUtilsMain(haplib.BaseMainPlugin, Common):
 
     def hap_fetch_triggers(self, params, request_id):
         self.ensure_connection()
+        self.get_sender().response("SUCCESS", request_id)
         fetch_id = params["fetchId"]
         host_ids = params["hostIds"]
         self.collect_triggers_and_put(fetch_id, host_ids)
 
     def hap_fetch_events(self, params, request_id):
         self.ensure_connection()
+        self.get_sender().response("SUCCESS", request_id)
         self.collect_events_and_put(params["fetchId"], params["lastInfo"],
                                     params["count"], params["direction"])
 

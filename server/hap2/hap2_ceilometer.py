@@ -483,21 +483,25 @@ class Hap2CeilometerMain(haplib.BaseMainPlugin, Common):
 
     def hap_fetch_triggers(self, params, request_id):
         self.ensure_connection()
+        self.get_sender().response("SUCCESS", request_id)
         fetch_id = params["fetchId"]
         host_ids = params["hostIds"]
         self.collect_triggers_and_put(fetch_id, host_ids)
 
     def hap_fetch_events(self, params, request_id):
         self.ensure_connection()
+        self.get_sender().response("SUCCESS", request_id)
         self.collect_events_and_put(params["fetchId"], params["lastInfo"],
                                     params["count"], params["direction"])
 
     def hap_fetch_items(self, params, request_id):
         self.ensure_connection()
+        self.get_sender().response("SUCCESS", request_id)
         self.collect_items_and_put(params["fetchId"], params["hostIds"])
 
     def hap_fetch_history(self, params, request_id):
         self.ensure_connection()
+        self.get_sender().response("SUCCESS", request_id)
         self.collect_history_and_put(params["fetchId"],
                                      params["hostId"], params["itemId"],
                                      params["beginTime"], params["endTime"])
