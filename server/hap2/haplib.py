@@ -340,182 +340,6 @@ class Sender:
         self.request(procedure_name, params, request_id=None)
 
 
-class Utils:
-
-    # TODO: We need to specify custom validators
-    # TODO: Check the maximum length
-    # ToDo Currently, this method does not have notification filter.
-    # If we implement notification procedures, should insert notification filter.
-
-    @staticmethod
-    def define_transporter_arguments(parser):
-        parser.add_argument("--transporter", type=str,
-                            default="RabbitMQHapiConnector")
-        parser.add_argument("--transporter-module", type=str, default="haplib")
-
-        # TODO: Don't specifiy a sub class of transporter directly.
-        #       We'd like to implement the mechanism that automatically
-        #       collects transporter's sub classes, loads them,
-        #       and calls their define_arguments().
-        RabbitMQHapiConnector.define_arguments(parser)
-
-    @staticmethod
-    def load_transporter(args):
-        (file, pathname, descr) = imp.find_module(args.transporter_module)
-        mod = imp.load_module("", file, pathname, descr)
-        transporter_class = eval("mod.%s" % args.transporter)
-        return transporter_class
-
-    @staticmethod
-    def parse_received_message(message, allowed_procedures):
-        """
-        Parse a received message.
-        @return A ParsedMessage object. Each attribute will be set as below.
-        - error_code If the parse is succeeded, this attribute is set to None.
-                     Othwerwise the error code is set.
-        - message_dict A dictionary that corresponds to the received message.
-                       If the parse fails, this attribute may be None.
-        - message_id A message ID if available. Or None.
-        - error_message An error message.
-        """
-
-        pm = ParsedMessage()
-        pm.error_code, pm.message_dict = \
-          Utils.__convert_string_to_dict(message)
-        pm.message_id = pm.message_dict.get("id")
-
-        # Failed to convert the message to a dictionary
-        if pm.error_code is not None:
-            return pm
-
-        # The case the message is a reply
-        need_id = True
-        should_reply = pm.message_dict.has_key("result")
-
-        if not should_reply:
-            method = pm.message_dict["method"]
-            pm.error_code = Utils.is_allowed_procedure(method,
-                                                       allowed_procedures)
-            if pm.error_code is not None:
-                pm.error_message = "Unsupported method: '%s'" % method
-                return pm
-            if PROCEDURES_DEFS[method].get("notification"):
-                need_id = False
-
-        # 'id' is not included in the message.
-        if need_id and pm.message_id is None:
-            pm.error_code = ERR_CODE_INVALID_PARAMS
-            pm.error_message = "Not found: id"
-            return pm
-
-        if should_reply:
-            return pm
-
-        pm.error_code, pm.error_message = \
-          Utils.validate_arguments(pm.message_dict)
-        if pm.error_code is not None:
-            return pm
-
-        return pm
-
-    @staticmethod
-    def __convert_string_to_dict(json_string):
-        try:
-            json_dict = json.loads(json_string)
-        except ValueError:
-            return (ERR_CODE_PARSER_ERROR, None)
-        else:
-            return (None, json_dict)
-
-    @staticmethod
-    def is_allowed_procedure(procedure_name, allowed_procedures):
-        if procedure_name in allowed_procedures:
-            return
-        else:
-            return ERR_CODE_METHOD_NOT_FOUND
-
-    @staticmethod
-    def validate_arguments(json_dict):
-        args_dict = PROCEDURES_DEFS[json_dict["method"]]["args"]
-        for arg_name, arg_value in args_dict.iteritems():
-            try:
-                type_actual = type(json_dict["params"][arg_name])
-                type_expect = type(arg_value["type"])
-                if type_expect != type_actual:
-                    msg = "Argument '%s': unexpected type: exp: %s, act: %s" \
-                          % (arg_name, type_expect, type_actual)
-                    return (ERR_CODE_INVALID_PARAMS, msg)
-            except KeyError:
-                if arg_value["mandatory"]:
-                    msg = "Missing a mandatory paramter: %s" % arg_name
-                    return (ERR_CODE_INVALID_PARAMS, msg)
-        return (None, None)
-
-    @staticmethod
-    def generate_request_id(component_code):
-        assert component_code <= 0x7f, \
-               "Invalid component code: " + str(component_code)
-        req_id = random.randint(1, 0xffffff)
-        req_id |= component_code << 24
-        return req_id
-
-    @staticmethod
-    def translate_unix_time_to_hatohol_time(float_unix_time):
-        return datetime.strftime(datetime.fromtimestamp(float_unix_time), "%Y%m%d%H%M%S.%f")
-
-    @staticmethod
-    def translate_hatohol_time_to_unix_time(hatohol_time):
-        date_time = time.strptime(hatohol_time, "%Y%m%d%H%M%S.%f")
-        return int(time.mktime(date_time))
-
-    @staticmethod
-    def optimize_server_procedures(valid_procedures_dict, procedures):
-        for name in valid_procedures_dict:
-            valid_procedures_dict[name] = False
-
-        for procedure in procedures:
-            valid_procedures_dict[procedure] = True
-
-    #This method is created on the basis of getting same number of digits under the decimal.
-
-    @staticmethod
-    def get_maximum_eventid(events):
-        return Utils.get_biggest_num_of_dict_array(events, "eventId")
-
-    @staticmethod
-    def get_biggest_num_of_dict_array(array, key):
-        last_info = None
-
-        for target_dict in array:
-            digit = int()
-            if digit < len(target_dict[key]):
-                digit = len(target_dict[key])
-
-        for target_dict in array:
-            target_value = target_dict[key]
-            if isinstance(target_value, str) or isinstance(target_value, unicode):
-                target_value = target_value.zfill(digit)
-
-            if last_info < target_value:
-                last_info = target_value
-
-        return last_info
-
-    @staticmethod
-    def get_current_hatohol_time():
-        utc_now = datetime.utcnow()
-        return utc_now.strftime("%Y%m%d%H%M%S.") + str(utc_now.microsecond)
-
-    @staticmethod
-    def conv_to_hapi_time(date_time):
-        """
-        Convert a datetime object to a string formated for HAPI
-        @param date_time A datatime object
-        @return A string of the date and time in HAPI2.0
-        """
-        return date_time.strftime("%Y%m%d%H%M%S.") + "%06d" % date_time.microsecond
-
-
 """
 Issue HAPI requests and responses.
 Some APIs blocks until the response is arrived.
@@ -656,8 +480,11 @@ class HapiProcessor:
             self.__event_last_info = self.get_last_info("event")
         return self.__event_last_info
 
+    def generate_event_last_info(self, events):
+        return Utils.get_maximum_eventid(events)
+
     def put_events(self, events, fetch_id=None,
-                   last_info_generator=Utils.get_maximum_eventid):
+                   last_info_generator=generate_event_last_info):
 
         """
         This method calls putEvents() and wait for a reply.
@@ -1051,4 +878,178 @@ class BasePoller(HapiProcessor):
         except:
             handle_exception()
 
+
+class Utils:
+    # TODO: We need to specify custom validators
+    # TODO: Check the maximum length
+    # ToDo Currently, this method does not have notification filter.
+    # If we implement notification procedures, should insert notification filter.
+
+    @staticmethod
+    def define_transporter_arguments(parser):
+        parser.add_argument("--transporter", type=str,
+                            default="RabbitMQHapiConnector")
+        parser.add_argument("--transporter-module", type=str, default="haplib")
+
+        # TODO: Don't specifiy a sub class of transporter directly.
+        #       We'd like to implement the mechanism that automatically
+        #       collects transporter's sub classes, loads them,
+        #       and calls their define_arguments().
+        RabbitMQHapiConnector.define_arguments(parser)
+
+    @staticmethod
+    def load_transporter(args):
+        (file, pathname, descr) = imp.find_module(args.transporter_module)
+        mod = imp.load_module("", file, pathname, descr)
+        transporter_class = eval("mod.%s" % args.transporter)
+        return transporter_class
+
+    @staticmethod
+    def parse_received_message(message, allowed_procedures):
+        """
+        Parse a received message.
+        @return A ParsedMessage object. Each attribute will be set as below.
+        - error_code If the parse is succeeded, this attribute is set to None.
+                     Othwerwise the error code is set.
+        - message_dict A dictionary that corresponds to the received message.
+                       If the parse fails, this attribute may be None.
+        - message_id A message ID if available. Or None.
+        - error_message An error message.
+        """
+
+        pm = ParsedMessage()
+        pm.error_code, pm.message_dict = \
+          Utils.__convert_string_to_dict(message)
+        pm.message_id = pm.message_dict.get("id")
+
+        # Failed to convert the message to a dictionary
+        if pm.error_code is not None:
+            return pm
+
+        # The case the message is a reply
+        need_id = True
+        should_reply = pm.message_dict.has_key("result")
+
+        if not should_reply:
+            method = pm.message_dict["method"]
+            pm.error_code = Utils.is_allowed_procedure(method,
+                                                       allowed_procedures)
+            if pm.error_code is not None:
+                pm.error_message = "Unsupported method: '%s'" % method
+                return pm
+            if PROCEDURES_DEFS[method].get("notification"):
+                need_id = False
+
+        # 'id' is not included in the message.
+        if need_id and pm.message_id is None:
+            pm.error_code = ERR_CODE_INVALID_PARAMS
+            pm.error_message = "Not found: id"
+            return pm
+
+        if should_reply:
+            return pm
+
+        pm.error_code, pm.error_message = \
+          Utils.validate_arguments(pm.message_dict)
+        if pm.error_code is not None:
+            return pm
+
+        return pm
+
+    @staticmethod
+    def __convert_string_to_dict(json_string):
+        try:
+            json_dict = json.loads(json_string)
+        except ValueError:
+            return (ERR_CODE_PARSER_ERROR, None)
+        else:
+            return (None, json_dict)
+
+    @staticmethod
+    def is_allowed_procedure(procedure_name, allowed_procedures):
+        if procedure_name in allowed_procedures:
+            return
+        else:
+            return ERR_CODE_METHOD_NOT_FOUND
+
+    @staticmethod
+    def validate_arguments(json_dict):
+        args_dict = PROCEDURES_DEFS[json_dict["method"]]["args"]
+        for arg_name, arg_value in args_dict.iteritems():
+            try:
+                type_actual = type(json_dict["params"][arg_name])
+                type_expect = type(arg_value["type"])
+                if type_expect != type_actual:
+                    msg = "Argument '%s': unexpected type: exp: %s, act: %s" \
+                          % (arg_name, type_expect, type_actual)
+                    return (ERR_CODE_INVALID_PARAMS, msg)
+            except KeyError:
+                if arg_value["mandatory"]:
+                    msg = "Missing a mandatory paramter: %s" % arg_name
+                    return (ERR_CODE_INVALID_PARAMS, msg)
+        return (None, None)
+
+    @staticmethod
+    def generate_request_id(component_code):
+        assert component_code <= 0x7f, \
+               "Invalid component code: " + str(component_code)
+        req_id = random.randint(1, 0xffffff)
+        req_id |= component_code << 24
+        return req_id
+
+    @staticmethod
+    def translate_unix_time_to_hatohol_time(float_unix_time):
+        return datetime.strftime(datetime.fromtimestamp(float_unix_time), "%Y%m%d%H%M%S.%f")
+
+    @staticmethod
+    def translate_hatohol_time_to_unix_time(hatohol_time):
+        date_time = time.strptime(hatohol_time, "%Y%m%d%H%M%S.%f")
+        return int(time.mktime(date_time))
+
+    @staticmethod
+    def optimize_server_procedures(valid_procedures_dict, procedures):
+        for name in valid_procedures_dict:
+            valid_procedures_dict[name] = False
+
+        for procedure in procedures:
+            valid_procedures_dict[procedure] = True
+
+    #This method is created on the basis of getting same number of digits under the decimal.
+
+    @staticmethod
+    def get_maximum_eventid(events):
+        return Utils.get_biggest_num_of_dict_array(events, "eventId")
+
+    @staticmethod
+    def get_biggest_num_of_dict_array(array, key):
+        last_info = None
+
+        for target_dict in array:
+            digit = int()
+            if digit < len(target_dict[key]):
+                digit = len(target_dict[key])
+
+        for target_dict in array:
+            target_value = target_dict[key]
+            if isinstance(target_value, str) or isinstance(target_value, unicode):
+                target_value = target_value.zfill(digit)
+
+            if last_info < target_value:
+                last_info = target_value
+
+        return last_info
+
+    @staticmethod
+    def get_current_hatohol_time():
+        utc_now = datetime.utcnow()
+        return utc_now.strftime("%Y%m%d%H%M%S.") + str(utc_now.microsecond)
+
+    @staticmethod
+    def conv_to_hapi_time(date_time):
+        """
+        Convert a datetime object to a string formated for HAPI
+        @param date_time A datatime object
+        @return A string of the date and time in HAPI2.0
+        """
+        return date_time.strftime("%Y%m%d%H%M%S.") + "%06d" % date_time.microsecond
 
