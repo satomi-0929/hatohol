@@ -248,14 +248,13 @@ class CommandQueue(Callback):
 
 
 class MonitoringServerInfo:
-
     EXTENDED_INFO_RAW  = 0
     EXTENDED_INFO_JSON = 1
 
     def __init__(self, ms_info_dict):
         self.server_id = ms_info_dict["serverId"]
         self.url = ms_info_dict["url"]
-        self.server_type = ms_info_dict["type"]
+        self.type = ms_info_dict["type"]
         self.nick_name = ms_info_dict["nickName"]
         self.user_name = ms_info_dict["userName"]
         self.password = ms_info_dict["password"]
