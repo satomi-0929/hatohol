@@ -353,6 +353,7 @@ class HapiProcessor:
         self.__component_code = component_code
         self.__ms_info = None
         self.reset()
+        self.__timeout_sec = 30
 
     def reset(self):
         self.__previous_hosts = None
@@ -377,6 +378,12 @@ class HapiProcessor:
 
     def get_sender(self):
         return self.__sender
+
+    def set_timeout_sec(self, timeout_sec):
+        if isinstance(timeout_sec, int) and 0 < timeout_sec:
+            self.__timeout_sec = timeout_sec
+        else:
+            logging.error("Inputed value is invalid.")
 
     def get_monitoring_server_info(self):
         """
