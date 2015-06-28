@@ -553,11 +553,10 @@ class HapiProcessor:
         self.__wait_response(request_id)
 
     def __wait_acknowledge(self, request_id):
-        TIMEOUT_SEC = 30
         self.__dispatch_queue.put((self.__process_id, request_id))
         self.__dispatch_queue.join()
         try:
-            if self.__reply_queue.get(True, TIMEOUT_SEC) == True:
+            if self.__reply_queue.get(True, self.__timeout_sec) == True:
                 pass
             else:
                 raise
@@ -566,10 +565,8 @@ class HapiProcessor:
             raise
 
     def __wait_response(self, request_id):
-        TIMEOUT_SEC = 30
         try:
-            pm = self.__reply_queue.get(True, TIMEOUT_SEC)
-
+            pm = self.__reply_queue.get(True, self.__timeout_sec)
             if pm.message_id != request_id:
                 msg = "Got unexpected repsponse. req: " + str(request_id)
                 logging.error(msg)
