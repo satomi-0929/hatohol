@@ -969,6 +969,13 @@ class Utils:
             return (None, json_dict)
 
     @staticmethod
+    def __check_error_dict(error_dict):
+        error_dict["id"]
+        error_dict["error"]["code"]
+        error_dict["error"]["message"]
+        error_dict["error"]["data"]
+
+    @staticmethod
     def is_allowed_procedure(procedure_name, allowed_procedures):
         if procedure_name in allowed_procedures:
             return
@@ -995,7 +1002,7 @@ class Utils:
     @staticmethod
     def generate_request_id(component_code):
         assert component_code <= 0x7f, \
-               "Invalid component code: " + str(component_code)
+                "Invalid component code: " + str(component_code)
         req_id = random.randint(1, 0xffffff)
         req_id |= component_code << 24
         return req_id
