@@ -923,7 +923,7 @@ class Utils:
 
         pm = ParsedMessage()
         pm.error_code, pm.message_dict = \
-          Utils.__convert_string_to_dict(message)
+          Utils.__convert_json_to_dict(message)
         pm.message_id = pm.message_dict.get("id")
 
         # Failed to convert the message to a dictionary
@@ -961,7 +961,7 @@ class Utils:
         return pm
 
     @staticmethod
-    def __convert_string_to_dict(json_string):
+    def __convert_json_to_dict(json_string):
         try:
             json_dict = json.loads(json_string)
         except ValueError:
