@@ -21,7 +21,13 @@
 
 import unittest
 import common
+import haplib
 from hap2_nagios_ndoutils import Common
+
+class CommonForTest(Common):
+    def get_ms_info(self):
+        # On TravisCI, we may return appropriate paramters here
+        return None
 
 class TestCommon(unittest.TestCase):
     def test_constructor(self):
@@ -30,3 +36,9 @@ class TestCommon(unittest.TestCase):
     def test_close_connection(self):
         comm = Common()
         common.assertNotRaises(comm.close_connection)
+
+    # TODO: test_close_connection with __currsor and __db used
+
+    def test_ensure_connection(self):
+        comm = CommonForTest()
+        common.assertNotRaises(comm.ensure_connection)
