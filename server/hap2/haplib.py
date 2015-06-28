@@ -592,6 +592,9 @@ class Receiver:
     def __messenger(self, ch, message):
         parsed = Utils.parse_received_message(message,
                                               self.__allowed_procedures)
+        if parsed.message_id is None and parsed.error_message is not None:
+            logging.error(parsed.error_message)
+            return
         self.__dispatch_queue.put(("Receiver", parsed))
 
     def __call__(self):
