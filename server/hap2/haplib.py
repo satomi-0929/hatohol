@@ -773,7 +773,7 @@ class BaseMainPlugin(HapiProcessor):
             request = msg.message_dict
             procedure = self.__implemented_procedures[request["method"]]
             args = [request.get("params")]
-            request_id = request.get("id")
+            request_id = msg.message_id
             if request_id is not None:
                 args.append(request_id)
             procedure(*args)
@@ -923,10 +923,20 @@ class Utils:
         pm = ParsedMessage()
         pm.error_code, pm.message_dict = \
           Utils.__convert_json_to_dict(message)
-        pm.message_id = pm.message_dict.get("id")
 
         # Failed to convert the message to a dictionary
         if pm.error_code is not None:
+            return pm
+
+        pm.message_id = pm.message_dict.get("id")
+
+        if pm.message_dict.has_key("error"):
+            try:
+                Utils.__check_error_dict(pm.message_dict)
+                pm.error_message = pm.message_dict["error"]["message"]
+            except KeyError:
+                pm.error_message = "Invalid error message: " + message
+
             return pm
 
         # The case the message is a reply
