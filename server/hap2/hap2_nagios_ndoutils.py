@@ -45,6 +45,8 @@ class Common:
 
     def __init__(self):
         self.__db = None
+        self.__cursor = None
+
         self.__db_server = self.DEFAULT_SERVER
         self.__db_port = self.DEFAULT_PORT
         self.__db_name = self.DEFAULT_DATABASE

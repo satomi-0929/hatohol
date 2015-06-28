@@ -26,3 +26,7 @@ from hap2_nagios_ndoutils import Common
 class TestCommon(unittest.TestCase):
     def test_constructor(self):
         common.assertNotRaises(Common)
+
+    def test_close_connection(self):
+        comm = Common()
+        common.assertNotRaises(comm.close_connection)
