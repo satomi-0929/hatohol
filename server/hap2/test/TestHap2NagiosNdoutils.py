@@ -25,20 +25,46 @@ import haplib
 from hap2_nagios_ndoutils import Common
 
 class CommonForTest(Common):
+    def __init__(self, options={}):
+        Common.__init__(self)
+        self.__options = options
+        print options
+
     def get_ms_info(self):
         # On TravisCI, we may return appropriate paramters here
-        return None
+        if self.__options.get("db_invalid_param"):
+            return haplib.MonitoringServerInfo({
+                "serverId": "hoge",
+                "url": "",
+                "type": "",
+                "nickName": "",
+                "userName": "non-existing-user",
+                "password": "",
+                "pollingIntervalSec": 30,
+                "retryIntervalSec": 10,
+                "extendedInfo": "",
+            })
+        else:
+            return None
 
 class TestCommon(unittest.TestCase):
     def test_constructor(self):
         common.assertNotRaises(Common)
 
-    def test_close_connection(self):
-        comm = Common()
-        common.assertNotRaises(comm.close_connection)
-
-    # TODO: test_close_connection with __currsor and __db used
-
     def test_ensure_connection(self):
         comm = CommonForTest()
         common.assertNotRaises(comm.ensure_connection)
+
+    def test_ensure_connection_with_failure_of_opening_db(self):
+        options = {"db_invalid_param": True}
+        comm = CommonForTest(options)
+        self.assertRaises(haplib.Signal, comm.ensure_connection)
+
+    def test_close_connection_without_connection(self):
+        comm = Common()
+        common.assertNotRaises(comm.close_connection)
+
+    def test_close_connection(self):
+        self.test_ensure_connection()
+        self.test_close_connection_without_connection()
+
