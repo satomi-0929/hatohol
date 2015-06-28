@@ -888,7 +888,6 @@ class Utils:
     # TODO: Check the maximum length
     # ToDo Currently, this method does not have notification filter.
     # If we implement notification procedures, should insert notification filter.
-
     @staticmethod
     def define_transporter_arguments(parser):
         parser.add_argument("--transporter", type=str,
