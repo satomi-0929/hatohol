@@ -760,10 +760,9 @@ class BaseMainPlugin(HapiProcessor):
     def __call__(self):
         while True:
             msg = self.__rpc_queue.get()
-            request = msg.message_dict
-
-            if self.is_exit_request(request):
+            if self.is_exit_request(msg):
                 return
+
             if msg.error_code is not None:
                 self.hap_return_error(msg.error_code, msg.message_id)
                 logging.error(msg.get_error_message())
@@ -771,6 +770,7 @@ class BaseMainPlugin(HapiProcessor):
 
             # TODO check if there are necessary parameters.
             # Or should return error
+            request = msg.message_dict
             procedure = self.__implemented_procedures[request["method"]]
             args = [request.get("params")]
             request_id = request.get("id")
