@@ -490,9 +490,7 @@ class HapiProcessor:
     def generate_event_last_info(self, events):
         return Utils.get_maximum_eventid(events)
 
-    def put_events(self, events, fetch_id=None,
-                   last_info_generator=generate_event_last_info):
-
+    def put_events(self, events, fetch_id=None, last_info_generator=None):
         """
         This method calls putEvents() and wait for a reply.
         It divide events if the size is beyond the limitation.
@@ -504,7 +502,7 @@ class HapiProcessor:
         @param fetch_id A fetch ID.
         @param last_info_generator
         A callable object whose argument is the list of the devided events.
-
+        It this parameter is None, generate_event_last_info() is called.
         """
 
         CHUNK_SIZE = MAX_EVENT_CHUNK_SIZE
@@ -521,6 +519,8 @@ class HapiProcessor:
             start = num * CHUNK_SIZE
             event_chunk = events[start:start + CHUNK_SIZE]
 
+            if last_info_generator is None:
+                last_info_generator = self.generate_event_last_info
             last_info = last_info_generator(event_chunk)
             params = {"events": event_chunk, "lastInfo": last_info,
                       "updateType": "UPDATE"}
@@ -585,7 +585,6 @@ class HapiProcessor:
 
 
 class Receiver:
-
     def __init__(self, transporter_args, dispatch_queue, procedures):
         transporter_args["direction"] = transporter.DIR_RECV
         self.__connector = transporter.Factory.create(transporter_args)
@@ -671,10 +670,8 @@ class Dispatcher:
 
 
 class BaseMainPlugin(HapiProcessor):
-
     __COMPONENT_CODE = 0x10
-
-    CB_NOTIFY_MONITORING_SERVER_INFO = 1
+    CB_UPDATE_MONITORING_SERVER_INFO = 1
 
     def __init__(self, transporter_args):
         self.__detect_implemented_procedures()
@@ -705,7 +702,7 @@ class BaseMainPlugin(HapiProcessor):
             "hap_fetch_history":    "fetchHistory",
             "hap_fetch_triggers":   "fetchTriggers",
             "hap_fetch_events":     "fetchEvents",
-            "hap_notify_monitoring_server_info": "updateMonitoringServerInfo",
+            "hap_update_monitoring_server_info": "updateMonitoringServerInfo",
         }
         imp = {}
         for func_name in dir(self):
@@ -734,9 +731,9 @@ class BaseMainPlugin(HapiProcessor):
                                          params["procedures"])
         self.exchange_profile(response_id=request_id)
 
-    def hap_notify_monitoring_server_info(self, params):
+    def hap_update_monitoring_server_info(self, params):
         ms_info = MonitoringServerInfo(params)
-        self.__callback(self.CB_NOTIFY_MONITORING_SERVER_INFO, ms_info)
+        self.__callback(self.CB_UPDATE_MONITORING_SERVER_INFO, ms_info)
 
     def hap_return_error(self, error_code, response_id):
         self.__sender.error(error_code, response_id)
@@ -1031,8 +1028,10 @@ class Utils:
     def get_biggest_num_of_dict_array(array, key):
         last_info = None
 
+        digit = int()
         for target_dict in array:
-            digit = int()
+            if isinstance(target_dict[key], int):
+                break
             if digit < len(target_dict[key]):
                 digit = len(target_dict[key])
 

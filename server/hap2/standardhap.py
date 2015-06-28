@@ -138,7 +138,7 @@ class StandardHap:
 
         self.__main_plugin = self.create_main_plugin(transporter_args=transporter_args)
         self.__main_plugin.register_callback(
-            haplib.BaseMainPlugin.CB_NOTIFY_MONITORING_SERVER_INFO,
+            haplib.BaseMainPlugin.CB_UPDATE_MONITORING_SERVER_INFO,
             self.on_got_monitoring_server_info)
         logging.info("created main plugin.")
 
