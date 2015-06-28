@@ -1022,8 +1022,10 @@ class Utils:
 
     @staticmethod
     def translate_hatohol_time_to_unix_time(hatohol_time):
-        date_time = time.strptime(hatohol_time, "%Y%m%d%H%M%S.%f")
-        return int(time.mktime(date_time))
+        sec, ns = hatohol_time.split(".")
+        date_time = datetime.strptime(sec, "%Y%m%d%H%M%S")
+        unix_time =  calendar.timegm(date_time.timetuple())
+        return unix_time + int(ns) / float(10 ** 9)
 
     @staticmethod
     def optimize_server_procedures(valid_procedures_dict, procedures):
@@ -1073,4 +1075,3 @@ class Utils:
         @return A string of the date and time in HAPI2.0
         """
         return date_time.strftime("%Y%m%d%H%M%S.") + "%06d" % date_time.microsecond
-
