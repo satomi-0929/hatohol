@@ -701,14 +701,14 @@ class BaseMainPlugin(HapiProcessor):
             "hap_fetch_events":     "fetchEvents",
             "hap_update_monitoring_server_info": "updateMonitoringServerInfo",
         }
-        imp = {}
+        implement = {}
         for func_name in dir(self):
             procedure_name = PROCEDURES_MAP.get(func_name)
             if procedure_name is None:
                 continue
-            imp[procedure_name] = eval("self.%s" % func_name)
+            implement[procedure_name] = eval("self.%s" % func_name)
             logging.info("Detected procedure: %s" % func_name)
-        self.__implemented_procedures = imp
+        self.__implemented_procedures = implement
 
     def get_sender(self):
         return self.__sender
