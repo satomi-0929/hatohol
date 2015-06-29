@@ -18,10 +18,14 @@
   <http://www.gnu.org/licenses/>.
 """
 import unittest
+import common as testutils
 from hap2_ceilometer import Common
 from datetime import datetime
 
 class TestCommon(unittest.TestCase):
+    def test_constructor(self):
+        testutils.assertNotRaises(Common)
+
     def test_parse_time_with_micro(self):
         actual = Common.parse_time("2014-09-05T06:25:29.185000")
         expect = datetime(2014, 9, 5, 6, 25, 29, 185000)
