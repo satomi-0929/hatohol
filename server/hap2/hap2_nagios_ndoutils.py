@@ -318,12 +318,12 @@ class Common:
     def __parse_status_and_severity(self, status):
         hapi_status = self.STATUS_MAP.get(status)
         if hapi_status is None:
-            log.warning("Unknown status: " + str(status))
+            logging.warning("Unknown status: " + str(status))
             hapi_status = "UNKNOWN"
 
         hapi_severity = self.SEVERITY_MAP.get(status)
         if hapi_severity is None:
-            log.warning("Unknown status: " + str(status))
+            logging.warning("Unknown status: " + str(status))
             hapi_severity = "UNKNOWN"
 
         return (hapi_status, hapi_severity)

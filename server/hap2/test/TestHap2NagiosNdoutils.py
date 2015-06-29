@@ -196,6 +196,26 @@ class TestCommon(unittest.TestCase):
     def test_extract_validated_event_last_info_with_string(self):
         self.__assert_extract_validated_event_last_info("An apple", None)
 
+    def test_parse_status_and_severity_OK(self):
+        status = 0
+        self.__assert_parse_status_and_severity(status, ("OK", "INFO"))
+
+    def test_parse_status_and_severity_WARNING(self):
+        status = 1
+        self.__assert_parse_status_and_severity(status, ("NG", "WARNING"))
+
+    def test_parse_status_and_severity_CRITICAL(self):
+        status = 2
+        self.__assert_parse_status_and_severity(status, ("NG", "CRITICAL"))
+
+    def test_parse_status_and_severity_with_invalid_status(self):
+        status = 15
+        self.__assert_parse_status_and_severity(status, ("UNKNOWN", "UNKNOWN"))
+
+    def test_parse_status_and_severity_with_invalid_stringstatus(self):
+        status = "ABC"
+        self.__assert_parse_status_and_severity(status, ("UNKNOWN", "UNKNOWN"))
+
     def __assert_parse_url(self, url, expect):
         comm = Common()
         target_func = testutil.returnPrivObj(comm, "__parse_url")
@@ -216,3 +236,9 @@ class TestCommon(unittest.TestCase):
         target_func = \
             testutil.returnPrivObj(comm, "__extract_validated_event_last_info")
         self.assertEquals(target_func(last_info), expect)
+
+    def __assert_parse_status_and_severity(self, status, expect):
+        comm = Common()
+        target_func = \
+            testutil.returnPrivObj(comm, "__parse_status_and_severity")
+        self.assertEquals(target_func(status), expect)
