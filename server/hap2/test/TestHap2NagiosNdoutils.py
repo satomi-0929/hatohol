@@ -57,6 +57,13 @@ class CommonForTest(Common):
     def put_host_group_membership(self, membership):
         self.stores["host_group_membership"] = membership
 
+    def put_triggers(self, triggers, update_type,
+                     last_info=None, fetch_id=None):
+        self.stores["triggers"] = triggers
+        self.stores["update_type"] = update_type
+        self.stores["last_info"] = last_info
+        self.stores["fetch_id"] = fetch_id
+
 class TestCommon(unittest.TestCase):
     def test_constructor(self):
         testutil.assertNotRaises(Common)
@@ -104,20 +111,33 @@ class TestCommon(unittest.TestCase):
     def test_collect_hosts_and_put(self):
         comm = CommonForTest()
         comm.ensure_connection()
+        # TODO: insert test materials and check it
         comm.collect_hosts_and_put()
         self.assertEquals(type(comm.stores["hosts"]), type([]))
 
     def test_collect_host_groups_and_put(self):
         comm = CommonForTest()
         comm.ensure_connection()
+        # TODO: insert test materials and check it
         comm.collect_host_groups_and_put()
         self.assertEquals(type(comm.stores["host_groups"]), type([]))
 
     def test_collect_host_group_membership_and_put(self):
         comm = CommonForTest()
         comm.ensure_connection()
+        # TODO: insert test materials and check it
         comm.collect_host_group_membership_and_put()
         self.assertEquals(type(comm.stores["host_group_membership"]), type([]))
+
+    def test_collect_triggers_and_put(self):
+        comm = CommonForTest()
+        comm.ensure_connection()
+        # TODO: insert test materials and check it
+        comm.collect_triggers_and_put()
+        self.assertEquals(type(comm.stores["triggers"]), type([]))
+        self.assertEquals(comm.stores["update_type"], "ALL")
+        self.assertEquals(comm.stores["last_info"], None)
+        self.assertEquals(comm.stores["fetch_id"], None)
 
     def __assert_parse_url(self, url, expect):
         comm = Common()
