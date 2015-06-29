@@ -109,6 +109,8 @@ class Common:
         if slash_idx >= 0:
             database = url[slash_idx+1:]
             server = url[0:slash_idx]
+        else:
+            server = url
 
         colon_idx = server.find(":")
         if colon_idx >= 0:

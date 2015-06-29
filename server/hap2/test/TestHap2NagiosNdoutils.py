@@ -72,6 +72,11 @@ class TestCommon(unittest.TestCase):
         self.__assert_parse_url(
             "123.45.67.89:1122/mydb", ("123.45.67.89", "1122", "mydb"))
 
+    def test_parse_url_sv_port(self):
+        self.__assert_parse_url(
+            "123.45.67.89:1122",
+            ("123.45.67.89", "1122", Common.DEFAULT_DATABASE))
+
     def __assert_parse_url(self, url, expect):
         comm = Common()
         target_func = testutil.returnPrivObj(comm, "__parse_url")
