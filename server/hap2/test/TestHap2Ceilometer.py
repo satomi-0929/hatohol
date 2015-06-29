@@ -21,10 +21,19 @@ import unittest
 import common as testutils
 from hap2_ceilometer import Common
 from datetime import datetime
+import haplib
+
+class CommonForTest(Common):
+    def get_ms_info(self):
+        return None
 
 class TestCommon(unittest.TestCase):
     def test_constructor(self):
         testutils.assertNotRaises(Common)
+
+    def test_ensure_connection_with_empty_monitoring_server_info(self):
+        comm = CommonForTest()
+        self.assertRaises(haplib.Signal, comm.ensure_connection)
 
     def test_parse_time_with_micro(self):
         actual = Common.parse_time("2014-09-05T06:25:29.185000")
