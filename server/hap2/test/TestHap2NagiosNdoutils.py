@@ -269,12 +269,17 @@ class TraceableTestCommon:
         self.stores["fetch_id"] = fetch_id
         self.stores["host_ids"] = host_ids
 
-    def collect_events_and_put(self):
-        self.stores["trace"].append("collect_event_and_put")
+    def collect_events_and_put(self, fetch_id=None, last_info=None, count=None,
+                               direction=None):
+        self.stores["trace"].append("collect_events_and_put")
+        self.stores["fetch_id"] = fetch_id
+        self.stores["last_info"] = last_info
+        self.stores["count"] = count
+        self.stores["direction"] = direction
 
 
-class PollerForTest(hap2_nagios_ndoutils.Hap2NagiosNDOUtilsPoller,
-                    TraceableTestCommon):
+class PollerForTest(TraceableTestCommon,
+                    hap2_nagios_ndoutils.Hap2NagiosNDOUtilsPoller):
     def __init__(self):
         kwargs = {"sender": "", "process_id": "PollerForTest"}
         hap2_nagios_ndoutils.Hap2NagiosNDOUtilsPoller.__init__(self, **kwargs)
@@ -295,7 +300,7 @@ class Hap2NagiosNDOUtilsPoller(unittest.TestCase):
             "collect_host_groups_and_put",
             "collect_host_group_membership_and_put",
             "collect_triggers_and_put",
-            "collect_event_and_put",
+            "collect_events_and_put",
         ]
         self.assertEquals(poller.stores["trace"], expected_traces)
 
@@ -333,3 +338,16 @@ class Hap2NagiosNDOUtilsMain(unittest.TestCase):
                           ["ensure_connection", "collect_triggers_and_put"])
         self.assertEquals(main.stores["fetch_id"], params["fetchId"])
         self.assertEquals(main.stores["host_ids"], params["hostIds"])
+
+    def test_hap_fetch_events(self):
+        main = MainPluginForTest()
+        params = {"fetchId": "252525", "lastInfo": "abcedef",
+                  "count": 100, "direction": "ASC"}
+        request_id = "1234"
+        main.hap_fetch_events(params, request_id)
+        self.assertEquals(main.stores["trace"],
+                          ["ensure_connection", "collect_events_and_put"])
+        self.assertEquals(main.stores["fetch_id"], params["fetchId"])
+        self.assertEquals(main.stores["last_info"], params["lastInfo"])
+        self.assertEquals(main.stores["count"], params["count"])
+        self.assertEquals(main.stores["direction"], params["direction"])

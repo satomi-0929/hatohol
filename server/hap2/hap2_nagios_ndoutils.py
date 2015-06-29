@@ -355,6 +355,7 @@ class Hap2NagiosNDOUtilsMain(haplib.BaseMainPlugin, Common):
 
     def hap_fetch_triggers(self, params, request_id):
         self.ensure_connection()
+        # TODO: return FAILURE when connection fails
         self.get_sender().response("SUCCESS", request_id)
         fetch_id = params["fetchId"]
         host_ids = params["hostIds"]
@@ -362,6 +363,7 @@ class Hap2NagiosNDOUtilsMain(haplib.BaseMainPlugin, Common):
 
     def hap_fetch_events(self, params, request_id):
         self.ensure_connection()
+        # TODO: return FAILURE when connection fails
         self.get_sender().response("SUCCESS", request_id)
         self.collect_events_and_put(params["fetchId"], params["lastInfo"],
                                     params["count"], params["direction"])
