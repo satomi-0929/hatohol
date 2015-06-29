@@ -399,6 +399,7 @@ class TestCommon(unittest.TestCase):
         target_func = testutils.returnPrivObj(comm, "__collect_events_and_put",
                                               "Common")
         # TODO: test the path when alarm_cache is hit
+        #       In that case, hostId, hostName, and brief should not be "N/A"
         alarm_id = "alarm1"
         last_alarm_time = "20150423112233.123000"
         fetch_id = "a123"
@@ -441,6 +442,25 @@ class TestCommon(unittest.TestCase):
                 "brief": "N/A",
                 "extendedInfo": "",
             }])
+
+    def test_last_info_generator(self):
+        comm = CommonForTest()
+        target_func = testutils.returnPrivObj(comm, "__last_info_generator",
+                                              "Common")
+        # TODO: test the path when __alarm_last_time_map.get(alarm_id) is hit
+        events = [{
+            "triggerId": "alarm1",
+            "time": "20121212121212.121212",
+        }, {
+            "triggerId": "alarm2",
+            "time": "20121212121213.131313",
+        }]
+        last_info = target_func(events)
+        expect =  {
+            "alarm1": "20121212121212.121212",
+            "alarm2": "20121212121213.131313",
+        }
+        self.__assert_decode_last_alarm_timestamp_map(last_info, expect)
 
     def test_parse_time_with_micro(self):
         actual = Common.parse_time("2014-09-05T06:25:29.185000")
