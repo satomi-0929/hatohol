@@ -212,6 +212,14 @@ class CommonForTest(Common):
         self.store["item_id"] = item_id
         self.store["fetch_id"] = fetch_id
 
+    def set_host_cache(self, host_cache):
+        """
+        Set the given dictionary to Common.__host_cache
+        @host_cache A dictionary in which
+                    the key is host_id and the value is host name.
+        """
+        self._Common__host_cache = host_cache
+
 
 class TestCommon(unittest.TestCase):
     def test_constructor(self):
@@ -537,14 +545,38 @@ class Common_hapi_time_to_url_enc_openstack_time(unittest.TestCase):
 
 
 class Common__parse_alarm_host(unittest.TestCase):
-    def __assert_parse_alarm_host(self, threshold_rule,  expect):
+    def __assert_parse_alarm_host(self, threshold_rule,  expect,
+                                  host_cache=None):
         comm = CommonForTest()
+        if host_cache is not None:
+            comm.set_host_cache(host_cache)
         target_func = testutils.returnPrivObj(
                             comm, "__parse_alarm_host", "Common")
         self.assertEquals(target_func(threshold_rule), expect)
 
     def test_parse_alarm_host_without_query(self):
         self.__assert_parse_alarm_host({}, ("N/A", "N/A"))
+
+    def test_parse_alarm_host(self):
+        threshold_rule = {
+            "query": [{
+                "field": "host",
+                "value": "host12345",
+                "op": "eq",
+            }]
+        }
+        comm = CommonForTest()
+        host_cache = {"host12345": "onamae755"}
+        self.__assert_parse_alarm_host(
+            threshold_rule, ("host12345", "onamae755"), host_cache)
+
+    def test_parse_alarm_host_with_all_invalid_query(self):
+        threshold_rule = {
+            "query": [{
+            }]
+        }
+        comm = CommonForTest()
+        self.__assert_parse_alarm_host(threshold_rule, ("N/A", "N/A"))
 
 
 class Common_parse_time(unittest.TestCase):
