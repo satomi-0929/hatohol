@@ -352,6 +352,27 @@ class TestCommon(unittest.TestCase):
             "counter_volume": "CVOL"
         })
 
+    def __assert_decode_last_alarm_timestamp_map(self, last_info, source):
+        comm = CommonForTest()
+        dec_func = testutils.returnPrivObj(
+                        comm, "__decode_last_alarm_timestamp_map", "Common")
+        self.assertEquals(dec_func(last_info), source)
+
+    def test_encode_decode_last_alarm_timestamp_map(self):
+        comm = CommonForTest()
+        enc_func = testutils.returnPrivObj(
+                        comm, "__encode_last_alarm_timestamp_map", "Common")
+        source = {"ABCDEFG": 1, "2345": "foo"}
+        encoded = enc_func(source)
+        self.__assert_decode_last_alarm_timestamp_map(encoded, source)
+
+    def test_decode_last_alarm_timestamp_map_with_none(self):
+        self.__assert_decode_last_alarm_timestamp_map(None, {})
+
+    def test_decode_last_alarm_timestamp_map_with_invalid_input(self):
+        self.assertRaises(Exception,
+            self.__assert_decode_last_alarm_timestamp_map, ("NON ENCODED", {}))
+
     def test_parse_time_with_micro(self):
         actual = Common.parse_time("2014-09-05T06:25:29.185000")
         expect = datetime(2014, 9, 5, 6, 25, 29, 185000)
