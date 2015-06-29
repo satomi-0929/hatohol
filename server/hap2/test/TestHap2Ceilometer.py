@@ -102,6 +102,8 @@ class CommonForTest(Common):
         url_handler_map = {
             "http://example.com/tokens": self.__request_token,
             self.NOVA_EP + "/servers": self.__request_servers,
+            "http://hoge/ceilometer/v2/.*/history":
+                self.__request_alarm_history,
             "http://hoge/ceilometer/v2/alarms": self.__request_alarms,
             "http://hoge/ceilometer/v2/resource": self.__request_resources,
             "http://HREF/href1": self.__request_href1,
@@ -142,6 +144,24 @@ class CommonForTest(Common):
 
     def __request_alarms(self, url):
         return self.ALARMS
+
+    def __request_alarm_history(self, url):
+        return [{
+            "type": "state transition",
+            "detail": '{"state": "alarm"}',
+            "timestamp": "2013-03-22T04:56:12.111222",
+            "event_id": "event_id_2",
+        }, {
+            "type": "state transition",
+            "detail": '{"state": "ok"}',
+            "timestamp": "2013-03-22T04:56:00.334455",
+            "event_id": "event_id_1",
+        }, {
+            "type": "creation",
+            "detail": '{"state": "ok"}',
+            "timestamp": "2013-03-22T04:50:00.334455",
+            "event_id": "event_id_0",
+        }]
 
     def __request_resources(self, url):
         return {
@@ -372,6 +392,55 @@ class TestCommon(unittest.TestCase):
     def test_decode_last_alarm_timestamp_map_with_invalid_input(self):
         self.assertRaises(Exception,
             self.__assert_decode_last_alarm_timestamp_map, ("NON ENCODED", {}))
+
+    def test__collect_events_and_put(self):
+        comm = CommonForTest()
+        comm.ensure_connection()
+        target_func = testutils.returnPrivObj(comm, "__collect_events_and_put",
+                                              "Common")
+        # TODO: test the path when alarm_cache is hit
+        alarm_id = "alarm1"
+        last_alarm_time = "20150423112233.123000"
+        fetch_id = "a123"
+        target_func(alarm_id, last_alarm_time, fetch_id)
+        self.assertEquals(comm.store["fetch_id"], fetch_id)
+        self.assertEquals(comm.store["last_info_generator"],
+            testutils.returnPrivObj(comm, "__last_info_generator", "Common"))
+        self.assertEquals(comm.store["events"], [
+            {
+                "eventId": "event_id_0",
+                "time": "20130322045000.334455",
+                "type": "GOOD",
+                "status": "OK",
+                "triggerId": alarm_id,
+                "hostId": "N/A",
+                "hostName": "N/A",
+                "severity": "ERROR",
+                "brief": "N/A",
+                "extendedInfo": "",
+            }, {
+                "eventId": "event_id_1",
+                "time": "20130322045600.334455",
+                "status": "OK",
+                "type": "GOOD",
+                "triggerId": alarm_id,
+                "hostId": "N/A",
+                "hostName": "N/A",
+                "severity": "ERROR",
+                "brief": "N/A",
+                "extendedInfo": "",
+            }, {
+                "eventId": "event_id_2",
+                "time": "20130322045612.111222",
+                "type": "BAD",
+                "status": "NG",
+                "triggerId": alarm_id,
+                "hostId": "N/A",
+                "hostName": "N/A",
+                "severity": "ERROR",
+                "brief": "N/A",
+                "extendedInfo": "",
+            }])
 
     def test_parse_time_with_micro(self):
         actual = Common.parse_time("2014-09-05T06:25:29.185000")
