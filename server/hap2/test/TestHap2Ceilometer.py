@@ -92,6 +92,8 @@ class CommonForTest(Common):
             "http://example.com/tokens": self.__request_token,
             self.NOVA_EP + "/servers": self.__request_servers,
             "http://hoge/ceilometer/v2/alarms": self.__request_alarms,
+            "http://hoge/ceilometer/v2/resource": self.__request_resources,
+            "http://HREF/href1": self.__request_href1,
         }
 
         handler = None
@@ -128,8 +130,28 @@ class CommonForTest(Common):
     def __request_alarms(self, url):
         return self.ALARMS
 
+    def __request_resources(self, url):
+        return {
+            "links": [{
+                "rel": "cpu_util",
+                "href": "http://HREF/href1",
+            }],
+        }
+
+    def __request_href1(self, url):
+        return [{
+            "timestamp": "1994-05-25T12:34:56",
+            "counter_name": "CNAME",
+            "counter_volume": "CVOL",
+            "counter_unit": "UNIT",
+        }]
+
     def get_cached_event_last_info(self):
         return "abcdef"
+
+    def put_items(self, items, fetch_id):
+        self.store["items"] = items
+        self.store["fetch_id"] = fetch_id
 
 
 class TestCommon(unittest.TestCase):
@@ -207,6 +229,27 @@ class TestCommon(unittest.TestCase):
                                     count=count, direction=direction)
         self.assertEqual(caught,
                          ["alarm_id1", "20150629110435.250000", "000111"])
+
+
+    def test_collect_items_and_put(self):
+        comm = CommonForTest()
+        comm.ensure_connection()
+        # TODO: Test with non-None host_ids
+        fetch_id = "000111"
+        host_ids = ["host_id1"]
+        comm.collect_items_and_put(fetch_id, host_ids)
+        self.assertEquals(comm.store["items"], [
+            {
+                "itemId": "host_id1.CNAME",
+                "hostId": "host_id1",
+                "brief": "CNAME",
+                "lastValueTime": "19940525123456.000000",
+                "lastValue": "CVOL",
+                "itemGroupName": "",
+                "unit": "UNIT",
+            }
+        ])
+        self.assertEquals(comm.store["fetch_id"], fetch_id)
 
     def test_parse_time_with_micro(self):
         actual = Common.parse_time("2014-09-05T06:25:29.185000")
