@@ -484,12 +484,70 @@ class TestCommon(unittest.TestCase):
         target_func(alarm_time_map)
         self.assertEquals(alarm_time_map, {"112233": "20120322121311.123456"})
 
-    def test_get_history_query_option_with_last_alarm_none(self):
+
+class Common__get_history_query_option(unittest.TestCase):
+    def __assert_get_history_query_option(self, last_alarm_time, expect):
         comm = CommonForTest()
         target_func = testutils.returnPrivObj(
                             comm, "__get_history_query_option", "Common")
-        self.assertEquals(target_func(None), "")
+        self.assertEquals(target_func(last_alarm_time), expect)
 
+    def test_get_history_query_option_with_none_input(self):
+        self.__assert_get_history_query_option(None, "")
+
+    def test_get_history_query_option(self):
+        self.__assert_get_history_query_option(
+            "20130703121015.000456",
+            "?q.field=timestamp&q.op=gt&q.value=2013-07-03T12%3A10%3A15.000456")
+
+
+class Common_hapi_time_to_url_enc_openstack_time(unittest.TestCase):
+    def test_hapi_time_to_url_enc_openstack_time(self):
+        hapi_time = "20150624081005"
+        actual = Common.hapi_time_to_url_enc_openstack_time(hapi_time)
+        expect = "2015-06-24T08%3A10%3A05.000000"
+        self.assertEqual(actual, expect)
+
+    def test_hapi_time_to_url_enc_openstack_time_with_us(self):
+        hapi_time = "20150624081005.123456"
+        actual = Common.hapi_time_to_url_enc_openstack_time(hapi_time)
+        expect = "2015-06-24T08%3A10%3A05.123456"
+        self.assertEqual(actual, expect)
+
+    def test_hapi_time_to_url_enc_openstack_time_with_ns(self):
+        hapi_time = "20150624081005.123456789"
+        actual = Common.hapi_time_to_url_enc_openstack_time(hapi_time)
+        expect = "2015-06-24T08%3A10%3A05.123456"
+        self.assertEqual(actual, expect)
+
+    def test_hapi_time_to_url_enc_openstack_time_with_ms(self):
+        hapi_time = "20150624081005.123"
+        actual = Common.hapi_time_to_url_enc_openstack_time(hapi_time)
+        expect = "2015-06-24T08%3A10%3A05.123000"
+        self.assertEqual(actual, expect)
+
+    def test_hapi_time_to_url_enc_openstack_time_with_dot_only(self):
+        hapi_time = "20150624081005."
+        actual = Common.hapi_time_to_url_enc_openstack_time(hapi_time)
+        expect = "2015-06-24T08%3A10%3A05.000000"
+        self.assertEqual(actual, expect)
+
+
+# TODO: Implemnet Test for __request
+
+
+class Common__parse_alarm_host(unittest.TestCase):
+    def __assert_parse_alarm_host(self, threshold_rule,  expect):
+        comm = CommonForTest()
+        target_func = testutils.returnPrivObj(
+                            comm, "__parse_alarm_host", "Common")
+        self.assertEquals(target_func(threshold_rule), expect)
+
+    def test_parse_alarm_host_without_query(self):
+        self.__assert_parse_alarm_host({}, ("N/A", "N/A"))
+
+
+class Common_parse_time(unittest.TestCase):
     def test_parse_time_with_micro(self):
         actual = Common.parse_time("2014-09-05T06:25:29.185000")
         expect = datetime(2014, 9, 5, 6, 25, 29, 185000)
@@ -503,6 +561,8 @@ class TestCommon(unittest.TestCase):
     def test_parse_time_without_invalid_string(self):
         self.assertRaises(Exception, Common.parse_time, "20140905062529")
 
+
+class Common_alarm_to_hapi_status(unittest.TestCase):
     def test_alarm_to_hapi_status_ok(self):
         alarm_type = "state transition"
         detail = '{"state": "ok"}'
@@ -541,32 +601,3 @@ class TestCommon(unittest.TestCase):
             Exception,
             Common.alarm_to_hapi_status, (alarm_type, detail))
 
-    def test_hapi_time_to_url_enc_openstack_time(self):
-        hapi_time = "20150624081005"
-        actual = Common.hapi_time_to_url_enc_openstack_time(hapi_time)
-        expect = "2015-06-24T08%3A10%3A05.000000"
-        self.assertEqual(actual, expect)
-
-    def test_hapi_time_to_url_enc_openstack_time_with_us(self):
-        hapi_time = "20150624081005.123456"
-        actual = Common.hapi_time_to_url_enc_openstack_time(hapi_time)
-        expect = "2015-06-24T08%3A10%3A05.123456"
-        self.assertEqual(actual, expect)
-
-    def test_hapi_time_to_url_enc_openstack_time_with_ns(self):
-        hapi_time = "20150624081005.123456789"
-        actual = Common.hapi_time_to_url_enc_openstack_time(hapi_time)
-        expect = "2015-06-24T08%3A10%3A05.123456"
-        self.assertEqual(actual, expect)
-
-    def test_hapi_time_to_url_enc_openstack_time_with_ms(self):
-        hapi_time = "20150624081005.123"
-        actual = Common.hapi_time_to_url_enc_openstack_time(hapi_time)
-        expect = "2015-06-24T08%3A10%3A05.123000"
-        self.assertEqual(actual, expect)
-
-    def test_hapi_time_to_url_enc_openstack_time_with_dot_only(self):
-        hapi_time = "20150624081005."
-        actual = Common.hapi_time_to_url_enc_openstack_time(hapi_time)
-        expect = "2015-06-24T08%3A10%3A05.000000"
-        self.assertEqual(actual, expect)
