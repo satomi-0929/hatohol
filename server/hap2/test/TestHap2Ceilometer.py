@@ -22,15 +22,22 @@ import common as testutils
 from hap2_ceilometer import Common
 from datetime import datetime
 import haplib
+import re
 
 class CommonForTest(Common):
 
     NOVA_EP = "http://hoge/nova"
     CEILOMETER_EP = "http://hoge/ceilometer"
 
+    SERVERS = [{
+        "id": "12345",
+        "name": "onamae",
+    }]
+
     def __init__(self, options={}):
         Common.__init__(self)
         self.__options = options
+        self.store = {}
 
         # replace a lower layer method
         self._Common__request = self.__request
@@ -40,7 +47,7 @@ class CommonForTest(Common):
             return None
         return haplib.MonitoringServerInfo({
             "serverId": 51,
-            "url": "localhost",
+            "url": "http://example.com",
             "type": "Ceilometer",
             "nickName": "Jack",
             "userName": "fooo",
@@ -50,7 +57,25 @@ class CommonForTest(Common):
             "extendedInfo": '{"tenantName": "yah"}',
         })
 
+    def put_hosts(self, hosts):
+        self.store["hosts"] = hosts
+
     def __request(self, url, headers={}, use_token=True, data=None):
+        url_handler_map = {
+            "http://example.com/tokens": self.__request_token,
+            self.NOVA_EP + "/servers": self.__request_servers
+        }
+
+        handler = None
+        for key, func in url_handler_map.items():
+            if re.search(key, url):
+                handler = func
+                break
+        else:
+            raise Exception("Not found handler for %s" % url)
+        return handler(url)
+
+    def __request_token(self, url):
         return {
             "access": {
                 "token": {
@@ -65,6 +90,11 @@ class CommonForTest(Common):
                     "endpoints": [{"publicURL": self.CEILOMETER_EP}],
                 }]
             }
+        }
+
+    def __request_servers(self, subseq):
+        return {
+            "servers": self.SERVERS,
         }
 
 
@@ -86,6 +116,16 @@ class TestCommon(unittest.TestCase):
         ceilometer_ep = \
             testutils.returnPrivObj(comm, "__ceilometer_ep", "Common")
         self.assertEqual(ceilometer_ep, comm.CEILOMETER_EP)
+
+    # skip tests for __set_nova_ep and __set_ceilometer_ep, because theya are
+    # private and used in ensure_connection().
+
+    def test_collect_hosts_and_put(self):
+        comm = CommonForTest()
+        comm.ensure_connection()
+        comm.collect_hosts_and_put()
+        hosts = comm.store["hosts"]
+        self.assertEqual(hosts, [{"hostId": "12345", "hostName": "onamae"}])
 
     def test_parse_time_with_micro(self):
         actual = Common.parse_time("2014-09-05T06:25:29.185000")
