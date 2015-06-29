@@ -24,16 +24,63 @@ from datetime import datetime
 import haplib
 
 class CommonForTest(Common):
+
+    NOVA_EP = "http://hoge/nova"
+    CEILOMETER_EP = "http://hoge/ceilometer"
+
+    def __init__(self, options={}):
+        Common.__init__(self)
+        self.__options = options
+
+        # replace a lower layer method
+        self._Common__request = self.__request
+
     def get_ms_info(self):
-        return None
+        if self.__options.get("none_monitoring_server_info"):
+            return None
+        return haplib.MonitoringServerInfo({
+            "serverId": 51,
+            "url": "localhost",
+            "type": "Ceilometer",
+            "nickName": "Jack",
+            "userName": "fooo",
+            "password": "gooo",
+            "pollingIntervalSec": 30,
+            "retryIntervalSec": 10,
+            "extendedInfo": '{"tenantName": "yah"}',
+        })
+
+    def __request(self, url, headers={}, use_token=True, data=None):
+        return {
+            "access": {
+                "token": {
+                    "id": "xxxxxxxxxxxxxxxx",
+                    "expires": "2015-06-29T16:54:23Z",
+                },
+                "serviceCatalog": [{
+                    "name": "nova",
+                    "endpoints": [{"publicURL": self.NOVA_EP}],
+                }, {
+                    "name": "ceilometer",
+                    "endpoints": [{"publicURL": self.CEILOMETER_EP}],
+                }]
+            }
+        }
+
 
 class TestCommon(unittest.TestCase):
     def test_constructor(self):
         testutils.assertNotRaises(Common)
 
     def test_ensure_connection_without_monitoring_server_info(self):
-        comm = CommonForTest()
+        options = {"none_monitoring_server_info": True}
+        comm = CommonForTest(options)
         self.assertRaises(haplib.Signal, comm.ensure_connection)
+
+    def test_ensure_connection(self):
+        options = {}
+        comm = CommonForTest(options)
+        comm.ensure_connection()
 
     def test_parse_time_with_micro(self):
         actual = Common.parse_time("2014-09-05T06:25:29.185000")

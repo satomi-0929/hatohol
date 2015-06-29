@@ -111,7 +111,7 @@ class Common:
 
         if len(target_eps) > 0:
             logging.error("Not found Endpoints: Nova: %s, Ceiloemeter: %s" % \
-                          self.__nova_ep, self.__ceilometer_ep)
+                          (self.__nova_ep, self.__ceilometer_ep))
             raise haplib.Signal()
 
         logging.info("EP: Nova: %s", self.__nova_ep)
