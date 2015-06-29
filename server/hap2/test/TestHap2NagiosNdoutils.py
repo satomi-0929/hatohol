@@ -170,6 +170,20 @@ class TestCommon(unittest.TestCase):
     def test_validate_object_ids_with_invalid_data(self):
         self.__assert_validate_object_ids(["123", "555555", "I'm Mike"], False)
 
+    # NOTE: The following tests for single id not (ids), different from
+    #       above ones
+    def test_validate_object_id(self):
+        self.__assert_validate_object_id("123")
+
+    def test_validate_object_with_empty_id(self):
+        self.__assert_validate_object_id("", False)
+
+    def test_validate_object_with_string(self):
+        self.__assert_validate_object_id("String", False)
+
+    def test_validate_object_with_hex(self):
+        self.__assert_validate_object_id("a5a5a5", False)
+
     def __assert_parse_url(self, url, expect):
         comm = Common()
         target_func = testutil.returnPrivObj(comm, "__parse_url")
@@ -179,3 +193,8 @@ class TestCommon(unittest.TestCase):
         comm = Common()
         target_func = testutil.returnPrivObj(comm, "__validate_object_ids")
         self.assertEquals(target_func(host_ids), expect)
+
+    def __assert_validate_object_id(self, host_id, expect=True):
+        comm = Common()
+        target_func = testutil.returnPrivObj(comm, "__validate_object_id")
+        self.assertEquals(target_func(host_id), expect)
