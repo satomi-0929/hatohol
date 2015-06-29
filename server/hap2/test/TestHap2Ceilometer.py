@@ -81,6 +81,11 @@ class TestCommon(unittest.TestCase):
         options = {}
         comm = CommonForTest(options)
         comm.ensure_connection()
+        nova_ep = testutils.returnPrivObj(comm, "__nova_ep", "Common")
+        self.assertEqual(nova_ep, comm.NOVA_EP)
+        ceilometer_ep = \
+            testutils.returnPrivObj(comm, "__ceilometer_ep", "Common")
+        self.assertEqual(ceilometer_ep, comm.CEILOMETER_EP)
 
     def test_parse_time_with_micro(self):
         actual = Common.parse_time("2014-09-05T06:25:29.185000")
