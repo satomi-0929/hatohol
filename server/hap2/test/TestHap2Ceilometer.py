@@ -49,6 +49,17 @@ class CommonForTest(Common):
         },
     }]
 
+
+    EXPECT_ITEM_HOST_ID1_CNAME = {
+        "itemId": "host_id1.CNAME",
+        "hostId": "host_id1",
+        "brief": "CNAME",
+        "lastValueTime": "19940525123456.000000",
+        "lastValue": "CVOL",
+        "itemGroupName": "",
+        "unit": "UNIT",
+    }
+
     def __init__(self, options={}):
         Common.__init__(self)
         self.__options = options
@@ -273,6 +284,7 @@ class TestCommon(unittest.TestCase):
         fetch_id = "0055"
         host_id = "host_id1"
         item_id = "host_id1.CNAME"
+        # TODO: Set the proper time range
         begin_time = ""
         end_time = ""
         comm.collect_history_and_put(fetch_id=fetch_id, host_id=host_id,
@@ -289,6 +301,17 @@ class TestCommon(unittest.TestCase):
                 "value": "12",
             }
         ])
+
+    def test__collect_items_and_put(self):
+        comm = CommonForTest()
+        comm.ensure_connection()
+        host_id = "host_id2"
+        target_func = \
+            testutils.returnPrivObj(comm, "__collect_items_and_put", "Common")
+        expect_item = comm.EXPECT_ITEM_HOST_ID1_CNAME
+        expect_item["itemId"] = "host_id2.CNAME"
+        expect_item["hostId"] = host_id
+        self.assertEquals(target_func(host_id), [expect_item])
 
     def test_parse_time_with_micro(self):
         actual = Common.parse_time("2014-09-05T06:25:29.185000")
