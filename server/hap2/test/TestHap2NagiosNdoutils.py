@@ -28,6 +28,7 @@ class CommonForTest(Common):
     def __init__(self, options={}):
         Common.__init__(self)
         self.__options = options
+        self.stores = {}
         print options
 
     def get_ms_info(self):
@@ -46,6 +47,9 @@ class CommonForTest(Common):
         else:
             # On TravisCI, we may return appropriate paramters here
             return None
+
+    def put_hosts(self, hosts):
+        self.stores["hosts"] = hosts
 
 class TestCommon(unittest.TestCase):
     def test_constructor(self):
@@ -90,6 +94,12 @@ class TestCommon(unittest.TestCase):
     def test_parse_url_db(self):
         self.__assert_parse_url(
             "/mydb", (Common.DEFAULT_SERVER, Common.DEFAULT_PORT, "mydb"))
+
+    def test_collect_hosts_and_put(self):
+        comm = CommonForTest()
+        comm.ensure_connection()
+        comm.collect_hosts_and_put()
+        self.assertEquals(type(comm.stores["hosts"]), type([]))
 
     def __assert_parse_url(self, url, expect):
         comm = Common()
