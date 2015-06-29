@@ -275,7 +275,7 @@ class PollerForTest(hap2_nagios_ndoutils.Hap2NagiosNDOUtilsPoller):
 
 class Hap2NagiosNDOUtilsPoller(unittest.TestCase):
     def test_constructor(self):
-        kwargs = {"sender": "FOO", "process_id": "my test"}
+        kwargs = {"sender": "", "process_id": "my test"}
         poller = hap2_nagios_ndoutils.Hap2NagiosNDOUtilsPoller(**kwargs)
 
     def test_poll(self):
@@ -290,3 +290,16 @@ class Hap2NagiosNDOUtilsPoller(unittest.TestCase):
             "collect_event_and_put",
         ]
         self.assertEquals(poller.stores["trace"], expected_traces)
+
+
+class DummyTransporter:
+    def setup(self, args):
+        pass
+
+    def set_receiver(self, receiver):
+        pass
+
+class Hap2NagiosNDOUtilsMain(unittest.TestCase):
+    def test_constructor(self):
+        kwargs = {"transporter_args":{"class": DummyTransporter}}
+        main = hap2_nagios_ndoutils.Hap2NagiosNDOUtilsMain(**kwargs)
