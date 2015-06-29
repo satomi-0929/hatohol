@@ -344,6 +344,14 @@ class TestCommon(unittest.TestCase):
     def test_get_resource_with_no_returned_item(self):
         self.__assert_get_resource(0, None)
 
+    def test_get_resource_with_two_returned_item(self):
+        self.__assert_get_resource(2, {
+            "timestamp": "1994-05-25T12:34:56",
+            "counter_name": "CNAME",
+            "counter_unit": "UNIT",
+            "counter_volume": "CVOL"
+        })
+
     def test_parse_time_with_micro(self):
         actual = Common.parse_time("2014-09-05T06:25:29.185000")
         expect = datetime(2014, 9, 5, 6, 25, 29, 185000)
