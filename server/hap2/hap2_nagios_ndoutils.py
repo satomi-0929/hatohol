@@ -53,12 +53,6 @@ class Common:
         self.__db_user = self.DEFAULT_USER
         self.__db_passwd = ""
 
-        # See https://github.com/project-hatohol/hatohol/issues/1151
-        # for the reason the host name and group name conversion with the
-        # following variables are needed.
-        self.__host_map = {}
-        self.__host_group_map = {}
-
     def close_connection(self):
         if self.__cursor is not None:
             self.__cursor.close()
@@ -66,10 +60,6 @@ class Common:
         if self.__db is not None:
             self.__db.close()
             self.__db = None
-
-        # TODO: Should we change the method name ?
-        self.__host_map = {}
-        self.__host_group_map = {}
 
     def ensure_connection(self):
         if self.__db is not None:
@@ -328,18 +318,6 @@ class Common:
 
         return (hapi_status, hapi_severity)
 
-    def __get_invariant_host_id(self, host_id):
-        invariant_host_id = self.__host_map.get(host_id)
-        if invariant_host_id is None:
-            logging.error("Not found invariant host ID for '%s'" % host_id)
-        return invariant_host_id
-
-    def __get_invariant_host_group_id(self, group_id):
-        invariant_group_id = self.__host_group_map.get(group_id)
-        if invariant_group_id is None:
-            logging.error(
-                "Not found invariant host group ID for '%s'" % group_id)
-        return invariant_group_id
 
 class Hap2NagiosNDOUtilsPoller(haplib.BasePoller, Common):
 

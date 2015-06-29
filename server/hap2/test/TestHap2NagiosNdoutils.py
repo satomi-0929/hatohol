@@ -216,6 +216,9 @@ class TestCommon(unittest.TestCase):
         status = "ABC"
         self.__assert_parse_status_and_severity(status, ("UNKNOWN", "UNKNOWN"))
 
+    #
+    # Utility methods
+    #
     def __assert_parse_url(self, url, expect):
         comm = Common()
         target_func = testutil.returnPrivObj(comm, "__parse_url")
