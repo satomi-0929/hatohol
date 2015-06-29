@@ -325,13 +325,16 @@ class TestCommon(unittest.TestCase):
         expect_item["hostId"] = host_id
         self.assertEquals(target_func(host_id), [expect_item])
 
-    def test_get_resource(self):
-        comm = CommonForTest()
+    def __assert_get_resource(self, num_items, expect):
+        comm = CommonForTest({"href1_num_items": num_items})
         get_resource = \
             testutils.returnPrivObj(comm, "__get_resource", "Common")
         rel = None
         href = "http://HREF/href1"
-        self.assertEquals(get_resource(rel, href), {
+        self.assertEquals(get_resource(rel, href), expect)
+
+    def test_get_resource(self):
+        self.__assert_get_resource(1, {
             "timestamp": "1994-05-25T12:34:56",
             "counter_name": "CNAME",
             "counter_unit": "UNIT",
