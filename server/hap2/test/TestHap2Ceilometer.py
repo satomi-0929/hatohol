@@ -484,6 +484,12 @@ class TestCommon(unittest.TestCase):
         target_func(alarm_time_map)
         self.assertEquals(alarm_time_map, {"112233": "20120322121311.123456"})
 
+    def test_get_history_query_option_with_last_alarm_none(self):
+        comm = CommonForTest()
+        target_func = testutils.returnPrivObj(
+                            comm, "__get_history_query_option", "Common")
+        self.assertEquals(target_func(None), "")
+
     def test_parse_time_with_micro(self):
         actual = Common.parse_time("2014-09-05T06:25:29.185000")
         expect = datetime(2014, 9, 5, 6, 25, 29, 185000)
