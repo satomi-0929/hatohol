@@ -133,11 +133,12 @@ class TestCommon(unittest.TestCase):
         comm = CommonForTest()
         comm.ensure_connection()
         # TODO: insert test materials and check it
-        comm.collect_triggers_and_put()
+        fetch_id = "12345"
+        comm.collect_triggers_and_put(fetch_id)
         self.assertEquals(type(comm.stores["triggers"]), type([]))
         self.assertEquals(comm.stores["update_type"], "ALL")
         self.assertEquals(comm.stores["last_info"], None)
-        self.assertEquals(comm.stores["fetch_id"], None)
+        self.assertEquals(comm.stores["fetch_id"], fetch_id)
 
     def __assert_parse_url(self, url, expect):
         comm = Common()
