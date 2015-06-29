@@ -108,7 +108,8 @@ class Common:
         slash_idx = url.find("/")
         if slash_idx >= 0:
             database = url[slash_idx+1:]
-            server = url[0:slash_idx]
+            if slash_idx != 0:
+                server = url[0:slash_idx]
         else:
             server = url
 
