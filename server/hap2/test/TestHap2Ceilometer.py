@@ -31,7 +31,7 @@ class TestCommon(unittest.TestCase):
     def test_constructor(self):
         testutils.assertNotRaises(Common)
 
-    def test_ensure_connection_with_empty_monitoring_server_info(self):
+    def test_ensure_connection_without_monitoring_server_info(self):
         comm = CommonForTest()
         self.assertRaises(haplib.Signal, comm.ensure_connection)
 
