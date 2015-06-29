@@ -64,6 +64,15 @@ class CommonForTest(Common):
         self.stores["last_info"] = last_info
         self.stores["fetch_id"] = fetch_id
 
+    def get_cached_event_last_info(self):
+        return None
+
+    def put_events(self, events, fetch_id=None, last_info_generator=None):
+        self.stores["events"] = events
+        self.stores["fetch_id"] = fetch_id
+        self.stores["last_info_generator"] = last_info_generator
+
+
 class TestCommon(unittest.TestCase):
     def test_constructor(self):
         testutil.assertNotRaises(Common)
@@ -138,6 +147,18 @@ class TestCommon(unittest.TestCase):
         self.assertEquals(type(comm.stores["triggers"]), type([]))
         self.assertEquals(comm.stores["update_type"], "ALL")
         self.assertEquals(comm.stores["last_info"], None)
+        self.assertEquals(comm.stores["fetch_id"], fetch_id)
+
+    def test_collect_events_and_put(self):
+        comm = CommonForTest()
+        comm.ensure_connection()
+        fetch_id = "6789"
+        last_info = None
+        count = None
+        direction = "ASC"
+        # TODO: insert test materials and check it
+        comm.collect_events_and_put(fetch_id, last_info, count, direction)
+        self.assertEquals(type(comm.stores["events"]), type([]))
         self.assertEquals(comm.stores["fetch_id"], fetch_id)
 
     def __assert_parse_url(self, url, expect):
