@@ -152,12 +152,24 @@ class CommonForTest(Common):
         }
 
     def __request_href1(self, url):
-        return [{
+        num_items = self.__options.get("href1_num_items", 1)
+        items = [{
             "timestamp": "1994-05-25T12:34:56",
             "counter_name": "CNAME",
             "counter_volume": "CVOL",
             "counter_unit": "UNIT",
+        }, {
+            "timestamp": "1997-01-22T22:33:44",
+            "counter_name": "Flower",
+            "counter_volume": 13.20,
+            "counter_unit": "%",
+        }, {
+            "timestamp": "1992-08-20T11:22:33",
+            "counter_name": "Lake",
+            "counter_volume": 123,
+            "counter_unit": "degree",
         }]
+        return items[0:num_items]
 
     def __request_meters_CNAME(self, url):
         return [{
@@ -312,6 +324,19 @@ class TestCommon(unittest.TestCase):
         expect_item["itemId"] = "host_id2.CNAME"
         expect_item["hostId"] = host_id
         self.assertEquals(target_func(host_id), [expect_item])
+
+    def test_get_resource(self):
+        comm = CommonForTest()
+        get_resource = \
+            testutils.returnPrivObj(comm, "__get_resource", "Common")
+        rel = None
+        href = "http://HREF/href1"
+        self.assertEquals(get_resource(rel, href), {
+            "timestamp": "1994-05-25T12:34:56",
+            "counter_name": "CNAME",
+            "counter_unit": "UNIT",
+            "counter_volume": "CVOL"
+        })
 
     def test_parse_time_with_micro(self):
         actual = Common.parse_time("2014-09-05T06:25:29.185000")
