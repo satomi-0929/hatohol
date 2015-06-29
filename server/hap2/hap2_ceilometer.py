@@ -410,7 +410,7 @@ class Common:
         if value is None:
             return None
         if op != "eq":
-            logger.info("Unknown eperator: %s" % op)
+            logging.info("Unknown eperator: %s" % op)
             return None
         return value
 

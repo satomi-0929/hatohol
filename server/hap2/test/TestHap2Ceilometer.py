@@ -579,6 +579,29 @@ class Common__parse_alarm_host(unittest.TestCase):
         self.__assert_parse_alarm_host(threshold_rule, ("N/A", "N/A"))
 
 
+class Common__parse_alarm_host_each(unittest.TestCase):
+    def __assert(self, query, expect):
+        comm = CommonForTest()
+        target_func = testutils.returnPrivObj(
+                            comm, "__parse_alarm_host_each", "Common")
+        self.assertEquals(target_func(query), expect)
+
+    def test_no_field(self):
+        self.__assert({"value":"hoge", "op":"eq"}, None)
+
+    def test_no_value(self):
+        self.__assert({"field":"hoge", "op":"eq"}, None)
+
+    def test_no_op(self):
+        self.__assert({"field":"hoge", "value": "foo"}, None)
+
+    def test_op_is_not_eq(self):
+        self.__assert({"field":"hoge", "value": "foo", "op":"gt"}, None)
+
+    def test_normal(self):
+        self.__assert({"field":"hoge", "value": "foo", "op":"eq"}, "foo")
+
+
 class Common_parse_time(unittest.TestCase):
     def test_parse_time_with_micro(self):
         actual = Common.parse_time("2014-09-05T06:25:29.185000")
