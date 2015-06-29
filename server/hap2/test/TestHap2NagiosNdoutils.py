@@ -31,7 +31,6 @@ class CommonForTest(Common):
         print options
 
     def get_ms_info(self):
-        # On TravisCI, we may return appropriate paramters here
         if self.__options.get("db_invalid_param"):
             return haplib.MonitoringServerInfo({
                 "serverId": "hoge",
@@ -45,6 +44,7 @@ class CommonForTest(Common):
                 "extendedInfo": "",
             })
         else:
+            # On TravisCI, we may return appropriate paramters here
             return None
 
 class TestCommon(unittest.TestCase):
@@ -68,3 +68,11 @@ class TestCommon(unittest.TestCase):
         self.test_ensure_connection()
         self.test_close_connection_without_connection()
 
+    def test_parse_url_sv_port_db(self):
+        self.__assert_parse_url(
+            "123.45.67.89:1122/mydb", ("123.45.67.89", "1122", "mydb"))
+
+    def __assert_parse_url(self, url, expect):
+        comm = Common()
+        target_func = common.returnPrivObj(comm, "__parse_url")
+        self.assertEquals(target_func(url), expect)
