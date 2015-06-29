@@ -54,6 +54,9 @@ class CommonForTest(Common):
     def put_host_groups(self, groups):
         self.stores["host_groups"] = groups
 
+    def put_host_group_membership(self, membership):
+        self.stores["host_group_membership"] = membership
+
 class TestCommon(unittest.TestCase):
     def test_constructor(self):
         testutil.assertNotRaises(Common)
@@ -109,6 +112,12 @@ class TestCommon(unittest.TestCase):
         comm.ensure_connection()
         comm.collect_host_groups_and_put()
         self.assertEquals(type(comm.stores["host_groups"]), type([]))
+
+    def test_collect_host_group_membership_and_put(self):
+        comm = CommonForTest()
+        comm.ensure_connection()
+        comm.collect_host_group_membership_and_put()
+        self.assertEquals(type(comm.stores["host_group_membership"]), type([]))
 
     def __assert_parse_url(self, url, expect):
         comm = Common()
