@@ -319,7 +319,7 @@ class DummyTransporter:
 class MainPluginForTest(TraceableTestCommon,
                         hap2_nagios_ndoutils.Hap2NagiosNDOUtilsMain):
     def __init__(self):
-        kwargs = {"transporter_args":{"class": DummyTransporter}}
+        kwargs = {"transporter_args": {"class": DummyTransporter}}
         hap2_nagios_ndoutils.Hap2NagiosNDOUtilsMain.__init__(self, **kwargs)
         TraceableTestCommon.__init__(self)
 
@@ -351,3 +351,18 @@ class Hap2NagiosNDOUtilsMain(unittest.TestCase):
         self.assertEquals(main.stores["last_info"], params["lastInfo"])
         self.assertEquals(main.stores["count"], params["count"])
         self.assertEquals(main.stores["direction"], params["direction"])
+
+class Hap2NagiosNDOUtils(unittest.TestCase):
+    def test_create_main_plugin(self):
+        hap = hap2_nagios_ndoutils.Hap2NagiosNDOUtils()
+        kwargs = {"transporter_args": {"class": DummyTransporter}}
+        main_plugin = hap.create_main_plugin(**kwargs)
+        expect_class = hap2_nagios_ndoutils.Hap2NagiosNDOUtilsMain
+        self.assertTrue(isinstance(main_plugin, expect_class))
+
+    def test_create_poller(self):
+        hap = hap2_nagios_ndoutils.Hap2NagiosNDOUtils()
+        kwargs = {"sender": None, "process_id": ""}
+        poller = hap.create_poller(**kwargs)
+        expect_class = hap2_nagios_ndoutils.Hap2NagiosNDOUtilsPoller
+        self.assertTrue(isinstance(poller, expect_class))
