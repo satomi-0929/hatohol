@@ -472,6 +472,18 @@ class TestCommon(unittest.TestCase):
         target_func(alarm_time_map)
         self.assertEquals(len(alarm_time_map), 2)
 
+    def test_remove_missing_alarm(self):
+        comm = CommonForTest()
+        comm.ensure_connection()
+        comm.collect_triggers_and_put()
+        target_func = testutils.returnPrivObj(comm, "__remove_missing_alarm",
+                                              "Common")
+        alarm_time_map = {"alarm1": "20120222101011.123456",
+                          "112233": "20120322121311.123456",
+        }
+        target_func(alarm_time_map)
+        self.assertEquals(alarm_time_map, {"112233": "20120322121311.123456"})
+
     def test_parse_time_with_micro(self):
         actual = Common.parse_time("2014-09-05T06:25:29.185000")
         expect = datetime(2014, 9, 5, 6, 25, 29, 185000)
