@@ -248,10 +248,8 @@ class TestCommon(unittest.TestCase):
         self.assertEquals(target_func(status), expect)
 
 
-class PollerForTest(hap2_nagios_ndoutils.Hap2NagiosNDOUtilsPoller):
+class TraceableTestCommon:
     def __init__(self):
-        kwargs = {"sender": "", "process_id": "PollerForTest"}
-        hap2_nagios_ndoutils.Hap2NagiosNDOUtilsPoller.__init__(self, **kwargs)
         self.stores = {"trace":[]}
 
     def ensure_connection(self):
@@ -266,11 +264,21 @@ class PollerForTest(hap2_nagios_ndoutils.Hap2NagiosNDOUtilsPoller):
     def collect_host_group_membership_and_put(self):
         self.stores["trace"].append("collect_host_group_membership_and_put")
 
-    def collect_triggers_and_put(self):
+    def collect_triggers_and_put(self, fetch_id=None, host_ids=None):
         self.stores["trace"].append("collect_triggers_and_put")
+        self.stores["fetch_id"] = fetch_id
+        self.stores["host_ids"] = host_ids
 
     def collect_events_and_put(self):
         self.stores["trace"].append("collect_event_and_put")
+
+
+class PollerForTest(hap2_nagios_ndoutils.Hap2NagiosNDOUtilsPoller,
+                    TraceableTestCommon):
+    def __init__(self):
+        kwargs = {"sender": "", "process_id": "PollerForTest"}
+        hap2_nagios_ndoutils.Hap2NagiosNDOUtilsPoller.__init__(self, **kwargs)
+        TraceableTestCommon.__init__(self)
 
 
 class Hap2NagiosNDOUtilsPoller(unittest.TestCase):
@@ -299,7 +307,29 @@ class DummyTransporter:
     def set_receiver(self, receiver):
         pass
 
+    def reply(self, response):
+        pass
+
+
+class MainPluginForTest(TraceableTestCommon,
+                        hap2_nagios_ndoutils.Hap2NagiosNDOUtilsMain):
+    def __init__(self):
+        kwargs = {"transporter_args":{"class": DummyTransporter}}
+        hap2_nagios_ndoutils.Hap2NagiosNDOUtilsMain.__init__(self, **kwargs)
+        TraceableTestCommon.__init__(self)
+
+
 class Hap2NagiosNDOUtilsMain(unittest.TestCase):
     def test_constructor(self):
         kwargs = {"transporter_args":{"class": DummyTransporter}}
         main = hap2_nagios_ndoutils.Hap2NagiosNDOUtilsMain(**kwargs)
+
+    def test_hap_fetch_triggers(self):
+        main = MainPluginForTest()
+        params = {"fetchId": "252525", "hostIds": ["12", "345", "678"]}
+        request_id = "1234"
+        main.hap_fetch_triggers(params, request_id)
+        self.assertEquals(main.stores["trace"],
+                          ["ensure_connection", "collect_triggers_and_put"])
+        self.assertEquals(main.stores["fetch_id"], params["fetchId"])
+        self.assertEquals(main.stores["host_ids"], params["hostIds"])
