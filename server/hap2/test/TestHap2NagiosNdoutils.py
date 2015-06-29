@@ -20,7 +20,7 @@
 """
 
 import unittest
-import common
+import common as testutil
 import haplib
 from hap2_nagios_ndoutils import Common
 
@@ -49,11 +49,11 @@ class CommonForTest(Common):
 
 class TestCommon(unittest.TestCase):
     def test_constructor(self):
-        common.assertNotRaises(Common)
+        testutil.assertNotRaises(Common)
 
     def test_ensure_connection(self):
         comm = CommonForTest()
-        common.assertNotRaises(comm.ensure_connection)
+        testutil.assertNotRaises(comm.ensure_connection)
 
     def test_ensure_connection_with_failure_of_opening_db(self):
         options = {"db_invalid_param": True}
@@ -62,7 +62,7 @@ class TestCommon(unittest.TestCase):
 
     def test_close_connection_without_connection(self):
         comm = Common()
-        common.assertNotRaises(comm.close_connection)
+        testutil.assertNotRaises(comm.close_connection)
 
     def test_close_connection(self):
         self.test_ensure_connection()
@@ -74,5 +74,5 @@ class TestCommon(unittest.TestCase):
 
     def __assert_parse_url(self, url, expect):
         comm = Common()
-        target_func = common.returnPrivObj(comm, "__parse_url")
+        target_func = testutil.returnPrivObj(comm, "__parse_url")
         self.assertEquals(target_func(url), expect)
