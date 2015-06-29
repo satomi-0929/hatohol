@@ -161,7 +161,21 @@ class TestCommon(unittest.TestCase):
         self.assertEquals(type(comm.stores["events"]), type([]))
         self.assertEquals(comm.stores["fetch_id"], fetch_id)
 
+    def test_validate_object_ids(self):
+        self.__assert_validate_object_ids(["123", "555555", "23434324234"])
+
+    def test_validate_object_ids_with_empty_data(self):
+        self.__assert_validate_object_ids([])
+
+    def test_validate_object_ids_with_invalid_data(self):
+        self.__assert_validate_object_ids(["123", "555555", "I'm Mike"], False)
+
     def __assert_parse_url(self, url, expect):
         comm = Common()
         target_func = testutil.returnPrivObj(comm, "__parse_url")
         self.assertEquals(target_func(url), expect)
+
+    def __assert_validate_object_ids(self, host_ids, expect=True):
+        comm = Common()
+        target_func = testutil.returnPrivObj(comm, "__validate_object_ids")
+        self.assertEquals(target_func(host_ids), expect)
