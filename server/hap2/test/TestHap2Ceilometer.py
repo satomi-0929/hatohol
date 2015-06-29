@@ -82,6 +82,11 @@ class CommonForTest(Common):
         self.store["last_info"] = last_info
         self.store["fetch_id"] = fetch_id
 
+    def put_events(self, events, fetch_id=None, last_info_generator=None):
+        self.store["events"] = events
+        self.store["fetch_id"] = fetch_id
+        self.store["last_info_generator"] = last_info_generator
+
     def __request(self, url, headers={}, use_token=True, data=None):
         url_handler_map = {
             "http://example.com/tokens": self.__request_token,
@@ -123,6 +128,9 @@ class CommonForTest(Common):
     def __request_alarms(self, url):
         return self.ALARMS
 
+    def get_cached_event_last_info(self):
+        return "abcdef"
+
 
 class TestCommon(unittest.TestCase):
     def test_constructor(self):
@@ -158,6 +166,7 @@ class TestCommon(unittest.TestCase):
         comm.ensure_connection()
 
         fetch_id = "000111"
+        # TODO: Test with non-None host_ids
         host_ids = None
         comm.collect_triggers_and_put(fetch_id=fetch_id, host_ids=host_ids)
         self.assertEqual(comm.store["triggers"],
@@ -174,6 +183,30 @@ class TestCommon(unittest.TestCase):
         self.assertEquals(comm.store["update_type"], "ALL")
         self.assertEquals(comm.store["last_info"], None)
         self.assertEquals(comm.store["fetch_id"], fetch_id)
+
+    def test_collect_events_and_put(self):
+        caught = []
+        def catcher(alarm_id, last_alarm_time, fetch_id):
+            caught.extend([alarm_id, last_alarm_time, fetch_id])
+
+        comm = CommonForTest()
+        comm.ensure_connection()
+        fetch_id = "000111"
+        # TODO: Test with non-None host_ids, last_info, count
+        last_info = None
+        host_ids = None
+        count = None
+        # TODO: Test with "DESC"
+        direction = "ASC"
+        comm._Common__collect_events_and_put = catcher
+        comm._Common__decode_last_alarm_timestamp_map = \
+            lambda x: {"alarm_id1": "20150629110435.250000"}
+        comm._Common__alarm_cache = {"alarm_id1": {"host id", "brief"}}
+        comm.collect_events_and_put(fetch_id=fetch_id,
+                                    last_info=last_info,
+                                    count=count, direction=direction)
+        self.assertEqual(caught,
+                         ["alarm_id1", "20150629110435.250000", "000111"])
 
     def test_parse_time_with_micro(self):
         actual = Common.parse_time("2014-09-05T06:25:29.185000")
