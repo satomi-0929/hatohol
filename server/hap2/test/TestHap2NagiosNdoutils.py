@@ -184,6 +184,18 @@ class TestCommon(unittest.TestCase):
     def test_validate_object_with_hex(self):
         self.__assert_validate_object_id("a5a5a5", False)
 
+    def test_extract_validated_event_last_info(self):
+        self.__assert_extract_validated_event_last_info("12345", 12345)
+
+    def test_extract_validated_event_last_info_with_negative(self):
+        self.__assert_extract_validated_event_last_info("-12", None)
+
+    def test_extract_validated_event_last_info_with_empty(self):
+        self.__assert_extract_validated_event_last_info("", None)
+
+    def test_extract_validated_event_last_info_with_string(self):
+        self.__assert_extract_validated_event_last_info("An apple", None)
+
     def __assert_parse_url(self, url, expect):
         comm = Common()
         target_func = testutil.returnPrivObj(comm, "__parse_url")
@@ -198,3 +210,9 @@ class TestCommon(unittest.TestCase):
         comm = Common()
         target_func = testutil.returnPrivObj(comm, "__validate_object_id")
         self.assertEquals(target_func(host_id), expect)
+
+    def __assert_extract_validated_event_last_info(self, last_info, expect):
+        comm = Common()
+        target_func = \
+            testutil.returnPrivObj(comm, "__extract_validated_event_last_info")
+        self.assertEquals(target_func(last_info), expect)
