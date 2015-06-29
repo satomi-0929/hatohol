@@ -94,6 +94,8 @@ class CommonForTest(Common):
             "http://hoge/ceilometer/v2/alarms": self.__request_alarms,
             "http://hoge/ceilometer/v2/resource": self.__request_resources,
             "http://HREF/href1": self.__request_href1,
+            "http://hoge/ceilometer/v2/meters/CNAME":
+                self.__request_meters_CNAME,
         }
 
         handler = None
@@ -146,11 +148,25 @@ class CommonForTest(Common):
             "counter_unit": "UNIT",
         }]
 
+    def __request_meters_CNAME(self, url):
+        return [{
+            "timestamp": "2012-12-19T01:23:46",
+            "counter_volume": 12,
+        }, {
+            "timestamp": "2012-12-19T01:23:45",
+            "counter_volume": 10,
+        }]
+
     def get_cached_event_last_info(self):
         return "abcdef"
 
     def put_items(self, items, fetch_id):
         self.store["items"] = items
+        self.store["fetch_id"] = fetch_id
+
+    def put_history(self, samples, item_id, fetch_id):
+        self.store["samples"] = samples
+        self.store["item_id"] = item_id
         self.store["fetch_id"] = fetch_id
 
 
@@ -250,6 +266,29 @@ class TestCommon(unittest.TestCase):
             }
         ])
         self.assertEquals(comm.store["fetch_id"], fetch_id)
+
+    def test_collect_history_and_put(self):
+        comm = CommonForTest()
+        comm.ensure_connection()
+        fetch_id = "0055"
+        host_id = "host_id1"
+        item_id = "host_id1.CNAME"
+        begin_time = ""
+        end_time = ""
+        comm.collect_history_and_put(fetch_id=fetch_id, host_id=host_id,
+                                     item_id=item_id, begin_time=begin_time,
+                                     end_time=end_time)
+        self.assertEquals(comm.store["fetch_id"], fetch_id)
+        self.assertEquals(comm.store["item_id"], item_id)
+        self.assertEquals(comm.store["samples"], [
+            {
+                "time": "20121219012345.000000",
+                "value": "10",
+            }, {
+                "time": "20121219012346.000000",
+                "value": "12",
+            }
+        ])
 
     def test_parse_time_with_micro(self):
         actual = Common.parse_time("2014-09-05T06:25:29.185000")
