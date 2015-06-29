@@ -34,6 +34,21 @@ class CommonForTest(Common):
         "name": "onamae",
     }]
 
+    ALARMS = [{
+        "alarm_id": "112233",
+        "state_timestamp": "2015-06-29T10:05:11.135000",
+        "description": "DESCRIPTION",
+        "state": "ok",
+        "threshold_rule": {
+            "meter_name": "cpu_util",
+            "query": [{
+                "field": "name",
+                "value": "889900",
+                "op": "eq",
+            }]
+        },
+    }]
+
     def __init__(self, options={}):
         Common.__init__(self)
         self.__options = options
@@ -60,10 +75,18 @@ class CommonForTest(Common):
     def put_hosts(self, hosts):
         self.store["hosts"] = hosts
 
+    def put_triggers(self, triggers, update_type,
+                     last_info=None, fetch_id=None):
+        self.store["triggers"] = triggers
+        self.store["update_type"] = update_type
+        self.store["last_info"] = last_info
+        self.store["fetch_id"] = fetch_id
+
     def __request(self, url, headers={}, use_token=True, data=None):
         url_handler_map = {
             "http://example.com/tokens": self.__request_token,
-            self.NOVA_EP + "/servers": self.__request_servers
+            self.NOVA_EP + "/servers": self.__request_servers,
+            "http://hoge/ceilometer/v2/alarms": self.__request_alarms,
         }
 
         handler = None
@@ -92,10 +115,13 @@ class CommonForTest(Common):
             }
         }
 
-    def __request_servers(self, subseq):
+    def __request_servers(self, url):
         return {
             "servers": self.SERVERS,
         }
+
+    def __request_alarms(self, url):
+        return self.ALARMS
 
 
 class TestCommon(unittest.TestCase):
@@ -126,6 +152,28 @@ class TestCommon(unittest.TestCase):
         comm.collect_hosts_and_put()
         hosts = comm.store["hosts"]
         self.assertEqual(hosts, [{"hostId": "12345", "hostName": "onamae"}])
+
+    def test_collect_triggers_and_put(self):
+        comm = CommonForTest()
+        comm.ensure_connection()
+
+        fetch_id = "000111"
+        host_ids = None
+        comm.collect_triggers_and_put(fetch_id=fetch_id, host_ids=host_ids)
+        self.assertEqual(comm.store["triggers"],
+            [{
+                "triggerId": "112233",
+                "status": "OK",
+                "severity": "ERROR",
+                "lastChangeTime": "20150629100511.135000",
+                "hostId": "889900",
+                "hostName": "N/A",
+                "brief": "cpu_util: DESCRIPTION",
+                "extendedInfo": "",
+             }])
+        self.assertEquals(comm.store["update_type"], "ALL")
+        self.assertEquals(comm.store["last_info"], None)
+        self.assertEquals(comm.store["fetch_id"], fetch_id)
 
     def test_parse_time_with_micro(self):
         actual = Common.parse_time("2014-09-05T06:25:29.185000")
