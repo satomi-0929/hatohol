@@ -23,6 +23,7 @@ import unittest
 import common as testutil
 import haplib
 from hap2_nagios_ndoutils import Common
+import hap2_nagios_ndoutils
 
 class CommonForTest(Common):
     def __init__(self, options={}):
@@ -245,3 +246,47 @@ class TestCommon(unittest.TestCase):
         target_func = \
             testutil.returnPrivObj(comm, "__parse_status_and_severity")
         self.assertEquals(target_func(status), expect)
+
+
+class PollerForTest(hap2_nagios_ndoutils.Hap2NagiosNDOUtilsPoller):
+    def __init__(self):
+        kwargs = {"sender": "", "process_id": "PollerForTest"}
+        hap2_nagios_ndoutils.Hap2NagiosNDOUtilsPoller.__init__(self, **kwargs)
+        self.stores = {"trace":[]}
+
+    def ensure_connection(self):
+        self.stores["trace"].append("ensure_connection")
+
+    def collect_hosts_and_put(self):
+        self.stores["trace"].append("collect_host_and_put")
+
+    def collect_host_groups_and_put(self):
+        self.stores["trace"].append("collect_host_groups_and_put")
+
+    def collect_host_group_membership_and_put(self):
+        self.stores["trace"].append("collect_host_group_membership_and_put")
+
+    def collect_triggers_and_put(self):
+        self.stores["trace"].append("collect_triggers_and_put")
+
+    def collect_events_and_put(self):
+        self.stores["trace"].append("collect_event_and_put")
+
+
+class Hap2NagiosNDOUtilsPoller(unittest.TestCase):
+    def test_constructor(self):
+        kwargs = {"sender": "FOO", "process_id": "my test"}
+        poller = hap2_nagios_ndoutils.Hap2NagiosNDOUtilsPoller(**kwargs)
+
+    def test_poll(self):
+        poller = PollerForTest()
+        poller.poll()
+        expected_traces = [
+            "ensure_connection",
+            "collect_host_and_put",
+            "collect_host_groups_and_put",
+            "collect_host_group_membership_and_put",
+            "collect_triggers_and_put",
+            "collect_event_and_put",
+        ]
+        self.assertEquals(poller.stores["trace"], expected_traces)
