@@ -808,3 +808,18 @@ class Hap2CeilometerMain(unittest.TestCase):
         self.assertEquals(main.stores["item_id"], params["itemId"])
         self.assertEquals(main.stores["begin_time"], params["beginTime"])
         self.assertEquals(main.stores["end_time"], params["endTime"])
+
+class Hap2Ceilometer(unittest.TestCase):
+    def test_create_main_plugin(self):
+        hap = hap2_ceilometer.Hap2Ceilometer()
+        kwargs = {"transporter_args": {"class": transporter.Transporter}}
+        main_plugin = hap.create_main_plugin(**kwargs)
+        expect_class = hap2_ceilometer.Hap2CeilometerMain
+        self.assertTrue(isinstance(main_plugin, expect_class))
+
+    def test_create_poller(self):
+        hap = hap2_ceilometer.Hap2Ceilometer()
+        kwargs = {"sender": None, "process_id": ""}
+        poller = hap.create_poller(**kwargs)
+        expect_class = hap2_ceilometer.Hap2CeilometerPoller
+        self.assertTrue(isinstance(poller, expect_class))
