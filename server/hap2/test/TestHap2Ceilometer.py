@@ -24,6 +24,7 @@ import hap2_ceilometer
 from datetime import datetime
 import haplib
 import re
+import transporter
 
 class CommonForTest(Common):
 
@@ -705,6 +706,11 @@ class TraceableTestCommon:
         self.stores["count"] = count
         self.stores["direction"] = direction
 
+    def collect_items_and_put(self, fetch_id, host_ids):
+        self.stores["trace"].append("collect_items_and_put")
+        self.stores["fetch_id"] = fetch_id
+        self.stores["host_ids"] = host_ids
+
 
 class PollerForTest(TraceableTestCommon, hap2_ceilometer.Hap2CeilometerPoller):
     def __init__(self):
@@ -730,3 +736,51 @@ class Hap2CeilometerPoller(unittest.TestCase):
             "collect_events_and_put",
         ]
         self.assertEquals(poller.stores["trace"], expected_traces)
+
+
+class MainPluginForTest(TraceableTestCommon,
+                        hap2_ceilometer.Hap2CeilometerMain):
+    def __init__(self):
+        TraceableTestCommon.__init__(self)
+        kwargs = {"transporter_args": {"class": transporter.Transporter}}
+        hap2_ceilometer.Hap2CeilometerMain.__init__(self, **kwargs)
+
+
+class Hap2CeilometerMain(unittest.TestCase):
+    def test_constructor(self):
+        kwargs = {"transporter_args": {"class": transporter.Transporter}}
+        main = hap2_ceilometer.Hap2CeilometerMain(**kwargs)
+
+    def test_hap_fetch_triggers(self):
+        main = MainPluginForTest()
+        params = {"fetchId": "252525", "hostIds": ["12", "345", "678"]}
+        request_id = "1234"
+        main.hap_fetch_triggers(params, request_id)
+        self.assertEquals(main.stores["trace"],
+                          ["ensure_connection", "collect_triggers_and_put"])
+        self.assertEquals(main.stores["fetch_id"], params["fetchId"])
+        self.assertEquals(main.stores["host_ids"], params["hostIds"])
+
+    def test_hap_fetch_events(self):
+        main = MainPluginForTest()
+        params = {"fetchId": "252525", "lastInfo": "abcedef",
+                  "count": 100, "direction": "ASC"}
+        request_id = "1234"
+        main.hap_fetch_events(params, request_id)
+        self.assertEquals(main.stores["trace"],
+                          ["ensure_connection", "collect_events_and_put"])
+        self.assertEquals(main.stores["fetch_id"], params["fetchId"])
+        self.assertEquals(main.stores["last_info"], params["lastInfo"])
+        self.assertEquals(main.stores["count"], params["count"])
+        self.assertEquals(main.stores["direction"], params["direction"])
+
+
+    def test_hap_fetch_items(self):
+        main = MainPluginForTest()
+        params = {"fetchId": "252525", "hostIds": ["12", "345", "678"]}
+        request_id = "1234"
+        main.hap_fetch_items(params, request_id)
+        self.assertEquals(main.stores["trace"],
+                          ["ensure_connection", "collect_items_and_put"])
+        self.assertEquals(main.stores["fetch_id"], params["fetchId"])
+        self.assertEquals(main.stores["host_ids"], params["hostIds"])
