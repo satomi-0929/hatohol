@@ -602,21 +602,6 @@ class Common__parse_alarm_host_each(unittest.TestCase):
         self.__assert({"field":"hoge", "value": "foo", "op":"eq"}, "foo")
 
 
-class Common_parse_time(unittest.TestCase):
-    def test_parse_time_with_micro(self):
-        actual = Common.parse_time("2014-09-05T06:25:29.185000")
-        expect = datetime(2014, 9, 5, 6, 25, 29, 185000)
-        self.assertEqual(actual, expect)
-
-    def test_parse_time_without_micro(self):
-        actual = Common.parse_time("2014-09-05T06:25:29")
-        expect = datetime(2014, 9, 5, 6, 25, 29)
-        self.assertEqual(actual, expect)
-
-    def test_parse_time_without_invalid_string(self):
-        self.assertRaises(Exception, Common.parse_time, "20140905062529")
-
-
 class Common_alarm_to_hapi_status(unittest.TestCase):
     def test_alarm_to_hapi_status_ok(self):
         alarm_type = "state transition"
@@ -656,3 +641,34 @@ class Common_alarm_to_hapi_status(unittest.TestCase):
             Exception,
             Common.alarm_to_hapi_status, (alarm_type, detail))
 
+class Common_status_to_hapi_event_type(unittest.TestCase):
+    def __assert(self, status, expect):
+        self.assertEquals(Common.status_to_hapi_event_type(status), expect)
+
+    def test_OK(self):
+        self.__assert("OK", "GOOD")
+
+    def test_NG(self):
+        self.__assert("NG", "BAD")
+
+    def test_UNKNOWN(self):
+        self.__assert("UNKNOWN", "UNKNOWN")
+
+    def test_others(self):
+        self.assertRaises(KeyError, Common.status_to_hapi_event_type,
+                          ("others"))
+
+
+class Common_parse_time(unittest.TestCase):
+    def test_parse_time_with_micro(self):
+        actual = Common.parse_time("2014-09-05T06:25:29.185000")
+        expect = datetime(2014, 9, 5, 6, 25, 29, 185000)
+        self.assertEqual(actual, expect)
+
+    def test_parse_time_without_micro(self):
+        actual = Common.parse_time("2014-09-05T06:25:29")
+        expect = datetime(2014, 9, 5, 6, 25, 29)
+        self.assertEqual(actual, expect)
+
+    def test_parse_time_without_invalid_string(self):
+        self.assertRaises(Exception, Common.parse_time, "20140905062529")
