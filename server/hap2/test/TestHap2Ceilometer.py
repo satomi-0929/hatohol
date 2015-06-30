@@ -20,6 +20,7 @@
 import unittest
 import common as testutils
 from hap2_ceilometer import Common
+import hap2_ceilometer
 from datetime import datetime
 import haplib
 import re
@@ -672,3 +673,60 @@ class Common_parse_time(unittest.TestCase):
 
     def test_parse_time_without_invalid_string(self):
         self.assertRaises(Exception, Common.parse_time, "20140905062529")
+
+
+# TODO: Extract common part with tests for hap2_nagios_udoutils
+class TraceableTestCommon:
+    def __init__(self):
+        self.stores = {"trace":[]}
+
+    def ensure_connection(self):
+        self.stores["trace"].append("ensure_connection")
+
+    def collect_hosts_and_put(self):
+        self.stores["trace"].append("collect_host_and_put")
+
+    def collect_host_groups_and_put(self):
+        self.stores["trace"].append("collect_host_groups_and_put")
+
+    def collect_host_group_membership_and_put(self):
+        self.stores["trace"].append("collect_host_group_membership_and_put")
+
+    def collect_triggers_and_put(self, fetch_id=None, host_ids=None):
+        self.stores["trace"].append("collect_triggers_and_put")
+        self.stores["fetch_id"] = fetch_id
+        self.stores["host_ids"] = host_ids
+
+    def collect_events_and_put(self, fetch_id=None, last_info=None, count=None,
+                               direction=None):
+        self.stores["trace"].append("collect_events_and_put")
+        self.stores["fetch_id"] = fetch_id
+        self.stores["last_info"] = last_info
+        self.stores["count"] = count
+        self.stores["direction"] = direction
+
+
+class PollerForTest(TraceableTestCommon, hap2_ceilometer.Hap2CeilometerPoller):
+    def __init__(self):
+        kwargs = {"sender": "", "process_id": "PollerForTest"}
+        TraceableTestCommon.__init__(self)
+        hap2_ceilometer.Hap2CeilometerPoller.__init__(self, **kwargs)
+
+
+class Hap2CeilometerPoller(unittest.TestCase):
+    def test_constructor(self):
+        kwargs = {"sender": "", "process_id": "my test"}
+        poller = hap2_ceilometer.Hap2CeilometerPoller(**kwargs)
+
+    def test_poll(self):
+        poller = PollerForTest()
+        poller.poll()
+        expected_traces = [
+            "ensure_connection",
+            "collect_host_and_put",
+            "collect_host_groups_and_put",
+            "collect_host_group_membership_and_put",
+            "collect_triggers_and_put",
+            "collect_events_and_put",
+        ]
+        self.assertEquals(poller.stores["trace"], expected_traces)
