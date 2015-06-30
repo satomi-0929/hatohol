@@ -21,6 +21,7 @@ import unittest
 import common as testutils
 import hap2_fluentd
 import transporter
+import haplib
 
 class Hap2FluentdMainTestee(hap2_fluentd.Hap2FluentdMain):
     def __init__(self):
@@ -30,6 +31,9 @@ class Hap2FluentdMainTestee(hap2_fluentd.Hap2FluentdMain):
     def get_launch_args(self):
         return testutils.returnPrivObj(self, "__launch_args", "Hap2FluentdMain")
 
+    def set_null_fluentd_manager_main(self):
+        self._Hap2FluentdMain__fluentd_manager_main = lambda : None
+
 class Hap2FluentdMain(unittest.TestCase):
     def test_constructor(self):
         kwargs = {"transporter_args": {"class": transporter.Transporter}}
@@ -37,8 +41,22 @@ class Hap2FluentdMain(unittest.TestCase):
 
     def test_set_arguments(self):
         main = Hap2FluentdMainTestee()
-        arg = type('',(),{})()
+        arg = type('', (), {})()
         arg.fluentd_launch = "ABC -123 435"
         main.set_arguments(arg)
         self.assertEquals(main.get_launch_args(), ["ABC", "-123", "435"])
 
+    def test_set_ms_info(self):
+        main = Hap2FluentdMainTestee()
+        main.set_null_fluentd_manager_main()
+        main.set_ms_info(haplib.MonitoringServerInfo({
+            "serverId": 51,
+            "url": "http://example.com",
+            "type": "Fluentd",
+            "nickName": "Jack",
+            "userName": "fooo",
+            "password": "gooo",
+            "pollingIntervalSec": 30,
+            "retryIntervalSec": 10,
+            "extendedInfo": "",
+        }))
