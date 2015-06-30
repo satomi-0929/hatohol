@@ -711,6 +711,15 @@ class TraceableTestCommon:
         self.stores["fetch_id"] = fetch_id
         self.stores["host_ids"] = host_ids
 
+    def collect_history_and_put(self, fetch_id, host_id, item_id,
+                                begin_time, end_time):
+        self.stores["trace"].append("collect_history_and_put")
+        self.stores["fetch_id"] = fetch_id
+        self.stores["host_id"] = host_id
+        self.stores["item_id"] = item_id
+        self.stores["begin_time"] = begin_time
+        self.stores["end_time"] = end_time
+
 
 class PollerForTest(TraceableTestCommon, hap2_ceilometer.Hap2CeilometerPoller):
     def __init__(self):
@@ -784,3 +793,18 @@ class Hap2CeilometerMain(unittest.TestCase):
                           ["ensure_connection", "collect_items_and_put"])
         self.assertEquals(main.stores["fetch_id"], params["fetchId"])
         self.assertEquals(main.stores["host_ids"], params["hostIds"])
+
+    def test_hap_fetch_history(self):
+        main = MainPluginForTest()
+        params = {"fetchId": "252525", "hostId": "12", "itemId": "334455",
+                  "beginTime": "20141212012345.875000",
+                  "endTime": "20150102032345.000000"}
+        request_id = "1234"
+        main.hap_fetch_history(params, request_id)
+        self.assertEquals(main.stores["trace"],
+                          ["ensure_connection", "collect_history_and_put"])
+        self.assertEquals(main.stores["fetch_id"], params["fetchId"])
+        self.assertEquals(main.stores["host_id"], params["hostId"])
+        self.assertEquals(main.stores["item_id"], params["itemId"])
+        self.assertEquals(main.stores["begin_time"], params["beginTime"])
+        self.assertEquals(main.stores["end_time"], params["endTime"])
